@@ -1,0 +1,37 @@
+<ion-header>
+  <ion-navbar>
+    <ion-title>
+      Alarm
+    </ion-title>
+  </ion-navbar>
+</ion-header>
+
+<ion-content padding>
+
+    <h2>Alarm 1</h2>
+
+    <ion-item>
+      <ion-label>Enabled</ion-label>
+      <ion-toggle [(ngModel)]="alarm1enabled"></ion-toggle>
+    </ion-item>
+
+
+	<ion-item>
+	  <ion-label>Alarm</ion-label>
+	  <ion-datetime displayFormat="HH:mm" [(ngModel)]="alarm1hour"></ion-datetime>
+	</ion-item>
+
+	<h2>Alarm 2</h2>
+
+    <ion-item>
+      <ion-label>Enabled</ion-label>
+      <ion-toggle [(ngModel)]="alarm2enabled"></ion-toggle>
+    </ion-item>
+
+
+	<ion-item>
+	  <ion-label>Alarm</ion-label>
+	  <ion-datetime displayFormat="HH:mm" [(ngModel)]="alarm2hour"></ion-datetime>
+	</ion-item>
+
+</ion-content>

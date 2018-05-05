@@ -1,0 +1,45 @@
+<ion-header>
+  <ion-navbar>
+    <ion-title>
+      Install
+    </ion-title>
+  </ion-navbar>
+</ion-header>
+
+<ion-content padding>
+	
+	<ion-list-header>
+	Device
+	</ion-list-header>
+	<ion-item>
+	{{devicename}} ({{deviceid}})
+	</ion-item>
+
+	<ion-list-header>
+    Paired devices
+  	</ion-list-header>
+    <ion-list>
+
+		<button ion-item *ngFor="let device of pairedDevices" (click)="connectDevice(device)" >
+		  {{device.name}} ({{device.id}})
+		</button>
+
+    </ion-list>
+	
+
+	<button ion-button full [disabled]="!buttonScanEnabled || isScanning" (click)="listDevices()">scan</button>
+	<ion-spinner *ngIf="isScanning==true"></ion-spinner>
+	<ion-list-header>
+    Discovered devices
+  	</ion-list-header>
+    <ion-list>
+
+		<button ion-item *ngFor="let device of discoveredDevices" (click)="connectDevice(device)" >
+		  {{device.name}} ({{device.id}})
+		</button>
+
+    </ion-list>
+
+
+
+</ion-content>
