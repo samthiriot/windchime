@@ -2,8 +2,10 @@
 
 # test 
 
-to test it one your phone
-    ionic cordova run android
+to test it one your phone: first activate USB debug, then ensure your phone is on the same network (wifi) as your computer, then type:
 
-to test in a browser
+    ionic cordova run android --livereload
+
+to test it in a browser (but the native features like bluetooth will not work)
+
     ionic serve
