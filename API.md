@@ -32,7 +32,7 @@ For instance:
 	> PLEASE <DEMAND>
 	< OK <DEMAND>
 
-
+Below you'll find the complete list of actions and settings.
 
 # actions
 
