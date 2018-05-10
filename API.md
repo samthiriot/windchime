@@ -34,8 +34,8 @@ For instance:
 
 Below you'll find the complete list of actions and settings.
 
-# actions
 
+# actions
 ## chime and ring now
 
 The Chimuino has a current **action** it is doing now. This is a state 
