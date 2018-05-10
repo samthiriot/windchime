@@ -15,6 +15,7 @@ import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
 import { BLE } from '@ionic-native/ble';
 import { BluetoothSerial } from '@ionic-native/bluetooth-serial';
+import { ChimuinoProvider } from '../providers/chimuino/chimuino';
 
 @NgModule({
   declarations: [
@@ -46,7 +47,8 @@ import { BluetoothSerial } from '@ionic-native/bluetooth-serial';
     SplashScreen,
     BluetoothSerial,
     BLE,
-    {provide: ErrorHandler, useClass: IonicErrorHandler}
+    {provide: ErrorHandler, useClass: IonicErrorHandler},
+    ChimuinoProvider
   ]
 })
 export class AppModule {}
