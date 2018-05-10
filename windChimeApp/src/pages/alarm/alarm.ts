@@ -26,15 +26,19 @@ export class AlarmPage {
 
 
   set alarm1enabled(value:boolean) {
+  	this._alarm1enabled = value;
   	this.storage.set('alarm-1-enabled', value);
   }
   set alarm1hour(value:string) {
+  	this._alarm1hour = value;
   	this.storage.set('alarm-1-hour', value);
   }
   set alarm2enabled(value:boolean) {
+  	this._alarm2enabled = value;
    	this.storage.set('alarm-2-enabled', value);
   }
   set alarm2hour(value:string) {
+  	this._alarm1hour = value;
   	this.storage.set('alarm-2-hour', value);
   }
 

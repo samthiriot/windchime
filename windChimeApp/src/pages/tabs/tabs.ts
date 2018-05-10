@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 import { AboutPage } from '../about/about';
-import { ContactPage } from '../contact/contact';
+import { ChimePage } from '../chime/chime';
 import { HomePage } from '../home/home';
 import { InstallPage } from '../install/install';
 import { AlarmPage } from '../alarm/alarm';
@@ -13,7 +13,7 @@ export class TabsPage {
 
   tab1Root = HomePage;
   tab2Root = AboutPage;
-  tab3Root = ContactPage;
+  tabChime = ChimePage;
   tabInstall = InstallPage;
   tabAlarm = AlarmPage;
 

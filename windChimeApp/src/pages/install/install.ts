@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { NavController } from 'ionic-angular';
 import { Storage } from '@ionic/storage';
+import { ToastController } from 'ionic-angular';
 
 // https://github.com/don/BluetoothSerial
 import { BluetoothSerial } from '@ionic-native/bluetooth-serial';
@@ -46,7 +47,8 @@ export class InstallPage {
   constructor(public navCtrl: NavController, 
   			  private bluetooth: BluetoothSerial,
   			  private ble: BLE,
-  			  private storage: Storage) {
+  			  private storage: Storage,
+  			  private toastCtrl: ToastController) {
 	
 	this.isScanning = false;
 
@@ -83,6 +85,13 @@ export class InstallPage {
   	this.storage.set('bluetooth-id', 	device.id);
   	this.deviceid = device.id;
   	this.devicename = device.name;
+
+  	let toast = this.toastCtrl.create({
+      message: 'Selected the chime '+device.name,
+      duration: 3000,
+      position: 'top'
+    });
+    toast.present();
   }
 
   listDevices(){

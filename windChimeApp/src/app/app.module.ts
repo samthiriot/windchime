@@ -6,7 +6,7 @@ import { MyApp } from './app.component';
 
 import { InstallPage } from '../pages/install/install';
 import { AboutPage } from '../pages/about/about';
-import { ContactPage } from '../pages/contact/contact';
+import { ChimePage } from '../pages/chime/chime';
 import { AlarmPage } from '../pages/alarm/alarm';
 import { HomePage } from '../pages/home/home';
 import { TabsPage } from '../pages/tabs/tabs';
@@ -22,7 +22,7 @@ import { BluetoothSerial } from '@ionic-native/bluetooth-serial';
     InstallPage,
     AboutPage,
     AlarmPage,
-    ContactPage,
+    ChimePage,
     HomePage,
     TabsPage
   ],
@@ -36,7 +36,7 @@ import { BluetoothSerial } from '@ionic-native/bluetooth-serial';
     MyApp,
     InstallPage,
     AboutPage,
-    ContactPage,
+    ChimePage,
     AlarmPage,
     HomePage,
     TabsPage
