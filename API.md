@@ -74,8 +74,7 @@ Do a strong chime
 
 
 
-# settings 
-
+# settings
 ## datetime
 
 Get and set the current datetime of the Chimuino, that is the clock time.
