@@ -3,8 +3,39 @@ The Chuimuino is able to receive and emit data through bluetooth.
 
 Here are the messages which can be sent and received: 
 
+# global syntax
 
-# chime and ring now
+several basic messages can be exchanged throught bluetooth. 
+
+## actions
+action demands are in the form
+
+	> DO <ACTION>
+
+The Chuimuino acknowledges it understood the demand and applied it by answering
+
+	< DOING <ACTION> 
+
+## parameters
+Asking for the value of parameters (settings) and setting their value is done in the form:
+
+	> GET <SETTING>
+	< <SETTING> IS <VALUE>
+
+	> SET <SETTING> VALUE
+	< <SETTING> SET
+
+## others
+Other demands can be sent to the arduino. 
+For instance:
+
+	> PLEASE <DEMAND>
+	< OK <DEMAND>
+
+
+# actions
+
+## chime and ring now
 
 The Chimuino has a current **action** it is doing now. This is a state 
 which lasts for several minutes.
@@ -41,8 +72,9 @@ Do a strong chime
 	< DOING CHIME 
 
 
+# settings 
 
-# datetime
+## datetime
 
 Get and set the current datetime of the Chimuino, that is the clock time.
 The format of the date is TODO. 
@@ -53,7 +85,7 @@ The format of the date is TODO.
     > SET DATETIME TODO
     < DATETIME SET
 
-# alarms
+## alarms
 
 There are two alarms which can be activated in the Chuimino.
 These alarms mean the Chuimuino will enter alarm mode. 
@@ -69,14 +101,14 @@ These alarms mean the Chuimuino will enter alarm mode.
 
 same with "ALARM2"
 
-# sound level
+## sound level
 
 Gets the sound level measured by the Chuimuino. 
 This sound level is used for the Chuimuino to decide to act or not. 
 
 TODO
 
-# light level and threshold
+## light level and threshold
 
 Gets the light level measured by the Chimuino. 
 
