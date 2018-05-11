@@ -9,7 +9,7 @@ import { Storage } from '@ionic/storage';
 export class ChimePage {
 
   private _isChimeEnabled:boolean = true;
-  private _chimeLevel:integer = 50;
+  private _chimeLevel:number = 50;
 
   constructor(public navCtrl: NavController,
   			  private storage: Storage) {
@@ -29,12 +29,12 @@ export class ChimePage {
   	return this._isChimeEnabled;
   }
 
-  set chimeLevel(value:integer) {
+  set chimeLevel(value:number) {
   	this._chimeLevel = value;
   	this.storage.set('chime-level', value);
   }
 
-  get chimeLevel():integer{
+  get chimeLevel():number {
   	return this._chimeLevel;
   }
 

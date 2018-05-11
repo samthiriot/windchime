@@ -25,6 +25,12 @@ Asking for the value of parameters (settings) and setting their value is done in
 	> SET <SETTING> VALUE
 	< <SETTING> SET
 
+## state
+Asking for the value of a state or characteristic of the Chimuino.
+
+	> GET <SOMETHING>
+	< <SOMETHING> IS <VALUE>
+
 ## others
 Other demands can be sent to the arduino. 
 For instance:
@@ -72,6 +78,15 @@ Do a strong chime
 	> GET ACTION
 	< DOING CHIME 
 
+
+
+# information
+## version
+
+Returns the version of the firmware running the arduino.
+
+	> GET VERSION
+	< VERSION IS alpha_2018_05_10
 
 
 # settings

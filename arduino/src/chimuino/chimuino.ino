@@ -1,3 +1,8 @@
+// about bluetooth
+// docs
+// - https://medium.com/@yostane/using-the-at-09-ble-module-with-the-arduino-3bc7d5cb0ac2
+
+
 // to control the stepper engine 
 #include <Stepper.h>
 
@@ -5,6 +10,10 @@
 #include <Wire.h>
 #include "RTClib.h"
 
+// for bluetooth
+#include <SoftwareSerial.h>
+
+#define FIRMWARE_VERSION "alpha_2018_05_10"
 
 // config debug
 #define DEBUG_SERIAL true
@@ -21,6 +30,13 @@
 
 // config random init
 #define RANDOM_PIN A2
+
+// config bluetooth
+#define BLUETOOTH_RX 13
+#define BLUETOOTH_TX 12
+SoftwareSerial BTSerial(BLUETOOTH_RX, BLUETOOTH_TX);
+#define CR 13
+#define LR 10
 
 // config connection servo
 
@@ -137,6 +153,136 @@ void printPositions() {
 }
 */
 
+
+void bluetoothExecAT(String cmd) {
+
+  //BTSerial.write("AT+");
+   // delay(20);
+
+
+  BTSerial.print(cmd);
+    
+  delay(200);
+  BTSerial.listen();
+  delay(800);
+  
+  while (BTSerial.available()) {
+    // TODO change to a string accumulator
+    Serial.write(BTSerial.read());
+    //delay(10);
+  }
+  //delay(1000);
+}
+
+
+/**
+ * Reads and ignores any data
+ * pending from bluetooth.
+ */
+void bluetoothConsume() {
+  BTSerial.listen();
+  while (BTSerial.available()) {
+    // skip
+    BTSerial.read();
+  }
+}
+
+
+/**
+ * Executes an AT command, reads the 
+ * result and returns it as a String
+ */
+String bluetoothReadATResult(String cmd) {
+
+  // consume older things
+  bluetoothConsume();
+  
+  BTSerial.print(cmd);
+
+  // gives time for the bluetooth chip
+  // to process the demand 
+  delay(200);
+
+  BTSerial.listen();
+
+  char serialdata[80];
+  int count = 0;
+  
+  // read data until EOL
+
+  // skip before : 
+  char r = BTSerial.available() ? BTSerial.read() : 0;
+  while (BTSerial.available() && (r !=':') ) {
+    // skip
+    r = BTSerial.read();
+  }
+  
+  count = BTSerial.readBytesUntil(CR, serialdata, 80);
+
+  // remove additional null
+  String str = String(serialdata);
+  str.remove(str.length()-1);
+  
+  Serial.print("read:");
+  Serial.println(str);
+  
+  return str;
+}
+
+#define BLUETOOTH_LONGEST_COMMAND 50
+
+/**
+ * returns null if nothing, else
+ * a string if one was received.
+ */
+String bluetoothReadline() {
+  
+  BTSerial.listen();
+
+  char concatenated[BLUETOOTH_LONGEST_COMMAND];
+  int count = BTSerial.readBytesUntil(CR, concatenated, BLUETOOTH_LONGEST_COMMAND);
+  //BTSerial.flush();
+  // consume (burn) the available data
+  while(BTSerial.available() > 0) {
+    BTSerial.read();
+  }
+  
+  String str = String(concatenated);
+ 
+  return str; 
+}
+
+void setupBluetooth() {
+  
+  // configure pins
+  pinMode(BLUETOOTH_RX, INPUT);
+  pinMode(BLUETOOTH_TX, OUTPUT);
+  
+  // define the speed 
+  // TODO quicker ? 
+  BTSerial.begin(9600);  
+
+  // TODO if another chimuino already exists (scan !)
+  // then add a number ?
+  // set the name of the module, if not correct already
+  String bluetoothName = bluetoothReadATResult("AT+NAME?");
+  // why does that execute ? 
+  if (!bluetoothName.equals(String("CHIMUINO"))) {
+    //Serial.println("* defining bluetooth name");
+    // we have to change the name 
+    bluetoothExecAT("AT+NAMECHIMUINO");
+    //delay(1000);
+  } else {
+    Serial.print("* name is already ");
+    Serial.println(bluetoothName);
+  }
+
+  bluetoothExecAT("AT+ROLE0");
+  bluetoothExecAT("AT+UUID0xFFE0");
+  bluetoothExecAT("AT+CHAR0xFFE1");
+
+}
+
 void setup()
 {
 
@@ -162,6 +308,8 @@ void setup()
   pinMode(TOUCH_H_PIN, INPUT);
   digitalWrite(TOUCH_H_PIN, INPUT_PULLUP);
   // TODO pullup ?
+
+  setupBluetooth();
 
   // init random 
   int seed = analogRead(RANDOM_PIN);
@@ -266,7 +414,7 @@ void bruissement() {
     delay(100); 
     motor.step(-MUSIC_PULL_VLIGHT);
     delay(1000);
-      motorFreeWheel();
+    motorFreeWheel();
 
     // discoveredLevelForPosition(MUSIC_PULL_VLIGHT, readMaxSoundLevelAvgSec(5));
   }
@@ -494,8 +642,61 @@ void detectTouchHour() {
 
 }
 
+void bluetoothListenAndReact() {
+
+  // read data from bluetooth (if any)
+  Serial.println("reading bluetooth...");
+  String received = bluetoothReadline();
+  if (!received.length()) {
+    // no message; return
+    return;
+  }
+  Serial.print("received from bluetooth: ");
+  Serial.println(received);
+  if (received == "GET VERSION") {
+    BTSerial.write("VERSION IS ");
+    BTSerial.write(FIRMWARE_VERSION);
+    BTSerial.write("\n");
+  } else if (received == "DO CHIME") {
+    reveil();
+    BTSerial.write("DOING CHIME\n");
+  } else if (received.startsWith("SET DATETIME ")) {
+    Serial.println("received datetime");
+    // decode time 
+    uint32_t timestamp;
+    String str = received.substring(14);
+    char cc[str.length()];
+    str.toCharArray(cc, str.length());
+    int year, month, day;
+    int hour, minutes, seconds;
+    sscanf(cc, "%u-%u-%u %u:%u:%u", &year, &month, &day, &hour, &minutes, &seconds);
+    // TODO reject invalid time 
+    // store it into the RTC clock
+    rtc.adjust(DateTime(year, month, day, hour, minutes, seconds));
+    DateTime now = rtc.now();
+  Serial.print(now.year(), DEC);
+    Serial.print('/');
+    Serial.print(now.month(), DEC);
+    Serial.print('/');
+  Serial.print(now.day(), DEC);
+  Serial.print(' ');
+    Serial.print(now.hour(), DEC);
+    Serial.print(':');
+    Serial.print(now.minute(), DEC);
+    Serial.print(':');
+    Serial.print(now.second(), DEC);
+  Serial.println();
+    BTSerial.write("DATETIME SET\n");
+  }
+  
+}
 void loop() {
 
+  for (int i=0; i<50; i++) {
+    bluetoothListenAndReact();
+    delay(500);
+  }
+  
   current_mode = NULL;
 
   // EXTERNAL CONTEXT SENSORS: how is the world around ? 
