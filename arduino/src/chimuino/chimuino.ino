@@ -3,68 +3,315 @@
 // - https://medium.com/@yostane/using-the-at-09-ble-module-with-the-arduino-3bc7d5cb0ac2
 
 
-// to control the stepper engine 
-#include <Stepper.h>
 
-// for RTC time 
-#include <Wire.h>
-#include "RTClib.h"
+// +---------------------------------------------+
+// |      SKETCH SETTINGS                        |
+// |                                             |
+// +---------------------------------------------+
+    
+    // current version of the firmware.
+    // should be upgraded
+    #define FIRMWARE_VERSION "alpha_2018_05_10"
+    
+    // config debug
+    #define DEBUG_SERIAL true
 
-// for bluetooth
-#include <SoftwareSerial.h>
+// +---------------------------------------------+
+// |      STEPPER                                |
+// |          move the chime                     |
+// +---------------------------------------------+
+    
+    // engine config 
+    // .. number of steps
+    #define MOTOR_STEPS 2048 // in 4 steps mode
+    
+    // ... speed silencious
+    #define MOTOR_SPEED_SLOW 5
+    // ... speed quick but less silencious
+    #define MOTOR_SPEED_QUICK 10
+    // .. max speed never to go beyond
+    #define MOTOR_SPEED_MAX 15
+    
+    // how much to pull for every level ?
+    #define MUSIC_PULL_VLIGHT MOTOR_STEPS/11
+    #define MUSIC_PULL_LIGHT MOTOR_STEPS/10
+    #define MUSIC_PULL_STRONG MOTOR_STEPS/9
+    
+    #define STEPPER_PIN_1 8
+    #define STEPPER_PIN_2 9
+    #define STEPPER_PIN_3 10
+    #define STEPPER_PIN_4 11
+    
+    #include <Stepper.h>
+    Stepper motor(MOTOR_STEPS, STEPPER_PIN_1, STEPPER_PIN_3, STEPPER_PIN_2, STEPPER_PIN_4);
+    
+    /**
+     * Switch the stepper to free wheel: no noise, no energy consumption.
+     */
+    void motorFreeWheel() {
+      digitalWrite(STEPPER_PIN_1, LOW);
+      digitalWrite(STEPPER_PIN_2, LOW);
+      digitalWrite(STEPPER_PIN_3, LOW);
+      digitalWrite(STEPPER_PIN_4, LOW); 
+    }
+    
+    void setupStepper() {
+        pinMode(STEPPER_PIN_1, OUTPUT);
+        pinMode(STEPPER_PIN_2, OUTPUT);
+        pinMode(STEPPER_PIN_3, OUTPUT);
+        pinMode(STEPPER_PIN_4, OUTPUT);
+      
+      #ifdef DEBUG_SERIAL
+        Serial.println("init: going to position free");
+      #endif
+        motor.setSpeed(MOTOR_SPEED_SLOW);
+        motor.step(MUSIC_PULL_VLIGHT);
+        delay(100); 
+        motor.step(-MUSIC_PULL_VLIGHT);
+          
+        motorFreeWheel();                                                     // relax and don't consume energy
+    }
+              
+// +---------------------------------------------+
+// |      CLOCK                                  |
+// |          precise time and alarms            |
+// +---------------------------------------------+
+    #include <Wire.h>
+    
+    #include "RTClib.h"
+    RTC_DS3231 rtc;
 
-#define FIRMWARE_VERSION "alpha_2018_05_10"
+    bool alarmDisabled = false;                                           
+    int alarmTimeHour = 7;                                                    // the hour 
+    bool alarmFinished = false;                                               // true if we did the job of waking up the user
 
-// config debug
-#define DEBUG_SERIAL true
+    void setupClock() {
+      
+      // init RTC !
+      #ifdef DEBUG_SERIAL
+        Serial.println("init: RTC...");
+      #endif
+        if (! rtc.begin()) {
+      #ifdef DEBUG_SERIAL
+          Serial.println("Couldn't find RTC");
+      #endif
+         while (1);
+        }
+      #ifdef DEBUG_SERIAL
+        Serial.println("Found RTC :-)");
+      #endif
+    
+      if (rtc.lostPower()) {
+      #ifdef DEBUG_SERIAL
+        Serial.println("RTC is NOT running! Initializing with compilation time.");
+      #endif
+         rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));                    //  sets the RTC to the date & time this sketch was compiled
+      }
+      #ifdef DEBUG_SERIAL
+        Serial.println("init: RTC ok");
+      #endif
+    }
 
-// config photocell
-#define PHOTOCELL_PIN A0
-#define PHOTOCELL_NIGHT_THRESHOLD 550
+    void debugNow() {
+      Serial.print("Time is: ");
+      DateTime now = rtc.now();
+      Serial.print(now.year(),    DEC); Serial.print('-');
+      Serial.print(now.month(),   DEC); Serial.print('-');
+      Serial.print(now.day(),     DEC); Serial.print(' ');
+      Serial.print(now.hour(),    DEC); Serial.print(':');
+      Serial.print(now.minute(),  DEC); Serial.print(':');
+      Serial.println(now.second(), DEC);
+    }
+    
+    void debugAlarm1() {
+      Serial.print("Alarm:"); 
+      if (alarmDisabled) 
+        Serial.println("Disabled");
+      else { 
+        Serial.print(alarmTimeHour); Serial.println("h"); 
+      }
+      Serial.print("Alarm:"); Serial.println(alarmFinished?"Finished":"Active"); 
+    }
 
-// config sound detector
-#define SOUND_PIN A1
+// +---------------------------------------------+
+// |      BLUETOOTH                              |
+// |          for smartphone interaction         |
+// +---------------------------------------------+
+    
+    // pins
+    #define BLUETOOTH_RX 13
+    #define BLUETOOTH_TX 12
+    
+    #include <SoftwareSerial.h>
+    SoftwareSerial BTSerial(BLUETOOTH_RX, BLUETOOTH_TX);
+    
+    #define CR 13
+    #define LR 10
+    
+    #define BLUETOOTH_LONGEST_COMMAND 50                             // the longest command we have to read (buffer size)
+    
+    /**
+     * Executes an AT command
+     * and reports result on the serial port
+     */
+    void bluetoothExecAT(String cmd) {
+      BTSerial.print(cmd);
+      BTSerial.listen();
+      delay(800);
+      while (BTSerial.available()) {
+        // TODO change to a string accumulator
+        Serial.write(BTSerial.read());
+      }
+    }
+    
+    /**
+     * Reads and ignores any data
+     * pending from bluetooth.
+     */
+    void bluetoothConsume() {
+      BTSerial.listen();
+      while (BTSerial.available()) {
+        BTSerial.read();                                            // skip
+      }
+    }
+    
+    /**
+     * Executes an AT command, reads the 
+     * result and returns it as a String
+     */
+    String bluetoothReadATResult(String cmd) {
+    
+      bluetoothConsume();                                           // consume older things
+      BTSerial.print(cmd);                                          // send to the command to the chip
+      BTSerial.listen();
+      delay(200);                                                   // gives time for the bluetooth chip to process the demand
+    
+      char serialdata[80];
+      int count = 0;
+    
+      // skip before : 
+      char r = BTSerial.available() ? BTSerial.read() : 0;
+      while (BTSerial.available() && (r !=':') ) {
+        // skip
+        r = BTSerial.read();
+      }
+        
+      // read data until EOL
+      count = BTSerial.readBytesUntil(CR, serialdata, 80);
+    
+      // remove additional null
+      String str = String(serialdata);
+      str.remove(str.length()-1);
+      
+      Serial.print("read:"); Serial.println(str);                   // debug on serial
+      
+      return str;
+    }
+    
+    
+    /**
+     * Reads a line from the bluetooth serial.
+     * Returns null if nothing, else
+     * a string if one was received.
+     */
+    String bluetoothReadline() {
+      
+      BTSerial.listen();                                            // listen to bluetooth
+    
+      // TODO update for a loop
+      char concatenated[BLUETOOTH_LONGEST_COMMAND];
+      int count = BTSerial.readBytesUntil(CR, concatenated, BLUETOOTH_LONGEST_COMMAND);
+      //BTSerial.flush();
+      // consume (burn) the available data
+      while(BTSerial.available() > 0) {
+        BTSerial.read();
+      }
+      
+      String str = String(concatenated);
+     
+      return str; 
+    }
+    
+    /**
+     * Called at init only
+     */
+    void setupBluetooth() {
+      
+      pinMode(BLUETOOTH_RX, INPUT);                               // configure pins
+      pinMode(BLUETOOTH_TX, OUTPUT);
+      
+      BTSerial.begin(9600);                                       // serial communication speed
+    
+      BTSerial.listen();                                          // by default, listen to bluetooth serial
+        
+      String bluetoothName = bluetoothReadATResult("AT+NAME?");   // get the current name of the module
+      // TODO why does that execute ? 
+      if (bluetoothName != "CHIMUINO") {                          // change the name if not initialized properly
+        bluetoothExecAT("AT+NAMECHIMUINO");                       // TODO if another chimuino already exists (scan !) then add a number ?
+      } else {                            
+        // TODO remove it
+        Serial.print("* name is already ");
+        Serial.println(bluetoothName);
+      }
+    
+      bluetoothExecAT("AT+ROLE0");                                // define as a peripherical
+      bluetoothExecAT("AT+UUID0xFFE0");                           // define a service
+      bluetoothExecAT("AT+CHAR0xFFE1");                           // define a characteristic
+    
+    }
 
-// config touch (test)
-#define TOUCH_H_PIN A2
+// +---------------------------------------------+
+// |      SOUND DETECTOR                         |
+// |            sense the world                  |
+// +---------------------------------------------+
+    
+    // config sound detector
+    #define SOUND_PIN A1
+    
+    // what we know about sound
+    
+    int soundLevelMin = 0;                                                    // the lowest sound we ever measured
+    int soundLevelMax = 1024;                                                 // the higest ever heard
+    int soundBackgroundSilenceThreshold = 20;                                 // the silence / noise threshold
+    int soundLastQuiet = 0;                                                   // the last time it was quiet 
+    int soundLastNotQuiet = 0;                                                // the last time it was noisy
+    
+    void setupSoundSensor() {
+        pinMode(SOUND_PIN, INPUT); 
+        soundLastQuiet = soundLastNotQuiet  = 0;                              // let's say the last time it was quiet and noisy was far ago
+        soundLevelMin = soundLevelMax = analogRead(SOUND_PIN);                // init the sound levels known so far
+    }
 
-// config random init
-#define RANDOM_PIN A2
+// +---------------------------------------------+
+// |      LIGHT SENSOR                           |
+// |            simple but smart                 |
+// +---------------------------------------------+
+    
+    #define PHOTOCELL_PIN A0                                                  // port for the photovoltaic cell
+    #define PHOTOCELL_NIGHT_THRESHOLD 550                                     // TODO detect threshold
+   
+    bool wasDark = false;                                                     // true if was dark before
 
-// config bluetooth
-#define BLUETOOTH_RX 13
-#define BLUETOOTH_TX 12
-SoftwareSerial BTSerial(BLUETOOTH_RX, BLUETOOTH_TX);
-#define CR 13
-#define LR 10
+    void setupLightSensor() {
+        pinMode(PHOTOCELL_PIN, INPUT);
+    }
 
-// config connection servo
+// +---------------------------------------------+
+// |      RANDOM                                 |
+// |            alea yacta est                   |
+// +---------------------------------------------+
+    
+    #define RANDOM_PIN A2                                                     // refers to a pin unconnected supposed to catch white noise 
+    
+    void setupRandom() {
+        pinMode(RANDOM_PIN, INPUT);                                           // this pin is used to init the random network generator
+        int seed = analogRead(RANDOM_PIN);
+      #ifdef DEBUG_SERIAL
+        Serial.print("init: random seed is "); Serial.print(seed); Serial.println();
+      #endif
+        randomSeed(seed);
+    }
 
-// engine config 
-// .. number of steps
-#define MOTOR_STEPS 2048 // in 4 steps mode
-
-// ... speed silencious
-#define MOTOR_SPEED_SLOW 5
-// ... speed quick but less silencious
-#define MOTOR_SPEED_QUICK 10
-// .. max speed never to go beyond
-#define MOTOR_SPEED_MAX 15
-
-// how much to pull for every level ?
-#define MUSIC_PULL_VLIGHT MOTOR_STEPS/11
-#define MUSIC_PULL_LIGHT MOTOR_STEPS/10
-#define MUSIC_PULL_STRONG MOTOR_STEPS/9
-
-
-Stepper motor(MOTOR_STEPS, 8, 10, 9, 11);
-
- 
-#define MOVE_SLOW_DELAY_STEP 20
-#define MOVE_SLOW_INC_STEP 1
-
-#define MOVE_QUICK_DELAY_STEP 10
-#define MOVE_QUICK_INC_STEP 2
 
 enum mode {
   SILENCE,      // do not play sound
@@ -77,328 +324,29 @@ enum mode {
 
 mode current_mode = AMBIANCE;
 
-// our RTC module
-RTC_DS3231 rtc;
-
-// previous dark state
-bool wasDark = false;
-
-// what we know about sound
-// ... the lowest we ever measured
-int soundLevelMin = 0;  
-// ... and the higher
-int soundLevelMax = 1024;
-// ... the background sound level
-int soundBackgroundSilenceThreshold = 20;
-// ... last times if was quiet and noisy
-int soundLastQuiet = 0;
-int soundLastNotQuiet = 0;
-
-
-// alarm 
-bool alarmDisabled = false;
-int alarmTimeHour = 7;
-// ... true if we did the job of waking up the user
-bool alarmFinished = false;
-
-#define LEARNING_POSITIONS_COUNT  // first is lower than, last is higher than upper and lower values
-
-/*
-#define LEARNING_POSITIONS_COUNT MUSIC_PULL_STRONG-0+2 // first is lower than, last is higher than upper and lower values
-int position2level[LEARNING_POSITIONS_COUNT];
-
-int getIndexForPosition(int pos) {
-  int pos5 = pos/5;
-  if (pos5 < LEARNING_POSITIONS_MIN) {
-    return 0;
-  }
-  if (pos5 > LEARNING_POSITIONS_MAX+1) {
-    return LEARNING_POSITIONS_COUNT-1;
-  }
-  return pos5-LEARNING_POSITIONS_MIN;
-}
-void discoveredLevelForPosition(int pos, int lvl) {
-  // TODO
- // just replace the value
- if (position2level[getIndexForPosition(pos)] < 0) {
-  position2level[getIndexForPosition(pos)] = lvl;
- } else {
-  position2level[getIndexForPosition(pos)] = (position2level[getIndexForPosition(pos)]*3+lvl)/4;
- }
-
- printPositions();
-}
-
-void printPositions() {
-  for (int i=0; i<LEARNING_POSITIONS_COUNT; i++) {
-    // for position...
-    if (i == 0) {
-      //Serial.print("<"); Serial.print(LEARNING_POSITIONS_MIN*5+5);     
-    } else if (i == LEARNING_POSITIONS_COUNT-1) {
-      //Serial.print(">"); Serial.print(LEARNING_POSITIONS_MIN*5+(i-1)*5); 
-    } else {
-     // Serial.print(LEARNING_POSITIONS_MIN*5+i*5); 
-    } 
-    // we know level...
-    Serial.print(": level="); 
-    if (position2level[i] < 0) {
-      Serial.print("?"); 
-    } else {
-      Serial.print(position2level[i]); 
-    }
-    
-    Serial.println();
-  }
-  
-}
-*/
-
-
-void bluetoothExecAT(String cmd) {
-
-  //BTSerial.write("AT+");
-   // delay(20);
-
-
-  BTSerial.print(cmd);
-    
-  delay(200);
-  BTSerial.listen();
-  delay(800);
-  
-  while (BTSerial.available()) {
-    // TODO change to a string accumulator
-    Serial.write(BTSerial.read());
-    //delay(10);
-  }
-  //delay(1000);
-}
 
 
 /**
- * Reads and ignores any data
- * pending from bluetooth.
+ * Entry point, ran before anything else by the Arduino.
  */
-void bluetoothConsume() {
-  BTSerial.listen();
-  while (BTSerial.available()) {
-    // skip
-    BTSerial.read();
-  }
-}
-
-
-/**
- * Executes an AT command, reads the 
- * result and returns it as a String
- */
-String bluetoothReadATResult(String cmd) {
-
-  // consume older things
-  bluetoothConsume();
+void setup() {
   
-  BTSerial.print(cmd);
-
-  // gives time for the bluetooth chip
-  // to process the demand 
-  delay(200);
-
-  BTSerial.listen();
-
-  char serialdata[80];
-  int count = 0;
-  
-  // read data until EOL
-
-  // skip before : 
-  char r = BTSerial.available() ? BTSerial.read() : 0;
-  while (BTSerial.available() && (r !=':') ) {
-    // skip
-    r = BTSerial.read();
-  }
-  
-  count = BTSerial.readBytesUntil(CR, serialdata, 80);
-
-  // remove additional null
-  String str = String(serialdata);
-  str.remove(str.length()-1);
-  
-  Serial.print("read:");
-  Serial.println(str);
-  
-  return str;
-}
-
-#define BLUETOOTH_LONGEST_COMMAND 50
-
-/**
- * returns null if nothing, else
- * a string if one was received.
- */
-String bluetoothReadline() {
-  
-  BTSerial.listen();
-
-  char concatenated[BLUETOOTH_LONGEST_COMMAND];
-  int count = BTSerial.readBytesUntil(CR, concatenated, BLUETOOTH_LONGEST_COMMAND);
-  //BTSerial.flush();
-  // consume (burn) the available data
-  while(BTSerial.available() > 0) {
-    BTSerial.read();
-  }
-  
-  String str = String(concatenated);
- 
-  return str; 
-}
-
-void setupBluetooth() {
-  
-  // configure pins
-  pinMode(BLUETOOTH_RX, INPUT);
-  pinMode(BLUETOOTH_TX, OUTPUT);
-  
-  // define the speed 
-  // TODO quicker ? 
-  BTSerial.begin(9600);  
-
-  // TODO if another chimuino already exists (scan !)
-  // then add a number ?
-  // set the name of the module, if not correct already
-  String bluetoothName = bluetoothReadATResult("AT+NAME?");
-  // why does that execute ? 
-  if (!bluetoothName.equals(String("CHIMUINO"))) {
-    //Serial.println("* defining bluetooth name");
-    // we have to change the name 
-    bluetoothExecAT("AT+NAMECHIMUINO");
-    //delay(1000);
-  } else {
-    Serial.print("* name is already ");
-    Serial.println(bluetoothName);
-  }
-
-  bluetoothExecAT("AT+ROLE0");
-  bluetoothExecAT("AT+UUID0xFFE0");
-  bluetoothExecAT("AT+CHAR0xFFE1");
-
-}
-
-void setup()
-{
-
 #ifdef DEBUG_SERIAL
   Serial.begin(9600); // 57600
   Serial.println("init: beginning !");
 #endif
 
-  // config pins
-  // ... photocell pins
-  pinMode(PHOTOCELL_PIN, INPUT);
-  // ... sound detector
-  pinMode(SOUND_PIN, INPUT);
-  // ... morot
-  pinMode(8, OUTPUT);
-  pinMode(10, OUTPUT);
-  pinMode(9, OUTPUT);
-  pinMode(11, OUTPUT);
-  
-  // .. random pin
-  pinMode(RANDOM_PIN, INPUT);
-  // ... touch
-  pinMode(TOUCH_H_PIN, INPUT);
-  digitalWrite(TOUCH_H_PIN, INPUT_PULLUP);
-  // TODO pullup ?
-
+  setupLightSensor();
+  setupSoundSensor();
+  setupRandom();
+  setupStepper();
   setupBluetooth();
-
-  // init random 
-  int seed = analogRead(RANDOM_PIN);
-  #ifdef DEBUG_SERIAL
-  Serial.print("init: random seed is "); Serial.print(seed); Serial.println();
-  #endif
-  randomSeed(seed);
-
-
-  // init what we know
-  // ... we don't know the level of sound for various positions
-  // TODO for (int i=0; i<LEARNING_POSITIONS_COUNT; i++) { position2level[i] = -1; }
-
-  
-  // ... let's say the last time it was quiet and noisy was far ago
-  soundLastQuiet = soundLastNotQuiet  = 0;
-  
-// TODO debug
-//readMaxSoundLevelAvgSec(60*5);
-
-// init engine
-  
-  #ifdef DEBUG_SERIAL
-    Serial.println("init: going to position free");
-  #endif
-
-  motor.setSpeed(MOTOR_SPEED_SLOW);
-  motor.step(MUSIC_PULL_VLIGHT);
-  delay(100); 
-  motor.step(-MUSIC_PULL_VLIGHT);
-  
-  #ifdef DEBUG_SERIAL
-    Serial.println("init: at position free");
-  #endif
-  motorFreeWheel();
-
-  // init RTC !
-  #ifdef DEBUG_SERIAL
-  Serial.println("init: RTC...");
-  #endif
-  if (! rtc.begin()) {
-    #ifdef DEBUG_SERIAL
-    Serial.println("Couldn't find RTC");
-    #endif
-    while (1);
-  }
-
-    #ifdef DEBUG_SERIAL
-    Serial.println("Found RTC !");
-    #endif
-
-
-  if (rtc.lostPower()) {
-    #ifdef DEBUG_SERIAL
-    Serial.println("RTC is NOT running! Initializing with compilation time.");
-    #endif
-    
-    // following line sets the RTC to the date & time this sketch was compiled
-     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-     // This line sets the RTC with an explicit date & time, for example to set
-    // January 21, 2014 at 3am you would call:
-    // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
-  }
-  #ifdef DEBUG_SERIAL
-  Serial.println("init: RTC ok");
-  #endif
-
- // init sound
- soundLevelMin = soundLevelMax = analogRead(SOUND_PIN);
-
-//delay(1000);
-
-//calibrateServoWithSound();
-
-//printPositions();
-
+  setupClock();
 
 #ifdef DEBUG_SERIAL
   Serial.println("init: end.");
 #endif
 
-}
-
-void motorFreeWheel() {
-  digitalWrite(8, LOW);
-  digitalWrite(9, LOW);
-  digitalWrite(10, LOW);
-  digitalWrite(11, LOW);
-  
 }
 
 void bruissement() {
@@ -596,104 +544,95 @@ void calibrateServoWithSound() {
 
 }
 
-void detectTouchHour() {
 
-  int touched = analogRead(TOUCH_H_PIN);
-  Serial.print("touched: "); Serial.print(touched); Serial.println();
-
-  bool alarmDisabledNew = (touched > 1018);
-  int alarmHour = -1;
-  if (alarmDisabledNew){
-    if (!alarmDisabled) {
-      alarmDisabled = alarmDisabledNew;
-      Serial.print("Alarm is now disabled"); Serial.println();
-      alarmFinished = false;
-    }
-    return;
-  }
-  
-  // read which hour
-  if (touched > 1000) {
-    alarmHour = 1;
-  } else if (touched > 870) {
-    alarmHour = 4;
-  } else if (touched > 830) {
-    alarmHour = 5;
-  } else if (touched > 780) {
-    alarmHour = 6;
-  } else if (touched > 715) {
-    alarmHour = 7;
-  } else if (touched > 685) {
-    alarmHour = 8;
-  } else if (touched > 520) {
-    alarmHour = 11;
-  } else if (touched > 450) {
-    alarmHour = 14;
-  } else {
-    alarmHour = 23;
-  }
-  if (alarmTimeHour != alarmHour) {
-    alarmTimeHour = alarmHour;
-    alarmFinished = false;
-    alarmDisabled = false;
-  
-  }
-  Serial.print("Alarm is set to "); Serial.print(alarmHour); Serial.print("h 30"); Serial.println();
-
+void bluetoothReactGetVersion() {
+    BTSerial.print("VERSION IS ");
+    BTSerial.println(FIRMWARE_VERSION);
 }
 
-void bluetoothListenAndReact() {
-
-  // read data from bluetooth (if any)
-  Serial.println("reading bluetooth...");
-  String received = bluetoothReadline();
-  if (!received.length()) {
-    // no message; return
-    return;
-  }
-  Serial.print("received from bluetooth: ");
-  Serial.println(received);
-  if (received == "GET VERSION") {
-    BTSerial.write("VERSION IS ");
-    BTSerial.write(FIRMWARE_VERSION);
-    BTSerial.write("\n");
-  } else if (received == "DO CHIME") {
-    reveil();
-    BTSerial.write("DOING CHIME\n");
-  } else if (received.startsWith("SET DATETIME ")) {
-    Serial.println("received datetime");
-    // decode time 
-    String str = received.substring(14);
-    char cc[str.length()+1];
-    str.toCharArray(cc, str.length()+1);
-    int year, month, day;
-    int hour, minutes, seconds;
-    sscanf(cc, "%u-%u-%u %u:%u:%u", &year, &month, &day, &hour, &minutes, &seconds);
-    // TODO reject invalid time 
-    // store it into the RTC clock
-    rtc.adjust(DateTime(year, month, day, hour, minutes, seconds));
+void bluetoothReactGetDatetime() {
+    BTSerial.print("DATETIME IS ");
     DateTime now = rtc.now();
-    BTSerial.write("DATETIME SET\n");
-  } else if (received.startsWith("SET ALARM1 ")) {
-    String str = received.substring(11);
-    Serial.print("received alarm");
-    Serial.println(str);
+    BTSerial.print(now.year(),    DEC); BTSerial.print('-');
+    BTSerial.print(now.month(),   DEC); BTSerial.print('-');
+    BTSerial.print(now.day(),     DEC); BTSerial.print(' ');
+    BTSerial.print(now.hour(),    DEC); BTSerial.print(':');
+    BTSerial.print(now.minute(),  DEC); BTSerial.print(':');
+    BTSerial.println(now.second(), DEC);
+}
+
+void bluetoothReactGetAlarm1() {
+    BTSerial.print("ALARM1 IS ");
+    BTSerial.print(alarmTimeHour,     DEC); BTSerial.print(':');
+    BTSerial.print(30,                DEC); BTSerial.print(' ');        // TODO !
+    BTSerial.println(!alarmDisabled,  DEC); 
+}
+
+void bluetoothReactDoChime() {
+    reveil();
+    BTSerial.println("DOING CHIME");                                // acknowledge
+}
+
+void bluetoothReactSetDatetime(String str) {
     
-    char cc[str.length()+1];
+    char cc[str.length()+1];                                        // convert to char*
     str.toCharArray(cc, str.length()+1);
-    int hour, minutes, enabled;
-    sscanf(cc, "%u:%u %u", &hour, &minutes, &enabled);
-    alarmTimeHour = hour;
+    int year, month, day, hour, minutes, seconds;
+    sscanf(cc,                                                      // decode received datetime
+           "%u-%u-%u %u:%u:%u", 
+           &year, &month, &day, &hour, &minutes, &seconds);    
+           
+    // TODO reject invalid time 
+    
+    rtc.adjust(DateTime(year, month, day, hour, minutes, seconds)); // store the novel datetime into the RTC clock
+    
+    BTSerial.write("DATETIME SET\n");                               // acknowledge
+}
+void bluetoothReactSetAlarm1(String str) {
+
+    Serial.print("received alarm"); Serial.println(str);
+    
+    char cc[str.length()+1];                                        // convert to char*
+    str.toCharArray(cc, str.length()+1);
+    int hour, minutes, enabled;                                     // decode alarm
+    sscanf(cc, "%u:%u %u", &hour, &minutes, &enabled);                
+    
+    alarmTimeHour = hour;                                           // store novel state
     // TODO minutes !
     minutes = 30;
     alarmDisabled = (enabled == 0);
     
-      Serial.print("Alarm:"); 
-      if (alarmDisabled) Serial.println("Disabled");
-      else { Serial.print(alarmTimeHour); Serial.println("h"); }
-  }
-  
+    Serial.print("Alarm:"); 
+    if (alarmDisabled) Serial.println("Disabled");
+    else { Serial.print(alarmTimeHour); Serial.println("h"); }
 }
+
+/**
+ * Listens to bluetooth, and reacts to messages 
+ * when a complete message is available.
+ */
+void bluetoothListenAndReact() {
+
+  Serial.println("reading bluetooth...");                           
+  String received = bluetoothReadline();                            // read data from bluetooth (if any)
+  if (!received.length()) { return; }                               // no message; return
+    
+  Serial.print("received from bluetooth: ");
+  Serial.println(received);
+  
+  if (received == "GET VERSION")          { bluetoothReactGetVersion();     }
+  else if (received == "GET DATETIME")    { bluetoothReactGetDatetime();    }
+  else if (received == "GET ALARM1")      { bluetoothReactGetAlarm1();      }
+
+  else if (received == "DO CHIME")        { bluetoothReactDoChime();    }
+  
+
+  else if (received.startsWith("SET DATETIME "))  { bluetoothReactSetDatetime(received.substring(14)); }
+  else if (received.startsWith("SET ALARM1 "))    { bluetoothReactSetAlarm1(received.substring(11)); }
+    
+}
+
+
 void loop() {
 
   //for (int i=0; i<50; i++) {
@@ -726,19 +665,8 @@ void loop() {
 
 
   // what time is it ? 
-   DateTime now = rtc.now();
-  Serial.print(now.year(), DEC);
-    Serial.print('/');
-    Serial.print(now.month(), DEC);
-    Serial.print('/');
-  Serial.print(now.day(), DEC);
-  Serial.print(' ');
-    Serial.print(now.hour(), DEC);
-    Serial.print(':');
-    Serial.print(now.minute(), DEC);
-    Serial.print(':');
-    Serial.print(now.second(), DEC);
-  Serial.println();
+  DateTime now = rtc.now();
+  debugNow();
   
   // is there sound around? which frequencies? 
   int sndAvg = readMaxSoundLevelAvgSec(1);
@@ -763,8 +691,6 @@ void loop() {
 
   // EXTERNAL USER INPUTS: what does he want? 
   
-  // what is the programmed alarm clock, if any?
-  // TODO detectTouchHour();
 
   // should we put some ambiance? 
 
@@ -777,11 +703,7 @@ void loop() {
   // what time is it? 
 
   // do we have an alarm clock?
-  Serial.print("Alarm:"); 
-  if (alarmDisabled) Serial.println("Disabled");
-  else { Serial.print(alarmTimeHour); Serial.println("h"); }
-  //Serial.println(alarmDisabled ?"Disabled":"Enabled"); 
-  Serial.print("Alarm:"); Serial.println(alarmFinished?"Finished":"Active"); 
+  debugAlarm1();
   if (!alarmDisabled and !alarmFinished) {
     
     // we have something to do later ! 
@@ -842,8 +764,6 @@ void loop() {
     }
   }
   
-  //current_mode = REVEIL;
-
   // MEMORIZE THE WORLD
   wasDark = isDark;
   
