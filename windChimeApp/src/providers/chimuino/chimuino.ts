@@ -132,6 +132,9 @@ export class ChimuinoProvider {
 	this.sendMessage("SET DATETIME "+now.getFullYear()+"-"+now.getMonth()+"-"+now.getDate()+" "+now.getHours()+":"+now.getMinutes()+":"+now.getSeconds());
   }
 
+  setAlarm1(hour:integer, minutes:integer, enabled:boolean) {
+  	this.sendMessage("SET ALARM1 "+hour+":"+minutes+" "+(enabled?"1":"0"));
+  }
 
   /*
 

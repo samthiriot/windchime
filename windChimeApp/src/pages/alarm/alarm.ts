@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { NavController } from 'ionic-angular';
 import { Storage } from '@ionic/storage';
+import { ChimuinoProvider } from '../../providers/chimuino/chimuino';
 
 @Component({
   selector: 'page-alarm',
@@ -8,13 +9,14 @@ import { Storage } from '@ionic/storage';
 })
 export class AlarmPage {
 
-  _alarm1hour:string;
+  _alarm1hour:string = "07:30";
   _alarm1enabled:boolean = false;
-  _alarm2hour:string;
+  _alarm2hour:string = "09:30";
   _alarm2enabled:boolean = false;
 
   constructor(public navCtrl: NavController,
-  			  private storage: Storage) {
+  			  private storage: Storage,
+			  private chimuino: ChimuinoProvider) {
 
   	this.storage.get('alarm-1-hour').then((val) => { this._alarm1hour = val; } );
 	this.storage.get('alarm-1-enabled').then((val) => { this._alarm1enabled = val; } );
@@ -23,15 +25,20 @@ export class AlarmPage {
 
   }
 
-
+  updateChimuinoAlarm1() {
+  	var tokens = this._alarm1hour.split(":");
+  	this.chimuino.setAlarm1(parseInt(tokens[0]), parseInt(tokens[1]), this._alarm1enabled);
+  }
 
   set alarm1enabled(value:boolean) {
   	this._alarm1enabled = value;
   	this.storage.set('alarm-1-enabled', value);
+  	this.updateChimuinoAlarm1();
   }
   set alarm1hour(value:string) {
   	this._alarm1hour = value;
   	this.storage.set('alarm-1-hour', value);
+  	this.updateChimuinoAlarm1();
   }
   set alarm2enabled(value:boolean) {
   	this._alarm2enabled = value;

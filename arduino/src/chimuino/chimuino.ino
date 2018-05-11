@@ -663,10 +663,9 @@ void bluetoothListenAndReact() {
   } else if (received.startsWith("SET DATETIME ")) {
     Serial.println("received datetime");
     // decode time 
-    uint32_t timestamp;
     String str = received.substring(14);
-    char cc[str.length()];
-    str.toCharArray(cc, str.length());
+    char cc[str.length()+1];
+    str.toCharArray(cc, str.length()+1);
     int year, month, day;
     int hour, minutes, seconds;
     sscanf(cc, "%u-%u-%u %u:%u:%u", &year, &month, &day, &hour, &minutes, &seconds);
@@ -674,28 +673,33 @@ void bluetoothListenAndReact() {
     // store it into the RTC clock
     rtc.adjust(DateTime(year, month, day, hour, minutes, seconds));
     DateTime now = rtc.now();
-  Serial.print(now.year(), DEC);
-    Serial.print('/');
-    Serial.print(now.month(), DEC);
-    Serial.print('/');
-  Serial.print(now.day(), DEC);
-  Serial.print(' ');
-    Serial.print(now.hour(), DEC);
-    Serial.print(':');
-    Serial.print(now.minute(), DEC);
-    Serial.print(':');
-    Serial.print(now.second(), DEC);
-  Serial.println();
     BTSerial.write("DATETIME SET\n");
+  } else if (received.startsWith("SET ALARM1 ")) {
+    String str = received.substring(11);
+    Serial.print("received alarm");
+    Serial.println(str);
+    
+    char cc[str.length()+1];
+    str.toCharArray(cc, str.length()+1);
+    int hour, minutes, enabled;
+    sscanf(cc, "%u:%u %u", &hour, &minutes, &enabled);
+    alarmTimeHour = hour;
+    // TODO minutes !
+    minutes = 30;
+    alarmDisabled = (enabled == 0);
+    
+      Serial.print("Alarm:"); 
+      if (alarmDisabled) Serial.println("Disabled");
+      else { Serial.print(alarmTimeHour); Serial.println("h"); }
   }
   
 }
 void loop() {
 
-  for (int i=0; i<50; i++) {
+  //for (int i=0; i<50; i++) {
     bluetoothListenAndReact();
-    delay(500);
-  }
+  //  delay(500);
+  //}
   
   current_mode = NULL;
 
