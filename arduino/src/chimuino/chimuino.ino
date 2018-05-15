@@ -13,8 +13,7 @@
     // should be upgraded
     #define FIRMWARE_VERSION "alpha_2018_05_10"
     
-    // config debug
-    #define DEBUG_SERIAL true
+    #define DEBUG_SERIAL true                                         // config debug
 
 // +---------------------------------------------+
 // |      STEPPER                                |
@@ -22,15 +21,11 @@
 // +---------------------------------------------+
     
     // engine config 
-    // .. number of steps
-    #define MOTOR_STEPS 2048 // in 4 steps mode
+    #define MOTOR_STEPS 2048                                          // in 4 steps mode
     
-    // ... speed silencious
-    #define MOTOR_SPEED_SLOW 5
-    // ... speed quick but less silencious
-    #define MOTOR_SPEED_QUICK 10
-    // .. max speed never to go beyond
-    #define MOTOR_SPEED_MAX 15
+    #define MOTOR_SPEED_SLOW 5                                        // speed silencious
+    #define MOTOR_SPEED_QUICK 10                                      // speed quick but less silencious
+    #define MOTOR_SPEED_MAX 15                                        // max speed never to go beyond
     
     // how much to pull for every level ?
     #define MUSIC_PULL_VLIGHT MOTOR_STEPS/11
