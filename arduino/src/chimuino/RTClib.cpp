@@ -504,3 +504,8 @@ void RTC_DS3231::writeSqwPinMode(Ds3231SqwPinMode mode) {
 
   //Serial.println( read_i2c_register(DS3231_ADDRESS, DS3231_CONTROL), HEX);
 }
+
+
+
+
+
