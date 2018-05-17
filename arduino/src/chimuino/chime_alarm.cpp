@@ -26,6 +26,7 @@ BluetoothListenerAnswer ChimeAlarm::processBluetoothGet(char* str, SoftwareSeria
     
     *BTSerial << name << " IS " 
               << start_hour << ":" << start_minutes << " " 
+              << durationSoft << ' ' << durationStrong << ' '
               << (enabled ? '1':'0') << ' ' 
               << (sunday ? '1':'0') << (monday ? '1':'0') << (tuesday ? '1':'0') << (wednesday ? '1':'0') << (thursday ? '1':'0') << (friday ? '1':'0') << (saterday ? '1':'0')
               << endl;
@@ -49,22 +50,24 @@ BluetoothListenerAnswer ChimeAlarm::processBluetoothSet(char* str, SoftwareSeria
           // skip the name and a space
           str + name_length + 1, 
           // expected format 
-          "%u:%u %c %c%c%c%c%c%c%c", 
+          "%u:%u %u %u %c %c%c%c%c%c%c%c", 
           // store directly in our variables
           &start_hour, &start_minutes, 
+          &durationSoft, &durationStrong,
           &cEnabled,
           &cSunday, &cMonday, &cTuesday, &cWednesday, &cThursday, &cFriday, &cSaterday
           );                
 
     // decode chars
-    enabled = (cEnabled == '1');
-    sunday = (cSunday == '1');
-    monday = (cMonday == '1');
-    tuesday = (cTuesday == '1');
+    enabled =   (cEnabled == '1');
+    
+    sunday =    (cSunday == '1');
+    monday =    (cMonday == '1');
+    tuesday =   (cTuesday == '1');
     wednesday = (cWednesday == '1');
-    thursday = (cThursday == '1');
-    friday = (cFriday == '1');
-    saterday = (cSaterday == '1');
+    thursday =  (cThursday == '1');
+    friday =    (cFriday == '1');
+    saterday =  (cSaterday == '1');
 
     *BTSerial << name << " SET" << endl;
     
