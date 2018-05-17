@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 
+
 LowPassFilterSensor::LowPassFilterSensor(float _ETA, char _pin, const unsigned int _period) {
   pin = _pin;
   pinMode(_pin, INPUT); 

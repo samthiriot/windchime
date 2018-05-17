@@ -16,21 +16,26 @@
 
 #include "chime_bluetooth.h"
 
+#include <Arduino.h>
+
+
 class ChimeLightSensor: public BluetoothCommandListener {
   
   private:
   
     // hardware config
-    char pin;
+    byte pin;
 
     // 
     LowPassFilterSensorWithMinMax sensor;                                                           // the sensor plugged on the pin
 
     unsigned short darkThreshold = PHOTOCELL_NIGHT_THRESHOLD;          // the default threshold
     
+    byte factorThreshold = 50;                // the quiet / noisy threshold in % will be defined as min+(max-min)*factor; so a factor of 0 will always lead to noisy, a factor of 1 will alwats lead to quiet
+
   public:
     
-    ChimeLightSensor(const char pin);
+    ChimeLightSensor(const byte pin);
     
     void setup();
     

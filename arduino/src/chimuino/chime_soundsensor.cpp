@@ -15,17 +15,35 @@ ChimeSoundSensor::ChimeSoundSensor(const char _pin):
   // save params
   pin = _pin;
 
-  
 }
 
 void ChimeSoundSensor::perceive() {
-  sensor.sense();         // update the measure of sound
+  
+  if (sensor.sense()) {         // update the measure of sound  
+    
+    // the sensor was updated
+
+    // ... update the threshold!
+    quietThreshold = sensor.envelopeMin() + (float(factorThreshold)/100.) * (sensor.envelopeMax() - sensor.envelopeMin());
+  
+    #ifdef DEBUG
+    debugSerial();
+    #endif
+  }
   
 }
 
 void ChimeSoundSensor::debugSerial() {
-  DEBUG_PRINT(F("SOUND LEVEL: ")); DEBUG_PRINT(sensor.value()); 
-  DEBUG_PRINTLN(isQuiet() ? F("(quiet)"):F("(noisy)"));
+  
+  #ifdef DEBUG
+  Serial << F("SOUND LEVEL: ") << _DEC(sensor.value()) << ' ' 
+         << ( isQuiet() ? F("(quiet)"):F("(noisy)") ) << ' '
+         << _DEC(factorThreshold) << '>'
+         << _DEC(quietThreshold) << ' '
+         << '[' << _DEC(sensor.envelopeMin()) << ':' << _DEC(sensor.envelopeMax()) << ']'
+         << endl;
+  #endif
+ 
 }
 
 void ChimeSoundSensor::setup() {
@@ -65,6 +83,7 @@ BluetoothListenerAnswer ChimeSoundSensor::processBluetoothGet(char* str, Softwar
   if (strncmp_P(str, PSTR("SOUNDTHRESHOLD"), 14) == 0) {
  
     *BTSerial << F("SOUNDTHRESHOLD IS ")
+              << _DEC(factorThreshold) << ' '
               << _DEC(quietThreshold) 
               << F(" [") << _DEC(sensor.envelopeMin()) << ':' << _DEC(sensor.envelopeMax()) << ']'
               << endl;
@@ -78,7 +97,27 @@ BluetoothListenerAnswer ChimeSoundSensor::processBluetoothGet(char* str, Softwar
 
 
 BluetoothListenerAnswer ChimeSoundSensor::processBluetoothSet(char* str, SoftwareSerial* BTSerial) {
-  // TODO threshold?
+ 
+  if (strncmp_P(str, PSTR("SOUNDTHRESHOLD "), 15) == 0) {
+
+    DEBUG_PRINT(F("received sound threshold: ")); DEBUG_PRINTLN(str);
+
+    sscanf(
+          str + 15,           // skip the command
+          "%u",               // expected format 
+          &factorThreshold    // store directly in our variables
+          );                
+
+    if (factorThreshold < 0) { factorThreshold = 0; }
+    else if (factorThreshold > 100) { factorThreshold = 100; }
+    
+    *BTSerial << F("SOUNDTHRESHOLD SET") << endl;
+   
+    debugSerial();
+
+    return SUCCESS;
+  }
+  
   return NOT_CONCERNED;
 }
 

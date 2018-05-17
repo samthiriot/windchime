@@ -12,6 +12,8 @@
 #include "sensors_filtering.h"
 #include "chime_bluetooth.h"
 
+#include <Arduino.h>
+
 class ChimeSoundSensor: public BluetoothCommandListener {
   
   private:
@@ -29,6 +31,8 @@ class ChimeSoundSensor: public BluetoothCommandListener {
     unsigned short soundLastQuiet = 0;                                                   // the last time it was quiet 
     unsigned short soundLastNotQuiet = 0;                                                // the last time it was noisy
 
+    byte factorThreshold = 50;                // the quiet / noisy threshold will be defined as min+(max-min)*factor; so a factor of 0 will always lead to noisy, a factor of 1 will alwats lead to quiet
+    
     // measures the current level of sound
     unsigned short measureSoundLevel();
     

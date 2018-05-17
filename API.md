@@ -129,12 +129,18 @@ This sound level is used for the Chuimuino to decide to act or not.
 TODO
 
 level is either NOISY or QUIET
+the sound threshold is a value between 0 and 100. 
+
 
 	> GET SOUNDLEVEL
 	< SOUNDLEVEL IS 110 NOISY
 
 	> GET SOUNDTHRESHOLD
-	< SOUNDTHRESHOLD IS 110
+	< SOUNDTHRESHOLD IS 50 110 [50:165]
+
+	> SET SOUNDTHRESHOLD 75
+	< SOUNDTHRESHOLD SET
+
 
 ## light level and threshold
 
@@ -145,20 +151,9 @@ Detected status is either DARK or LIT
 	> GET LIGHTLEVEL
 	< LIGHTLEVEL IS 72 LIT
 
-	> GET LIGHTLEVELS
-	< LIGHTLEVELS IS [72,70,110,75,100,92] 
-
 	> GET LIGHTTHRESHOLD
 	< LIGHTTHRESHOLD IS 80
 
 	> SET LIGHTTHRESHOLD 72
 	< LIGHTTHRESHOLD IS 72
-
-Setting the light threshold to AUTO will let the Chuimuino define the light threshold automatically.
-
-	> SET LIGHTTHRESHOLD AUTO
-	< LIGHTTHRESHOLD IS AUTO 72
-
-	> GET LIGHTTHRESHOLD 
-	< LIGHTTHRESHOLD IS AUTO 80
 
