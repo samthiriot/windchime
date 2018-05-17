@@ -42,7 +42,7 @@ bool ChimeLightSensor::isDark() {
 
 BluetoothListenerAnswer ChimeLightSensor::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
 
-  if (strncmp(str, "LIGHTLEVEL", 10) == 0) {
+  if (strncmp_P(str, PSTR("LIGHTLEVEL"), 10) == 0) {
     
     *BTSerial << F("LIGHTLEVEL IS ") 
               << _DEC(getLightLevel()) << ' ' 
@@ -52,7 +52,7 @@ BluetoothListenerAnswer ChimeLightSensor::processBluetoothGet(char* str, Softwar
     return SUCCESS;
   } 
 
-  if (strncmp(str, "LIGHTTHRESHOLD", 14) == 0) {
+  if (strncmp_P(str, PSTR("LIGHTTHRESHOLD"), 14) == 0) {
     
     *BTSerial << F("LIGHTTHRESHOLD IS ")
               << _DEC(darkThreshold) 

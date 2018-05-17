@@ -49,7 +49,7 @@ bool ChimeSoundSensor::isQuiet() {
 
 BluetoothListenerAnswer ChimeSoundSensor::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
 
-  if (strncmp(str, "SOUNDLEVEL", 10) == 0) {
+  if (strncmp_P(str, PSTR("SOUNDLEVEL"), 10) == 0) {
     
     *BTSerial << F("SOUNDLEVEL IS ") 
               << _DEC(getSoundLevel()) << ' ' 
@@ -59,8 +59,8 @@ BluetoothListenerAnswer ChimeSoundSensor::processBluetoothGet(char* str, Softwar
     return SUCCESS;
   } 
 
-  if (strncmp(str, "SOUNDTHRESHOLD", 14) == 0) {
-    
+  if (strncmp_P(str, PSTR("SOUNDTHRESHOLD"), 14) == 0) {
+ 
     *BTSerial << F("SOUNDTHRESHOLD IS ")
               << _DEC(quietThreshold) 
               << endl;

@@ -13,11 +13,12 @@ ChimeAlarm::ChimeAlarm(const char* _name) {
 }
 
 void ChimeAlarm::debugSerial() {
-  DEBUG_PRINT("Alarm "); 
-  DEBUG_PRINT(name);
-  DEBUG_PRINT(": ");
-  DEBUG_PRINT(start_hour); DEBUG_PRINT(":"); DEBUG_PRINT(start_minutes); DEBUG_PRINT(" ");
-  DEBUG_PRINTLN(enabled ? "enabled" : "disabled");
+  #ifdef DEBUG
+  Serial << F("Alarm ") << name << F(": ") 
+         << _DEC(start_hour) << ':' << _DEC(start_minutes) << ' ' 
+         << (enabled ? F("enabled") : F("disabled")) 
+         << endl;
+  #endif 
 }
 
 char bool2char(bool b) {
@@ -50,7 +51,7 @@ BluetoothListenerAnswer ChimeAlarm::processBluetoothSet(char* str, SoftwareSeria
   
   if (strncmp(str, name, name_length) == 0) {
 
-    DEBUG_PRINT("received alarm"); DEBUG_PRINTLN(str);
+    DEBUG_PRINT(F("received alarm")); DEBUG_PRINTLN(str);
 
     char cEnabled;
     char cSunday, cMonday, cTuesday, cWednesday, cThursday, cFriday, cSaterday;

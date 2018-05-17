@@ -35,9 +35,8 @@ time_t compileTime()
 void ChimeClock::setup() {
   
   // init RTC !
-  DEBUG_PRINTLN("init: RTC...");
-
-
+  DEBUG_PRINTLN(F("init: RTC..."));
+  
   // tells the TimeLib library that time is provided by our RTC chip
   setSyncProvider(RTC.get);
   setSyncInterval(1);         // only one second for resync
@@ -65,7 +64,7 @@ void ChimeClock::debugSerial() {
 
   #ifdef DEBUG
   time_t now = RTC.get();
-    Serial << "Time is: " 
+    Serial << F("Time is: ")
            << _DEC(year(now))  << '-' << _DEC(month(now)) << '-' << _DEC(year(now)) << ' '
            << _DEC(hour(now)) << ':' << _DEC(minute(now)) << ':' << _DEC(second(now)) 
            << endl;
@@ -79,10 +78,10 @@ float ChimeClock::getTemperature() {
 
 BluetoothListenerAnswer ChimeClock::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
   
-  if (strncmp(str, "DATETIME", 8) == 0) {
+  if (strncmp_P(str, PSTR("DATETIME"), 8) == 0) {
 
     time_t now = RTC.get();
-    *BTSerial << "DATETIME IS " 
+    *BTSerial << F("DATETIME IS ") 
               << _DEC(year(now))  << '-' << _DEC(month(now)) << '-' << _DEC(year(now)) << ' '
               << _DEC(hour(now)) << ':' << _DEC(minute(now)) << ':' << _DEC(second(now)) 
               << endl;
@@ -90,7 +89,7 @@ BluetoothListenerAnswer ChimeClock::processBluetoothGet(char* str, SoftwareSeria
     return SUCCESS;
   }
 
-  if (strncmp(str, "TEMPERATURE", 11) == 0) {
+  if (strncmp_P(str, PSTR("TEMPERATURE"), 11) == 0) {
     float temp = getTemperature();
      *BTSerial << F("TEMPERATURE IS ") << temp << endl;
      return SUCCESS;
@@ -101,7 +100,7 @@ BluetoothListenerAnswer ChimeClock::processBluetoothGet(char* str, SoftwareSeria
 
 BluetoothListenerAnswer ChimeClock::processBluetoothSet(char* str, SoftwareSerial* BTSerial) {
   
-  if (strncmp(str, "DATETIME ", 9) == 0) {
+  if (strncmp_P(str, PSTR("DATETIME "), 9) == 0) {
 
     DEBUG_PRINT(F("received time: ")); DEBUG_PRINTLN(str);
 
@@ -120,7 +119,7 @@ BluetoothListenerAnswer ChimeClock::processBluetoothSet(char* str, SoftwareSeria
     
     RTC.set(t);  // store the novel datetime into the RTC clock
     setTime(t);
-    BTSerial->println(F("DATETIME SET"));                               // acknowledge
+    *BTSerial << F("DATETIME SET") << endl;                               // acknowledge
       
     debugSerial();
 
@@ -131,7 +130,8 @@ BluetoothListenerAnswer ChimeClock::processBluetoothSet(char* str, SoftwareSeria
 }
 
 BluetoothListenerAnswer ChimeClock::processBluetoothDo(char* str,  SoftwareSerial* BTSerial) {
-  
+  // TODO ???
+  return NOT_CONCERNED;
 }
 
 /* TODO 
