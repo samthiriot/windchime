@@ -20,6 +20,10 @@ void ChimeAlarm::debugSerial() {
   DEBUG_PRINTLN(enabled ? "enabled" : "disabled");
 }
 
+char bool2char(bool b) {
+  return (b);
+}
+
 BluetoothListenerAnswer ChimeAlarm::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
 
   if (strncmp(str, name, name_length) == 0) {
@@ -27,14 +31,19 @@ BluetoothListenerAnswer ChimeAlarm::processBluetoothGet(char* str, SoftwareSeria
     *BTSerial << name << " IS " 
               << start_hour << ":" << start_minutes << " " 
               << durationSoft << ' ' << durationStrong << ' '
-              << (enabled ? '1':'0') << ' ' 
-              << (sunday ? '1':'0') << (monday ? '1':'0') << (tuesday ? '1':'0') << (wednesday ? '1':'0') << (thursday ? '1':'0') << (friday ? '1':'0') << (saterday ? '1':'0')
+              << bool2char(enabled) << ' ' 
+              << bool2char(sunday) << bool2char(monday) << bool2char(tuesday) << bool2char(wednesday) << bool2char(thursday) << bool2char(friday) << bool2char(saterday)
               << endl;
               
     return SUCCESS;
   } 
     
   return NOT_CONCERNED;
+}
+
+
+bool char2bool(char c) {
+  return (c);
 }
 
 BluetoothListenerAnswer ChimeAlarm::processBluetoothSet(char* str, SoftwareSerial* BTSerial) {
@@ -59,15 +68,15 @@ BluetoothListenerAnswer ChimeAlarm::processBluetoothSet(char* str, SoftwareSeria
           );                
 
     // decode chars
-    enabled =   (cEnabled == '1');
+    enabled =   char2bool(cEnabled);
     
-    sunday =    (cSunday == '1');
-    monday =    (cMonday == '1');
-    tuesday =   (cTuesday == '1');
-    wednesday = (cWednesday == '1');
-    thursday =  (cThursday == '1');
-    friday =    (cFriday == '1');
-    saterday =  (cSaterday == '1');
+    sunday =    char2bool(cSunday);
+    monday =    char2bool(cMonday);
+    tuesday =   char2bool(cTuesday);
+    wednesday = char2bool(cWednesday);
+    thursday =  char2bool(cThursday);
+    friday =    char2bool(cFriday);
+    saterday =  char2bool(cSaterday);
 
     *BTSerial << name << " SET" << endl;
     

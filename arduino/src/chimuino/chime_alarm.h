@@ -29,6 +29,7 @@ class ChimeAlarm: public BluetoothCommandListener {
     unsigned short name_length;                 // the length of the name
     
     bool rightWeekdayForRing();                 // returns true if the weekday is compliant with our settings
+    
   public:
     // constructor
     ChimeAlarm(const char* name);
