@@ -106,10 +106,13 @@ The format of the date is TODO.
 There are two alarms which can be activated in the Chuimino.
 These alarms mean the Chuimuino will enter alarm mode. 
 
-	> GET ALARM1
-	< ALARM1 IS TRUE 09:11
+The format is made of:
+    <HOUR>:<MINUTES> <ENABLED> <SUNDAY><MONDAY><TUESDAY><WEDNESDAY><THURSDAY><FRIDAY><SATERDAY>
 
-	> SET ALARM1 TRUE 09:11
+	> GET ALARM1
+	< ALARM1 IS 09:11 0 0111110
+
+	> SET ALARM1 09:11 1 0111110
 	< ALARM1 SET
 
 	> PLEASE SNOOZE

@@ -17,6 +17,14 @@ class ChimeAlarm: public BluetoothCommandListener {
     unsigned short durationLong = 15;
     bool done = false;                          // true if we did the job of waking up the user
 
+    bool monday = true;
+    bool tuesday = true;
+    bool wednesday = true;
+    bool thursday = true;
+    bool friday = true;
+    bool saterday = true;
+    bool sunday = true;
+    
     // other
     const char* name;                                 // the name of the alarm (like ALARM1, ALARM2...)
     unsigned short name_length;                 // the length of the name
@@ -24,6 +32,7 @@ class ChimeAlarm: public BluetoothCommandListener {
   public:
     // constructor
     ChimeAlarm(const char* name);
+    
     // prints the state of the alarm in the serial 
     void debugSerial();
 

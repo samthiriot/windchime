@@ -1,6 +1,12 @@
 # in practice
 
+## requirements
+
 You need the [Arduino IDE](https://www.arduino.cc/en/Main/Software) to compile and upload the sketch into your Arduino (and into your Chimuino).
+
+You have to install:
+* the Streaming library: http://arduiniana.org/libraries/streaming/
+
 
 # FAQ
 ## can't open device "/dev/ttyXXX": Permission denied
