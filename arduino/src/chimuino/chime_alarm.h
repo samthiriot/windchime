@@ -11,10 +11,10 @@ class ChimeAlarm: public BluetoothCommandListener {
 
     // user settings
     bool enabled = false;                                           
-    unsigned short hour = 7;                               // the hour 
-    unsigned short minutes = 15;                           // minutes
+    unsigned short start_hour = 7;                               // the hour 
+    unsigned short start_minutes = 15;                           // minutes
     unsigned short durationSoft = 15;    
-    unsigned short durationLong = 15;
+    unsigned short durationStrong = 15;
     bool done = false;                          // true if we did the job of waking up the user
 
     bool monday = true;
@@ -29,6 +29,7 @@ class ChimeAlarm: public BluetoothCommandListener {
     const char* name;                                 // the name of the alarm (like ALARM1, ALARM2...)
     unsigned short name_length;                 // the length of the name
     
+    bool rightWeekdayForRing();                 // returns true if the weekday is compliant with our settings
   public:
     // constructor
     ChimeAlarm(const char* name);

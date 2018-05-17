@@ -4,8 +4,10 @@
 
 You need the [Arduino IDE](https://www.arduino.cc/en/Main/Software) to compile and upload the sketch into your Arduino (and into your Chimuino).
 
-You have to install:
+You have to install into your arduino libraries folder:
 * the Streaming library: http://arduiniana.org/libraries/streaming/
+* the DS3232RTC library: https://github.com/JChristensen/DS3232RTC
+* the TimeLib library: https://github.com/PaulStoffregen/Time
 
 
 # FAQ

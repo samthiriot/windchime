@@ -7,13 +7,15 @@
 #ifndef CHIME_CLOCK_H
 #define CHIME_CLOCK_H
 
-#include "RTClib.h"
 #include "chime_bluetooth.h"
+
+// instanciates an RTC object
+#include <TimeLib.h>
+#include <DS3232RTC.h>
 
 class ChimeClock: public BluetoothCommandListener {
   
   private:
-    RTC_DS3231 rtc;
 
   public:
     ChimeClock();
@@ -24,7 +26,14 @@ class ChimeClock: public BluetoothCommandListener {
     void debugSerial();
     
     // return current datetime
-    DateTime now(); 
+    time_t now(); 
+
+    // set alarms
+    // TODO void setAlarm1(unsigned short hour, unsigned short minutes);
+    // TODO void setAlarm2(unsigned short hour, unsigned short minutes);
+
+    // reads and return a temperature in Celcius
+    float getTemperature();
     
     // inherited
     virtual BluetoothListenerAnswer processBluetoothGet(char* str, SoftwareSerial* BTSerial);
