@@ -1,6 +1,7 @@
 #include "chime_soundsensor.h"
 
 #include <Arduino.h>
+#include <Streaming.h>
 
 #include "debug.h"
 
@@ -20,8 +21,8 @@ void ChimeSoundSensor::perceive() {
 }
 
 void ChimeSoundSensor::debugSerial() {
-  DEBUG_PRINT("SOUND LEVEL: "); DEBUG_PRINT(sensor.value()); 
-  DEBUG_PRINTLN(isQuiet() ? "(quiet)":"(noisy)");
+  DEBUG_PRINT(F("SOUND LEVEL: ")); DEBUG_PRINT(sensor.value()); 
+  DEBUG_PRINTLN(isQuiet() ? F("(quiet)"):F("(noisy)"));
 }
 
 void ChimeSoundSensor::setup() {
@@ -46,6 +47,40 @@ bool ChimeSoundSensor::isQuiet() {
 }
 
 
+BluetoothListenerAnswer ChimeSoundSensor::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
+
+  if (strncmp(str, "SOUNDLEVEL", 10) == 0) {
+    
+    *BTSerial << F("SOUNDLEVEL IS ") 
+              << _DEC(getSoundLevel()) << ' ' 
+              << (isQuiet() ? F("QUIET"): F("NOISY"))
+              << endl;
+              
+    return SUCCESS;
+  } 
+
+  if (strncmp(str, "SOUNDTHRESHOLD", 14) == 0) {
+    
+    *BTSerial << F("SOUNDTHRESHOLD IS ")
+              << _DEC(quietThreshold) 
+              << endl;
+              
+    return SUCCESS;
+  } 
+    
+  return NOT_CONCERNED;
+}
+
+
+
+BluetoothListenerAnswer ChimeSoundSensor::processBluetoothSet(char* str, SoftwareSerial* BTSerial) {
+  // TODO threshold?
+  return NOT_CONCERNED;
+}
+
+BluetoothListenerAnswer ChimeSoundSensor::processBluetoothDo(char* str, SoftwareSerial* BTSerial) {
+  return NOT_CONCERNED;
+}
 
 
 

@@ -107,6 +107,7 @@ There are two alarms which can be activated in the Chuimino.
 These alarms mean the Chuimuino will enter alarm mode. 
 
 The format is made of:
+
     <HOUR>:<MINUTES> <DURATION SOFT MIN><DURATION STRONG MIN>  <ENABLED> <SUNDAY><MONDAY><TUESDAY><WEDNESDAY><THURSDAY><FRIDAY><SATERDAY>
 
 	> GET ALARM1
@@ -127,12 +128,22 @@ This sound level is used for the Chuimuino to decide to act or not.
 
 TODO
 
+level is either NOISY or QUIET
+
+	> GET SOUNDLEVEL
+	< SOUNDLEVEL IS 110 NOISY
+
+	> GET SOUNDTHRESHOLD
+	< SOUNDTHRESHOLD IS 110
+
 ## light level and threshold
 
 Gets the light level measured by the Chimuino. 
 
+Detected status is either DARK or LIT
+
 	> GET LIGHTLEVEL
-	< LIGHTLEVEL IS 72
+	< LIGHTLEVEL IS 72 LIT
 
 	> GET LIGHTLEVELS
 	< LIGHTLEVELS IS [72,70,110,75,100,92] 

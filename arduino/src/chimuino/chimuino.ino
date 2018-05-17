@@ -123,6 +123,8 @@ void setup() {
   bluetooth.addCommandInterpreter(&alarm1);
   bluetooth.addCommandInterpreter(&alarm2);
   bluetooth.addCommandInterpreter(&clock);
+  bluetooth.addCommandInterpreter(&lightSensor);
+  bluetooth.addCommandInterpreter(&soundSensor);
 
   DEBUG_PRINTLN("init: end.");
 

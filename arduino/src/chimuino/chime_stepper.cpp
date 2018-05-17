@@ -49,7 +49,7 @@ void ChimeStepper::doFreeWheel() {
 }
 
 void ChimeStepper::doReveil() {
-  DEBUG_PRINTLN("reveil...");
+  DEBUG_PRINTLN(F("reveil..."));
   for (int i=0; i<random(3,7); i++){
     motor.setSpeed(MOTOR_SPEED_QUICK);
     motor.step(pull_strong);
@@ -62,7 +62,7 @@ void ChimeStepper::doReveil() {
 }
   
 void ChimeStepper::doPreReveil() {
-  DEBUG_PRINTLN("prereveil...");
+  DEBUG_PRINTLN(F("prereveil..."));
   for (int i=0; i<random(2,7); i++){
     motor.setSpeed(MOTOR_SPEED_SLOW);
     motor.step(pull_medium);
@@ -76,7 +76,7 @@ void ChimeStepper::doPreReveil() {
 
 
 void ChimeStepper::doTintement() {
-  DEBUG_PRINTLN("prereveil...");
+  DEBUG_PRINTLN(F("prereveil..."));
   for (int i=0; i<random(1,5); i++){
     motor.setSpeed(MOTOR_SPEED_SLOW);
     motor.step(pull_light);

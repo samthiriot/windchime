@@ -1,6 +1,7 @@
 #include "chime_lightsensor.h"
 
 #include <Arduino.h>
+#include <Streaming.h>
 
 #include "debug.h"
 
@@ -18,8 +19,8 @@ void ChimeLightSensor::perceive() {
 }
 
 void ChimeLightSensor::debugSerial() {
-  DEBUG_PRINT("LIGHT LEVEL: "); DEBUG_PRINT(sensor.value()); 
-  DEBUG_PRINTLN(isDark() ? "(dark)":"(lid)");
+  DEBUG_PRINT(F("LIGHT LEVEL: ")); DEBUG_PRINT(sensor.value()); 
+  DEBUG_PRINTLN(isDark() ? F("(dark)"):F("(lid)"));
 }
 
 void ChimeLightSensor::setup() {
@@ -39,5 +40,38 @@ bool ChimeLightSensor::isDark() {
 
 
 
+BluetoothListenerAnswer ChimeLightSensor::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
+
+  if (strncmp(str, "LIGHTLEVEL", 10) == 0) {
+    
+    *BTSerial << F("LIGHTLEVEL IS ") 
+              << _DEC(getLightLevel()) << ' ' 
+              << (isDark() ? F("DARK"): F("LIT"))
+              << endl;
+              
+    return SUCCESS;
+  } 
+
+  if (strncmp(str, "LIGHTTHRESHOLD", 14) == 0) {
+    
+    *BTSerial << F("LIGHTTHRESHOLD IS ")
+              << _DEC(darkThreshold) 
+              << endl;
+              
+    return SUCCESS;
+  } 
+    
+  return NOT_CONCERNED;
+}
+
+
+
+BluetoothListenerAnswer ChimeLightSensor::processBluetoothSet(char* str, SoftwareSerial* BTSerial) {
+  return NOT_CONCERNED;
+}
+
+BluetoothListenerAnswer ChimeLightSensor::processBluetoothDo(char* str, SoftwareSerial* BTSerial) {
+  return NOT_CONCERNED;
+}
 
 

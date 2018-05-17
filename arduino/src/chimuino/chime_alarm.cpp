@@ -28,8 +28,8 @@ BluetoothListenerAnswer ChimeAlarm::processBluetoothGet(char* str, SoftwareSeria
 
   if (strncmp(str, name, name_length) == 0) {
     
-    *BTSerial << name << " IS " 
-              << start_hour << ":" << start_minutes << " " 
+    *BTSerial << name << F(" IS ")
+              << start_hour << ':' << start_minutes << ' ' 
               << durationSoft << ' ' << durationStrong << ' '
               << bool2char(enabled) << ' ' 
               << bool2char(sunday) << bool2char(monday) << bool2char(tuesday) << bool2char(wednesday) << bool2char(thursday) << bool2char(friday) << bool2char(saterday)
@@ -78,7 +78,7 @@ BluetoothListenerAnswer ChimeAlarm::processBluetoothSet(char* str, SoftwareSeria
     friday =    char2bool(cFriday);
     saterday =  char2bool(cSaterday);
 
-    *BTSerial << name << " SET" << endl;
+    *BTSerial << name << F(" SET") << endl;
     
     // TODO persist somewhere else?
     // TODO activate an alarm in the RTC chip?

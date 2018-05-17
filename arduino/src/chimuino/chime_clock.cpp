@@ -43,7 +43,7 @@ void ChimeClock::setup() {
   setSyncInterval(1);         // only one second for resync
 
   if (timeStatus() == timeNotSet) {
-     DEBUG_PRINTLN("WARN: RTC is NOT running! Initializing with compilation time.");
+     DEBUG_PRINTLN(F("WARN: RTC is NOT running! Initializing with compilation time."));
      time_t compilation_time = compileTime();
      RTC.set(compilation_time);
      setTime(compilation_time);
@@ -67,7 +67,7 @@ void ChimeClock::debugSerial() {
   time_t now = RTC.get();
     Serial << "Time is: " 
            << _DEC(year(now))  << '-' << _DEC(month(now)) << '-' << _DEC(year(now)) << ' '
-           << _DEC(hour(now)) << ":" << _DEC(minute(now)) << ":" << _DEC(second(now)) 
+           << _DEC(hour(now)) << ':' << _DEC(minute(now)) << ':' << _DEC(second(now)) 
            << endl;
   #endif
 }
@@ -84,7 +84,7 @@ BluetoothListenerAnswer ChimeClock::processBluetoothGet(char* str, SoftwareSeria
     time_t now = RTC.get();
     *BTSerial << "DATETIME IS " 
               << _DEC(year(now))  << '-' << _DEC(month(now)) << '-' << _DEC(year(now)) << ' '
-              << _DEC(hour(now)) << ":" << _DEC(minute(now)) << ":" << _DEC(second(now)) 
+              << _DEC(hour(now)) << ':' << _DEC(minute(now)) << ':' << _DEC(second(now)) 
               << endl;
  
     return SUCCESS;
@@ -92,7 +92,7 @@ BluetoothListenerAnswer ChimeClock::processBluetoothGet(char* str, SoftwareSeria
 
   if (strncmp(str, "TEMPERATURE", 11) == 0) {
     float temp = getTemperature();
-     *BTSerial << "TEMPERATURE IS " << temp << endl;
+     *BTSerial << F("TEMPERATURE IS ") << temp << endl;
      return SUCCESS;
   }
 
@@ -103,7 +103,7 @@ BluetoothListenerAnswer ChimeClock::processBluetoothSet(char* str, SoftwareSeria
   
   if (strncmp(str, "DATETIME ", 9) == 0) {
 
-    DEBUG_PRINT("received time: "); DEBUG_PRINTLN(str);
+    DEBUG_PRINT(F("received time: ")); DEBUG_PRINTLN(str);
 
     time_t t;     // the time to forge
     tmElements_t tm;
@@ -120,7 +120,7 @@ BluetoothListenerAnswer ChimeClock::processBluetoothSet(char* str, SoftwareSeria
     
     RTC.set(t);  // store the novel datetime into the RTC clock
     setTime(t);
-    BTSerial->println("DATETIME SET");                               // acknowledge
+    BTSerial->println(F("DATETIME SET"));                               // acknowledge
       
     debugSerial();
 

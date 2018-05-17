@@ -8,8 +8,9 @@
 #define CHIME_SOUNDSENSOR_MEASURES_ETA 0.5 
 
 #include "sensors_filtering.h"
+#include "chime_bluetooth.h"
 
-class ChimeSoundSensor {
+class ChimeSoundSensor: public BluetoothCommandListener {
   
   private:
   
@@ -47,6 +48,11 @@ class ChimeSoundSensor {
     // returns true if it is quiet now
     bool isQuiet();
     
+    // inherited
+    virtual BluetoothListenerAnswer processBluetoothGet(char* str, SoftwareSerial* BTSerial);
+    virtual BluetoothListenerAnswer processBluetoothSet(char* str, SoftwareSerial* BTSerial);
+    virtual BluetoothListenerAnswer processBluetoothDo(char* str, SoftwareSerial* BTSerial);
+
 };
 
 

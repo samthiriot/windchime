@@ -30,20 +30,20 @@ void ChimeBluetooth::setup() {
   BTSerial.listen();                                          // by default, listen to bluetooth serial
 
   // define setup name
-  String bluetoothName = readATResult("AT+NAME?");   // get the current name of the module
+  String bluetoothName = readATResult(F("AT+NAME?"));   // get the current name of the module
   // TODO why does that execute ? 
-  if (bluetoothName != "CHIMUINO") {                          // change the name if not initialized properly
-    execAT("AT+NAMECHIMUINO");                       // TODO if another chimuino already exists (scan !) then add a number ?
+  if (bluetoothName != F("CHIMUINO")) {                          // change the name if not initialized properly
+    execAT(F("AT+NAMECHIMUINO"));                       // TODO if another chimuino already exists (scan !) then add a number ?
   } else {                            
     // TODO remove it
-    Serial.print("* name is already ");
+    Serial.print(F("* name is already "));
     Serial.println(bluetoothName);
   }
 
   // define services and characteristics
-  execAT("AT+ROLE0");                                // define as a peripherical
-  execAT("AT+UUID0xFFE0");                           // define a service
-  execAT("AT+CHAR0xFFE1");                           // define a characteristic
+  execAT(F("AT+ROLE0"));                                // define as a peripherical
+  execAT(F("AT+UUID0xFFE0"));                           // define a service
+  execAT(F("AT+CHAR0xFFE1"));                           // define a characteristic
   
 }
 
@@ -127,7 +127,7 @@ void ChimeBluetooth::processGet(char* str) {
         // finished :-)
         return;
       case FAILURE:
-        DEBUG_PRINT("ERROR: failed processing bluetooth GET");
+        DEBUG_PRINT(F("ERROR: failed processing bluetooth GET"));
         DEBUG_PRINTLN(str);
         break;
       case NOT_CONCERNED:
@@ -147,7 +147,7 @@ void ChimeBluetooth::processSet(char* str) {
       case SUCCESS:
         return;
       case FAILURE:
-        DEBUG_PRINT("ERROR: failed processing bluetooth GET");
+        DEBUG_PRINT(F("ERROR: failed processing bluetooth GET"));
         DEBUG_PRINTLN(str);
         break;
       case NOT_CONCERNED:
@@ -155,7 +155,7 @@ void ChimeBluetooth::processSet(char* str) {
     }
   }
   // no one used our message
-  DEBUG_PRINT("WARN: failed processing bluetooth GET");
+  DEBUG_PRINT(F("WARN: failed processing bluetooth GET"));
   DEBUG_PRINTLN(str);
 }
 
@@ -167,7 +167,7 @@ void ChimeBluetooth::processDo(char* str) {
       case SUCCESS:
         return;
       case FAILURE:
-        DEBUG_PRINT("ERROR: failed processing bluetooth GET");
+        DEBUG_PRINT(F("ERROR: failed processing bluetooth GET"));
         DEBUG_PRINTLN(str);
         break;
       case NOT_CONCERNED:
@@ -175,7 +175,7 @@ void ChimeBluetooth::processDo(char* str) {
     }
   }
   // no one used our message
-  DEBUG_PRINT("WARN: failed processing bluetooth GET");
+  DEBUG_PRINT(F("WARN: failed processing bluetooth GET"));
   DEBUG_PRINTLN(str);
 }
 
@@ -190,7 +190,7 @@ void ChimeBluetooth::reactToCommand() {
   } else if (strncmp(received, "DO ", 3) == 0) {
     processDo(received + 3);
   } else {
-    DEBUG_PRINT("ERROR: command ignored ");
+    DEBUG_PRINT(F("ERROR: command ignored "));
     DEBUG_PRINTLN(received);
   }
 }
@@ -213,9 +213,7 @@ void ChimeBluetooth::readAndReact() {
     } else if (receivedCount < BLUETOOTH_LONGEST_COMMAND-1) {
       received[ receivedCount++ ] = c;    // accumulate the character 
     } else {                                                // OOPS, seems like we have overflowed our buffer capabilities
-      #ifdef DEBUG_SERIAL
-      Serial.println("OVERFLOW OF BLUETOOTH BUFFER !");     // warn 
-      #endif
+      DEBUG_PRINTLN(F("OVERFLOW OF BLUETOOTH BUFFER !"));     // warn 
       receivedCount = 0;                           // reset the reading (will probably not lead to something that good)
     }
   }

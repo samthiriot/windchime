@@ -12,7 +12,9 @@
 
 #include "sensors_filtering.h"
 
-class ChimeLightSensor {
+#include "chime_bluetooth.h"
+
+class ChimeLightSensor: public BluetoothCommandListener {
   
   private:
   
@@ -41,7 +43,12 @@ class ChimeLightSensor {
 
     // returns true if it is dark now
     bool isDark();
-    
+
+    // inherited
+    virtual BluetoothListenerAnswer processBluetoothGet(char* str, SoftwareSerial* BTSerial);
+    virtual BluetoothListenerAnswer processBluetoothSet(char* str, SoftwareSerial* BTSerial);
+    virtual BluetoothListenerAnswer processBluetoothDo(char* str, SoftwareSerial* BTSerial);
+
 };
 
 
