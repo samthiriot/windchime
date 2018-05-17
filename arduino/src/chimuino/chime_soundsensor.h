@@ -19,17 +19,13 @@ class ChimeSoundSensor: public BluetoothCommandListener {
   private:
   
     // hardware config
-    char pin;
+    byte pin;
 
     // 
     LowPassFilterSensorWithMinMax sensor;                                                // the sensor plugged on the pin
       
     // state
-    unsigned short soundLevelMin = 0;                                                    // the lowest sound we ever measured
-    unsigned short soundLevelMax = 1024;                                                 // the higest ever heard
     unsigned short quietThreshold = 20;                  // the silence / noise threshold
-    unsigned short soundLastQuiet = 0;                                                   // the last time it was quiet 
-    unsigned short soundLastNotQuiet = 0;                                                // the last time it was noisy
 
     byte factorThreshold = 50;                // the quiet / noisy threshold will be defined as min+(max-min)*factor; so a factor of 0 will always lead to noisy, a factor of 1 will alwats lead to quiet
     
@@ -38,7 +34,7 @@ class ChimeSoundSensor: public BluetoothCommandListener {
     
   public:
     
-    ChimeSoundSensor(const char pin);
+    ChimeSoundSensor(const byte pin);
     
     void setup();
     

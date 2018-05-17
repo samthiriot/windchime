@@ -33,6 +33,7 @@ class ChimeAlarm: public BluetoothCommandListener {
   public:
     // constructor
     ChimeAlarm(const char* name);
+    void setup();
     
     // prints the state of the alarm in the serial 
     void debugSerial();

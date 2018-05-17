@@ -21,6 +21,8 @@ ChimeBluetooth::ChimeBluetooth(unsigned short _pinRX, unsigned short _pinTX):
 
 void ChimeBluetooth::setup() {
 
+  DEBUG_PRINTLN(F("init: bluetooth..."));
+
   // configure pins
   pinMode(pinRX, INPUT);                               
   pinMode(pinTX, OUTPUT);
@@ -45,7 +47,8 @@ void ChimeBluetooth::setup() {
   execAT(F("AT+ROLE0"));                                // define as a peripherical
   execAT(F("AT+UUID0xFFE0"));                           // define a service
   execAT(F("AT+CHAR0xFFE1"));                           // define a characteristic
-  
+
+  DEBUG_PRINTLN(F("init: bluetooth ok"));
 }
 
 void ChimeBluetooth::addCommandInterpreter(BluetoothCommandListener* listener) {

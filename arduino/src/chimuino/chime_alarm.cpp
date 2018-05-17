@@ -12,18 +12,29 @@ ChimeAlarm::ChimeAlarm(const char* _name) {
   name_length = strlen(name);
 }
 
-void ChimeAlarm::debugSerial() {
-  #ifdef DEBUG
-  Serial << F("Alarm ") << name << F(": ") 
-         << _DEC(start_hour) << ':' << _DEC(start_minutes) << ' ' 
-         << (enabled ? F("enabled") : F("disabled")) 
-         << endl;
-  #endif 
+void ChimeAlarm::setup() {
+
+  DEBUG_PRINT(F("init: ")); DEBUG_PRINT(name); DEBUG(F("..."));
+
+
+  DEBUG_PRINT(F("init: ")); DEBUG_PRINT(name); DEBUG(F(" ok"));
 }
 
 char bool2char(bool b) {
   return (b);
 }
+
+void ChimeAlarm::debugSerial() {
+  #ifdef DEBUG
+  Serial << F("Alarm ") << name << F(": ") 
+         << _DEC(start_hour) << ':' << _DEC(start_minutes) << ' ' 
+         << (enabled ? F("enabled") : F("disabled")) << ' '
+         << _DEC(durationSoft) << ' ' << _DEC(durationStrong) << F(" days:")
+         << bool2char(sunday) << bool2char(monday) << bool2char(tuesday) << bool2char(wednesday) << bool2char(thursday) << bool2char(friday) << bool2char(saterday)
+         << endl;
+  #endif 
+}
+
 
 BluetoothListenerAnswer ChimeAlarm::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
 
@@ -44,7 +55,7 @@ BluetoothListenerAnswer ChimeAlarm::processBluetoothGet(char* str, SoftwareSeria
 
 
 bool char2bool(char c) {
-  return (c);
+  return (c == '1');
 }
 
 BluetoothListenerAnswer ChimeAlarm::processBluetoothSet(char* str, SoftwareSerial* BTSerial) {
@@ -78,6 +89,9 @@ BluetoothListenerAnswer ChimeAlarm::processBluetoothSet(char* str, SoftwareSeria
     thursday =  char2bool(cThursday);
     friday =    char2bool(cFriday);
     saterday =  char2bool(cSaterday);
+
+    if (start_hour > 23) { start_hour = 23; }
+    if (start_minutes > 59) { start_minutes = 59; }
 
     *BTSerial << name << F(" SET") << endl;
     

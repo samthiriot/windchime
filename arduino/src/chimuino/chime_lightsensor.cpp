@@ -45,9 +45,14 @@ void ChimeLightSensor::debugSerial() {
 }
 
 void ChimeLightSensor::setup() {
-  
+
+  DEBUG_PRINTLN(F("init: light sensor..."));
+
   pinMode(pin, INPUT); 
-        
+
+  sensor.sense();
+
+  DEBUG_PRINTLN(F("init: light sensor ok"));
 }
 
 unsigned short ChimeLightSensor::getLightLevel() {

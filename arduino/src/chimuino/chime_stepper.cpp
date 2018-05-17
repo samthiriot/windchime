@@ -18,7 +18,9 @@ ChimeStepper::ChimeStepper(
 }
     
 void ChimeStepper::setup() {
-  
+
+    DEBUG_PRINTLN(F("init: stepper..."));
+
     pinMode(pin1, OUTPUT);
     pinMode(pin2, OUTPUT);
     pinMode(pin3, OUTPUT);
@@ -36,6 +38,8 @@ void ChimeStepper::setup() {
     motor.step(-pull_medium);
       
     doFreeWheel(); // relax and don't consume energy
+
+    DEBUG_PRINTLN(F("init: stepper ok"));
 }
 
 /**

@@ -5,7 +5,7 @@
 
 #include "debug.h"
 
-ChimeSoundSensor::ChimeSoundSensor(const char _pin):
+ChimeSoundSensor::ChimeSoundSensor(const byte _pin):
               sensor(CHIME_SOUNDSENSOR_MEASURES_ETA, _pin, 
                     CHIME_SOUNDSENSOR_MEASURES_FREQUENCY, // read every 100ms
                     CHIME_SOUNDSENSOR_ENVELOPE_ETA_SLOW, CHIME_SOUNDSENSOR_ENVELOPE_ETA_QUICK
@@ -47,11 +47,14 @@ void ChimeSoundSensor::debugSerial() {
 }
 
 void ChimeSoundSensor::setup() {
-  
+
+  DEBUG_PRINTLN(F("init: sound sensor..."));
+
   pinMode(pin, INPUT); 
-        
-  soundLastQuiet = soundLastNotQuiet  = 0;                        // let's say the last time it was quiet and noisy was far ago
-  soundLevelMin = soundLevelMax = analogRead(pin);                // init the sound levels known so far
+
+  sensor.sense();
+
+  DEBUG_PRINTLN(F("init: sound sensor ok"));
 }
 
 unsigned short ChimeSoundSensor::measureSoundLevel() {

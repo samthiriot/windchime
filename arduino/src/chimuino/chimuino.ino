@@ -117,6 +117,8 @@ void setup() {
   lightSensor.setup();
   stepper.setup();
   clock.setup();
+  alarm1.setup();
+  alarm2.setup();
   bluetooth.setup();
 
   // ... add the chain of listeners

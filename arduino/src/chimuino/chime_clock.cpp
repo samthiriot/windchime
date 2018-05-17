@@ -5,7 +5,8 @@
 #include <Streaming.h>
 
 ChimeClock::ChimeClock() {
-  
+  // nothing to do (crazy, huh?)
+  // as everything is done by the DS3232RTC library
 }
 
 // function to return the compile date and time as a time_t value
@@ -34,7 +35,6 @@ time_t compileTime()
 
 void ChimeClock::setup() {
   
-  // init RTC !
   DEBUG_PRINTLN(F("init: RTC..."));
   
   // tells the TimeLib library that time is provided by our RTC chip
