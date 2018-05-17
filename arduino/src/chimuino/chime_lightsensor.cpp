@@ -6,7 +6,10 @@
 #include "debug.h"
 
 ChimeLightSensor::ChimeLightSensor(const char _pin):
-              sensor(CHIME_LIGHTSENSOR_MEASURES_ETA, _pin, CHIME_LIGHTSENSOR_MEASURES_FREQUENCY)  
+              sensor( CHIME_LIGHTSENSOR_MEASURES_ETA, _pin, 
+                      CHIME_LIGHTSENSOR_MEASURES_FREQUENCY,// read every 100ms
+                      CHIME_LIGHTSENSOR_ENVELOPE_ETA_SLOW, CHIME_LIGHTSENSOR_ENVELOPE_ETA_QUICK
+                      )  
               {
 
   // save params
@@ -56,6 +59,7 @@ BluetoothListenerAnswer ChimeLightSensor::processBluetoothGet(char* str, Softwar
     
     *BTSerial << F("LIGHTTHRESHOLD IS ")
               << _DEC(darkThreshold) 
+              << F(" [") << _DEC(sensor.envelopeMin()) << ':' << _DEC(sensor.envelopeMax()) << ']'
               << endl;
               
     return SUCCESS;

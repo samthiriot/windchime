@@ -4,8 +4,10 @@
 
 // in milliseconds
 #define CHIME_SOUNDSENSOR_MEASURES_FREQUENCY 100 
-
 #define CHIME_SOUNDSENSOR_MEASURES_ETA 0.5 
+
+#define CHIME_SOUNDSENSOR_ENVELOPE_ETA_SLOW 0.01
+#define CHIME_SOUNDSENSOR_ENVELOPE_ETA_QUICK 0.9
 
 #include "sensors_filtering.h"
 #include "chime_bluetooth.h"
@@ -18,7 +20,7 @@ class ChimeSoundSensor: public BluetoothCommandListener {
     char pin;
 
     // 
-    LowPassFilterSensor sensor;                                                           // the sensor plugged on the pin
+    LowPassFilterSensorWithMinMax sensor;                                                // the sensor plugged on the pin
       
     // state
     unsigned short soundLevelMin = 0;                                                    // the lowest sound we ever measured

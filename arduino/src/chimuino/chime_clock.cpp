@@ -52,7 +52,7 @@ void ChimeClock::setup() {
   RTC.alarmInterrupt(ALARM_1, false);
   RTC.alarmInterrupt(ALARM_2, false);
 
-  DEBUG_PRINTLN("init: RTC ok");
+  DEBUG_PRINTLN(F("init: RTC ok"));
 
 }
 

@@ -11,7 +11,7 @@
  
 #else
 
-  #define DEBUG_SETUP
+  #define DEBUG_SETUP()
 
   #define DEBUG_PRINT(x)
   #define DEBUG_PRINT_DEC(x)

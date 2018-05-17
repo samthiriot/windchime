@@ -4,8 +4,10 @@
 
 // in milliseconds
 #define CHIME_LIGHTSENSOR_MEASURES_FREQUENCY 100 
-
 #define CHIME_LIGHTSENSOR_MEASURES_ETA 0.5 
+
+#define CHIME_LIGHTSENSOR_ENVELOPE_ETA_SLOW 0.01
+#define CHIME_LIGHTSENSOR_ENVELOPE_ETA_QUICK 0.9
 
 // default light threshold
 #define PHOTOCELL_NIGHT_THRESHOLD 550                                     // TODO detect threshold
@@ -22,7 +24,7 @@ class ChimeLightSensor: public BluetoothCommandListener {
     char pin;
 
     // 
-    LowPassFilterSensor sensor;                                                           // the sensor plugged on the pin
+    LowPassFilterSensorWithMinMax sensor;                                                           // the sensor plugged on the pin
 
     unsigned short darkThreshold = PHOTOCELL_NIGHT_THRESHOLD;          // the default threshold
     

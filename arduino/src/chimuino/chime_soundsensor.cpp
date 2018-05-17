@@ -6,7 +6,10 @@
 #include "debug.h"
 
 ChimeSoundSensor::ChimeSoundSensor(const char _pin):
-              sensor(CHIME_SOUNDSENSOR_MEASURES_ETA, _pin, CHIME_SOUNDSENSOR_MEASURES_FREQUENCY)  // read every 100ms 
+              sensor(CHIME_SOUNDSENSOR_MEASURES_ETA, _pin, 
+                    CHIME_SOUNDSENSOR_MEASURES_FREQUENCY, // read every 100ms
+                    CHIME_SOUNDSENSOR_ENVELOPE_ETA_SLOW, CHIME_SOUNDSENSOR_ENVELOPE_ETA_QUICK
+                    )  
               {
 
   // save params
@@ -63,6 +66,7 @@ BluetoothListenerAnswer ChimeSoundSensor::processBluetoothGet(char* str, Softwar
  
     *BTSerial << F("SOUNDTHRESHOLD IS ")
               << _DEC(quietThreshold) 
+              << F(" [") << _DEC(sensor.envelopeMin()) << ':' << _DEC(sensor.envelopeMax()) << ']'
               << endl;
               
     return SUCCESS;
