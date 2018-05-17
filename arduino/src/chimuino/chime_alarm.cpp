@@ -97,7 +97,7 @@ bool ChimeAlarm::rightWeekdayForRing() {
          );
 }
 
-bool ChimeAlarm::shouldPrering(DateTime dt) {
+bool ChimeAlarm::shouldPrering() {
 
   // TODO manage alarm around midnight
 
@@ -119,7 +119,7 @@ bool ChimeAlarm::shouldPrering(DateTime dt) {
   
 }
 
-bool ChimeAlarm::shouldRing(DateTime dt) {
+bool ChimeAlarm::shouldRing() {
 
   // TODO manage alarm around midnight
 

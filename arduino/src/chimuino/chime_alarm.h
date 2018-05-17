@@ -3,7 +3,6 @@
 
 #include "chime_bluetooth.h"
 
-#include "RTClib.h"
 
 class ChimeAlarm: public BluetoothCommandListener {
   
@@ -37,8 +36,8 @@ class ChimeAlarm: public BluetoothCommandListener {
     // prints the state of the alarm in the serial 
     void debugSerial();
 
-    bool shouldPrering(DateTime now);
-    bool shouldRing(DateTime now);
+    bool shouldPrering();
+    bool shouldRing();
     
     // inherited
     virtual BluetoothListenerAnswer processBluetoothGet(char* str, SoftwareSerial* BTSerial);

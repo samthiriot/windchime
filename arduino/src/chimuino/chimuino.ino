@@ -140,7 +140,7 @@ void loop() {
   
   bool isDark = lightSensor.isDark();   // is there any light around? 
   bool isQuiet = soundSensor.isQuiet(); // is there any sound around?
-  DateTime now = clock.now();           // what time is it ? 
+  //DateTime now = clock.now();           // what time is it ? 
   
   // write debug info (from time to time)
   if (millis() - lastDisplayDebug >= FREQUENCY_DEBUG) {
@@ -153,10 +153,10 @@ void loop() {
   // DESIRE 
 
   // if an alarm should be rang, then override wathever current setting
-  if (alarm1.shouldPrering(now))      { if (current_mode != PREALARM1)  { current_mode = PREALARM1;   next_planned_action = millis() + random(1*60*1000l,5*60*1000l); } }
-  else if (alarm2.shouldPrering(now)) { if (current_mode != PREALARM2)  { current_mode = PREALARM2;   next_planned_action = millis() + random(1*60*1000l,5*60*1000l); } }
-  else if (alarm1.shouldRing(now))    { if (current_mode != ALARM1)     { current_mode = ALARM1;      next_planned_action = millis() + random(1*60*1000l,5*60*1000l); } }
-  else if (alarm2.shouldRing(now))    { if (current_mode != ALARM2)     { current_mode = ALARM2;      next_planned_action = millis() + random(1*60*1000l,5*60*1000l); } }
+  if (alarm1.shouldPrering())      { if (current_mode != PREALARM1)  { current_mode = PREALARM1;   next_planned_action = millis() + random(1*60*1000l,5*60*1000l); } }
+  else if (alarm2.shouldPrering()) { if (current_mode != PREALARM2)  { current_mode = PREALARM2;   next_planned_action = millis() + random(1*60*1000l,5*60*1000l); } }
+  else if (alarm1.shouldRing())    { if (current_mode != ALARM1)     { current_mode = ALARM1;      next_planned_action = millis() + random(1*60*1000l,5*60*1000l); } }
+  else if (alarm2.shouldRing())    { if (current_mode != ALARM2)     { current_mode = ALARM2;      next_planned_action = millis() + random(1*60*1000l,5*60*1000l); } }
   else if (current_mode == PREALARM1 or current_mode == PREALARM2 or current_mode == ALARM1 or current_mode == ALARM2) {
     // no alarm asked anymore, so it's not our current mode anymore
     current_mode = NOTHING;
