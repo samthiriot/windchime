@@ -3,12 +3,13 @@
 
 #include <Arduino.h>
 
+#include "debug.h"
 
-LowPassFilterSensor::LowPassFilterSensor(float _ETA, char _pin, const unsigned int _period) {
+LowPassFilterSensor::LowPassFilterSensor(float _ETA, byte _pin, const unsigned int _period) {
   pin = _pin;
   pinMode(_pin, INPUT); 
 
-  _ETA = ETA;
+  ETA = _ETA;
   period = _period;
   lastReading = millis();
   pastvalue = analogRead(pin);
@@ -16,9 +17,15 @@ LowPassFilterSensor::LowPassFilterSensor(float _ETA, char _pin, const unsigned i
 
 bool LowPassFilterSensor::sense() {
   const unsigned long now = millis();
-  if (now - lastReading > period) {
+  if (now - lastReading >= period) {
+    //DEBUG_PRINT(F("reading sensor value: ")); 
+    
     // let's read
-    pastvalue = ETA*analogRead(pin) + (1-ETA)*pastvalue;
+    float v = float(analogRead(pin));
+    //DEBUG_PRINT(v);
+    pastvalue = (int)(ETA * v + (1.0 - ETA) * float(pastvalue));
+    //DEBUG_PRINT(F(" => "));
+    //DEBUG_PRINTLN(pastvalue);
     lastReading = now;
     return true;
   }
@@ -28,12 +35,16 @@ bool LowPassFilterSensor::sense() {
 
  
 LowPassFilterSensorWithMinMax::LowPassFilterSensorWithMinMax(
-                  const float _ETA, const char _pin, const unsigned int _period, 
+                  const float _ETA, const byte _pin, const unsigned int _period, 
                   const float _ETAquick, const float _ETAslow)
              :LowPassFilterSensor(_ETA, _pin, _period) {
 
-  currentMin = currentMax = value();
+  ETAquick = _ETAquick;
+  ETAslow = _ETAslow;
   
+  currentMin = 1;
+  currentMax = value();
+    
 }
 
 bool LowPassFilterSensorWithMinMax::sense() {
@@ -43,20 +54,29 @@ bool LowPassFilterSensorWithMinMax::sense() {
     return false;
   }
   
-  int v = value();
+  float v = float(value());
+
+  //DEBUG_PRINT(F("reading sensor value: ")); 
+  //DEBUG_PRINTLN(v);
   
   if (v <= currentMin) {
-    currentMin = ETAquick*v + (1 - ETAquick)*currentMin;
+    currentMin = int(ETAquick * v + (1.0 - ETAquick)*float(currentMin));
   } else {
-    currentMin = ETAslow*v + (1 - ETAslow)*currentMin;
+    currentMin = int(ETAslow * v + (1.0 - ETAslow)*float(currentMin));
   }
-
+  
   if (v >= currentMax) {
-    currentMax = ETAquick*v + (1 - ETAquick)*currentMax;
+    currentMax = int(ETAquick * v + (1.0 - ETAquick)*float(currentMax));
   } else {
-    currentMax = ETAslow*v + (1 - ETAslow)*currentMax;
+    currentMax = int(ETAslow * v + (1.0 - ETAslow)*float(currentMax));
   }
-
+  
+  if (currentMin < 1) {
+    currentMin = 1;
+  }
+  if (currentMax < 1) {
+    currentMax = 1;
+  }
   return true;
 }
 

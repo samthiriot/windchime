@@ -14,10 +14,10 @@ ChimeAlarm::ChimeAlarm(const char* _name) {
 
 void ChimeAlarm::setup() {
 
-  DEBUG_PRINT(F("init: ")); DEBUG_PRINT(name); DEBUG(F("..."));
+  DEBUG_PRINT(F("init: ")); DEBUG_PRINT(name); DEBUG_PRINTLN(F("..."));
 
 
-  DEBUG_PRINT(F("init: ")); DEBUG_PRINT(name); DEBUG(F(" ok"));
+  DEBUG_PRINT(F("init: ")); DEBUG_PRINT(name); DEBUG_PRINTLN(F(" ok"));
 }
 
 char bool2char(bool b) {

@@ -24,11 +24,8 @@ void ChimeSoundSensor::perceive() {
     // the sensor was updated
 
     // ... update the threshold!
-    quietThreshold = sensor.envelopeMin() + (float(factorThreshold)/100.) * (sensor.envelopeMax() - sensor.envelopeMin());
+    quietThreshold = sensor.envelopeMin() + int(float(factorThreshold)* float(sensor.envelopeMax() - sensor.envelopeMin())/100.0);
   
-    #ifdef DEBUG
-    debugSerial();
-    #endif
   }
   
 }

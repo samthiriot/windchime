@@ -21,7 +21,7 @@
 #define DEBUG_SERIAL true                                         // config debug
 
 // frequency for displaying debug messages on the state
-#define FREQUENCY_DEBUG 500
+#define FREQUENCY_DEBUG 2000
 long lastDisplayDebug = millis();
 
 
@@ -71,8 +71,10 @@ bool wasDark = false;                                                     // tru
     void setupRandom() {
         pinMode(RANDOM_PIN, INPUT);                                           // this pin is used to init the random network generator
         int seed = analogRead(RANDOM_PIN);
+      #ifdef DEBUG_SERIAL
+        Serial.print("init: random seed is "); Serial.print(seed); Serial.println();
+      #endif
         randomSeed(seed);
-        DEBUG_PRINT("init: random seed is "); DEBUG_PRINT(seed); DEBUG_PRINTLN();
     }
 
 bool ambiance = true;             // play sound from time to time 
@@ -202,15 +204,15 @@ void loop() {
       case PREALARM1:
       case PREALARM2:
       case AMBIANCE_PREREVEIL:
-        stepper.doPreReveil();
+        //stepper.doPreReveil();
         break;
       case ALARM1:
       case ALARM2:
       case AMBIANCE_REVEIL:
-        stepper.doReveil();
+        //stepper.doReveil();
         break;
       case AMBIANCE_TINTEMENT:
-        stepper.doTintement();
+        //stepper.doTintement();
         break;
     }
     current_mode = NOTHING;

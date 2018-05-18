@@ -1,6 +1,8 @@
 #ifndef SENSORS_FILTERING_H
 #define SENSORS_FILTERING_H
 
+#include <Arduino.h>
+
 /**
  * reads data from the arduino pin <pin> every <period>ms, 
  * and smooth the value according to <ETA>. call sense() to update value, 
@@ -11,8 +13,8 @@ class LowPassFilterSensor {
   
   private:
 
-    float ETA;                  // the smoothing constant. 0.5 = mean, 0.9 strong weight on last value, 0.1 smooth a lot
-    char pin;                   // the pin to read data from
+    float ETA;                  // the smoothing constant in 0:100. 50 = mean, 90 strong weight on last value, 100 smooth a lot
+    byte pin;                   // the pin to read data from
     unsigned int period;        // how often to listen for the value (in milliseconds)
 
     unsigned long lastReading = 0;    // timestamp of the last reading
@@ -21,7 +23,7 @@ class LowPassFilterSensor {
   public:
    
     // constructor
-    LowPassFilterSensor(const float ETA, const char pin, const unsigned int period);
+    LowPassFilterSensor(const float ETA, const byte pin, const unsigned int period);
 
     /**
      * Returns true if something was sensed, false if it was not yet time
@@ -40,19 +42,19 @@ class LowPassFilterSensorWithMinMax: public LowPassFilterSensor {
   
   private:
   
-    float ETAquick = 0.9;
-    float ETAslow = 0.1;
+    float ETAquick = 90;
+    float ETAslow = 10;
   
     int currentMin;
     int currentMax;
     
   public:
   
-    LowPassFilterSensorWithMinMax(const float ETA, const char pin, const unsigned int period, const float ETAquick, const float ETAslow);
+    LowPassFilterSensorWithMinMax(const float ETA, const byte pin, const unsigned int period, const float ETAquick, const float ETAslow);
     bool sense();
     
-    int envelopeMin() { return currentMin; }
-    int envelopeMax() { return currentMax; }
+    int envelopeMin() { return currentMax; }
+    int envelopeMax() { return currentMin; }
 };
 
 

@@ -115,7 +115,7 @@ String ChimeBluetooth::readATResult(String cmd) {
 
   // remove additional null
   String str = String(serialdata);
-  str.remove(str.length()-1);
+  str.remove(str.length());
 
   DEBUG_PRINT(F("read AT result:")); DEBUG_PRINTLN(str);
   

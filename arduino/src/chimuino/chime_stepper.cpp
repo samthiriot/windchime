@@ -5,9 +5,9 @@
 #include "debug.h"
 
 ChimeStepper::ChimeStepper(
-              unsigned short _steps, 
-              unsigned short _pin1, unsigned short _pin2, unsigned short _pin3, unsigned short _pin4):
-      motor(_steps, _pin1,_pin3,_pin2,_pin4) {
+      unsigned short _steps, 
+      unsigned short _pin1, unsigned short _pin2, unsigned short _pin3, unsigned short _pin4):
+        motor(_steps, _pin1,_pin3,_pin2,_pin4) {
 
   steps = _steps;
   pin1 = _pin1;
@@ -26,9 +26,9 @@ void ChimeStepper::setup() {
     pinMode(pin3, OUTPUT);
     pinMode(pin4, OUTPUT);
 
-    pull_light = steps/11;
-    pull_medium = steps/10;
-    pull_strong = steps/9;
+    pull_light = steps/10;
+    pull_medium = steps/9;
+    pull_strong = steps/8;
 
     DEBUG_PRINTLN("init: going to position free");
  

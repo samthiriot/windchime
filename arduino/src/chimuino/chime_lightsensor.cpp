@@ -23,11 +23,8 @@ void ChimeLightSensor::perceive() {
     // the sensor was updated
 
     // ... update the threshold!
-    darkThreshold = sensor.envelopeMin() + (float(factorThreshold)/100.) * (sensor.envelopeMax() - sensor.envelopeMin());
+    darkThreshold = sensor.envelopeMin() + int(float(factorThreshold) * float(sensor.envelopeMax() - sensor.envelopeMin()) / 100.);
   
-    #ifdef DEBUG
-    debugSerial();
-    #endif
   }
 }
 

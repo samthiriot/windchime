@@ -65,7 +65,7 @@ void ChimeClock::debugSerial() {
   #ifdef DEBUG
   time_t now = RTC.get();
     Serial << F("Time is: ")
-           << _DEC(year(now))  << '-' << _DEC(month(now)) << '-' << _DEC(year(now)) << ' '
+           << _DEC(year(now))  << '-' << _DEC(month(now)) << '-' << _DEC(day(now)) << ' '
            << _DEC(hour(now)) << ':' << _DEC(minute(now)) << ':' << _DEC(second(now)) 
            << endl;
   #endif
