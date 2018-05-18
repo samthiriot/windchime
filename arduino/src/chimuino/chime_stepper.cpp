@@ -5,9 +5,9 @@
 #include "debug.h"
 
 ChimeStepper::ChimeStepper(
-      unsigned short _steps, 
-      unsigned short _pin1, unsigned short _pin2, unsigned short _pin3, unsigned short _pin4):
-        motor(_steps, _pin1,_pin3,_pin2,_pin4) {
+              unsigned short _steps, 
+              unsigned short _pin1, unsigned short _pin2, unsigned short _pin3, unsigned short _pin4):
+      motor(_steps, _pin1,_pin3,_pin2,_pin4) {
 
   steps = _steps;
   pin1 = _pin1;

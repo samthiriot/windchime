@@ -71,10 +71,8 @@ bool wasDark = false;                                                     // tru
     void setupRandom() {
         pinMode(RANDOM_PIN, INPUT);                                           // this pin is used to init the random network generator
         int seed = analogRead(RANDOM_PIN);
-      #ifdef DEBUG_SERIAL
-        Serial.print("init: random seed is "); Serial.print(seed); Serial.println();
-      #endif
         randomSeed(seed);
+        DEBUG_PRINT("init: random seed is "); DEBUG_PRINT(seed); DEBUG_PRINTLN();
     }
 
 bool ambiance = true;             // play sound from time to time 
