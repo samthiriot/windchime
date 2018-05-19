@@ -123,6 +123,8 @@ String ChimeBluetooth::readATResult(String cmd) {
 }
 
 void ChimeBluetooth::processGet(char* str) {
+  DEBUG_PRINT(F("bluetooth: received GET "));
+  DEBUG_PRINTLN(str);
   // call each listener and submit this possibility
   for (int i=0; i<listeners_count; i++) {
     BluetoothListenerAnswer answer = listeners[i]->processBluetoothGet(str, &BTSerial);  
@@ -143,6 +145,8 @@ void ChimeBluetooth::processGet(char* str) {
 }
 
 void ChimeBluetooth::processSet(char* str) {
+  DEBUG_PRINT(F("bluetooth: received SET "));
+  DEBUG_PRINTLN(str);
   // call each listener and submit this possibility
   for (int i=0; i<listeners_count; i++) {
     BluetoothListenerAnswer answer = listeners[i]->processBluetoothSet(str, &BTSerial);  
@@ -162,6 +166,8 @@ void ChimeBluetooth::processSet(char* str) {
 }
 
 void ChimeBluetooth::processDo(char* str) {
+  DEBUG_PRINT(F("bluetooth: received DO "));
+  DEBUG_PRINTLN(str);
   // call each listener and submit this possibility
   for (int i=0; i<listeners_count; i++) {
     BluetoothListenerAnswer answer = listeners[i]->processBluetoothDo(str, &BTSerial);  
