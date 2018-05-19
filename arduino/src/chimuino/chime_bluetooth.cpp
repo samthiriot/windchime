@@ -31,6 +31,9 @@ void ChimeBluetooth::setup() {
   
   BTSerial.listen();                                          // by default, listen to bluetooth serial
 
+  execAT(F("AT+RESET"));
+  delay(200);
+  
   // define setup name
   String bluetoothName = readATResult(F("AT+NAME?"));   // get the current name of the module
   // TODO why does that execute ? 
@@ -207,13 +210,13 @@ void ChimeBluetooth::reactToCommand() {
  */
 void ChimeBluetooth::readAndReact() {
 
-  BTSerial.listen();
+  //BTSerial.listen();
   
   char c;
   while(BTSerial.available()) {                             // there is something to read
     c = (byte)BTSerial.read();                              // read it
     if (c == '\n') {                                        // detect the end of a command
-      received[ receivedCount ] = '\0';   // terminate the accumulated string
+      received[ receivedCount ] = '\0';                     // terminate the accumulated string
       //bluetoothCommandAvailable = true;                     // the command is available for processing
       reactToCommand();                            // use the command
       receivedCount = 0;                           // restart reading from scratch
@@ -221,6 +224,7 @@ void ChimeBluetooth::readAndReact() {
       received[ receivedCount++ ] = c;    // accumulate the character 
     } else {                                                // OOPS, seems like we have overflowed our buffer capabilities
       DEBUG_PRINTLN(F("ERROR: OVERFLOW OF BLUETOOTH BUFFER !?"));     // warn 
+      DEBUG_PRINTLN(received);
       receivedCount = 0;                           // reset the reading (will probably not lead to something that good)
     }
   }
