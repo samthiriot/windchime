@@ -107,12 +107,17 @@ BluetoothListenerAnswer ChimeClock::processBluetoothSet(char* str, SoftwareSeria
     time_t t;     // the time to forge
     tmElements_t tm;
 
-    int year;
+    int year, month, day, hour, minute, second;
     sscanf(str + 9,                                                  // decode received datetime
            "%u-%u-%u %u:%u:%u", 
-           &year, &tm.Month, &tm.Day, &tm.Hour, &tm.Minute, &tm.Second);    
+           &year, &month, &day, &hour, &minute, &second);    
 
     tm.Year = CalendarYrToTm(year);
+    tm.Month = month;
+    tm.Day = day;
+    tm.Hour = hour;
+    tm.Minute = minute;
+    tm.Second = second;
     t = makeTime(tm);
 
     // TODO reject invalid time 
