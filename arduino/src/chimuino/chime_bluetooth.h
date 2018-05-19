@@ -10,7 +10,7 @@
 #include <SoftwareSerial.h>
 
 
-#define BLUETOOTH_LONGEST_COMMAND 50                             // the longest command we have to read (buffer size)
+#define BLUETOOTH_LONGEST_COMMAND 100                             // the longest command we have to read (buffer size)
 #define BLUETOOTH_MAX_LISTENERS 5
 
 enum BluetoothListenerAnswer {

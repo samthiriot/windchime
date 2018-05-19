@@ -31,6 +31,8 @@ void ChimeBluetooth::setup() {
   
   BTSerial.listen();                                          // by default, listen to bluetooth serial
 
+  bluetoothConsume();
+
   execAT(F("AT+RESET"));
   delay(200);
   
@@ -190,6 +192,8 @@ void ChimeBluetooth::processDo(char* str) {
 }
 
 void ChimeBluetooth::reactToCommand() {
+  DEBUG_PRINT(F("bluetooth: processing command "));
+  DEBUG_PRINTLN(received);
   // received
   // receivedCount
   if (strncmp_P(received, PSTR("GET "), 4) == 0) {
@@ -202,6 +206,8 @@ void ChimeBluetooth::reactToCommand() {
   } else {
     DEBUG_PRINT(F("ERROR: command ignored "));
     DEBUG_PRINTLN(received);
+    bluetoothConsume();
+    receivedCount = 0;
   }
 }
 
@@ -216,10 +222,12 @@ void ChimeBluetooth::readAndReact() {
   while(BTSerial.available()) {                             // there is something to read
     c = (byte)BTSerial.read();                              // read it
     if (c == '\n') {                                        // detect the end of a command
-      received[ receivedCount ] = '\0';                     // terminate the accumulated string
-      //bluetoothCommandAvailable = true;                     // the command is available for processing
-      reactToCommand();                            // use the command
-      receivedCount = 0;                           // restart reading from scratch
+      if (receivedCount > 0) {
+        received[ receivedCount ] = '\0';                     // terminate the accumulated string
+        //bluetoothCommandAvailable = true;                     // the command is available for processing
+        reactToCommand();                            // use the command
+        receivedCount = 0;                           // restart reading from scratch
+      }
     } else if (receivedCount < BLUETOOTH_LONGEST_COMMAND-1) {
       received[ receivedCount++ ] = c;    // accumulate the character 
     } else {                                                // OOPS, seems like we have overflowed our buffer capabilities
