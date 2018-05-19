@@ -132,23 +132,12 @@ export class ChimuinoProvider {
 	this.sendMessage("SET DATETIME "+now.getFullYear()+"-"+now.getMonth()+"-"+now.getDate()+" "+now.getHours()+":"+now.getMinutes()+":"+now.getSeconds());
   }
 
-  setAlarm1(hour:integer, minutes:integer, enabled:boolean) {
+  setAlarm1(hour:number, minutes:number, enabled:boolean) {
   	this.sendMessage("SET ALARM1 "+hour+":"+minutes+" "+(enabled?"1":"0"));
   }
 
-  /*
-
-var bytesToString = function (bytes) {
-    var bytesAsString = "";
-    for (var i = 0; i < bytes.length; i++) {
-        bytesAsString += String.fromCharCode(bytes[i]);
-    }
-    return bytesAsString;
-};
-
-  */
-	writeVersion() {
-		this.sendMessage("GET VERSION");
+  writeVersion() {
+	this.sendMessage("GET VERSION");
 	  	/*
 
 		this.bluetooth.write('GET VERSION\n').then(
