@@ -47,8 +47,7 @@ void ChimeSoundSensor::setup() {
 
   DEBUG_PRINTLN(F("init: sound sensor..."));
 
-  pinMode(pin, INPUT); 
-
+  sensor.setup(-1, -1); // we have no f idea of what are the min and max for such a sensor !
   sensor.sense();
 
   DEBUG_PRINTLN(F("init: sound sensor ok"));

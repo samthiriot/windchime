@@ -45,8 +45,7 @@ void ChimeLightSensor::setup() {
 
   DEBUG_PRINTLN(F("init: light sensor..."));
 
-  pinMode(pin, INPUT); 
-
+  sensor.setup(0, -1); // we assume no light means 0, but have no idea of the max
   sensor.sense();
 
   DEBUG_PRINTLN(F("init: light sensor ok"));

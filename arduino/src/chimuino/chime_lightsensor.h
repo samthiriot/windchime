@@ -3,14 +3,14 @@
 #define CHIME_LIGHTSENSOR_H
 
 // in milliseconds
-#define CHIME_LIGHTSENSOR_MEASURES_FREQUENCY 100 
+#define CHIME_LIGHTSENSOR_MEASURES_FREQUENCY 1000 
 #define CHIME_LIGHTSENSOR_MEASURES_ETA 0.5 
 
 #define CHIME_LIGHTSENSOR_ENVELOPE_ETA_SLOW 0.000001
 #define CHIME_LIGHTSENSOR_ENVELOPE_ETA_QUICK 0.999
 
 // default light threshold
-#define PHOTOCELL_NIGHT_THRESHOLD 550                                     // TODO detect threshold
+#define PHOTOCELL_NIGHT_THRESHOLD 30                                     // TODO detect threshold
 
 #include "sensors_filtering.h"
 

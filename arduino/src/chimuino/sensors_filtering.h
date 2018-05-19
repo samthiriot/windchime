@@ -24,7 +24,7 @@ class LowPassFilterSensor {
    
     // constructor
     LowPassFilterSensor(const float ETA, const byte pin, const unsigned int period);
-
+    void setup();
     /**
      * Returns true if something was sensed, false if it was not yet time
      */
@@ -42,19 +42,23 @@ class LowPassFilterSensorWithMinMax: public LowPassFilterSensor {
   
   private:
   
-    float ETAquick = 90;
-    float ETAslow = 10;
+    float ETAquick = 0.95;
+    float ETAslow = 0.000001;
   
-    int currentMin;
-    int currentMax;
+    float currentMin;
+    float currentMax;
     
   public:
   
-    LowPassFilterSensorWithMinMax(const float ETA, const byte pin, const unsigned int period, const float ETAquick, const float ETAslow);
+    LowPassFilterSensorWithMinMax(const float ETA, const byte pin, const unsigned int period, 
+                                  const float ETAslow, const float ETAquick
+                                  );
+    void setup(int initialMin = -1, int initialMax = -1);
     bool sense();
     
-    int envelopeMin() { return currentMax; }
-    int envelopeMax() { return currentMin; }
+    int envelopeMin() { return int(currentMin); }
+    int envelopeMax() { return int(currentMax); }
+    bool isMeaningful() { return int(currentMax - currentMin) > 10; }
 };
 
 
