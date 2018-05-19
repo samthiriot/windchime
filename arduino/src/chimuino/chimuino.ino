@@ -65,7 +65,7 @@ bool wasDark = false;                                                     // tru
 
 // +---------------------------------------------+
 // |      RANDOM                                 |
-// |            alea yacta est                   |
+// |            alea jacta est                   |
 // +---------------------------------------------+
     
     
@@ -182,19 +182,19 @@ void loop() {
     int r = random(0,100);
     if (r <= 60) { 
       current_mode = SILENCE;
-      next_planned_action = millis() + random(60*1000l,15*60*1000l);
+      next_planned_action = millis() + random(10,60)*1000l;
       DEBUG_PRINT(F("a bit of silence for ")); DEBUG_PRINTLN((next_planned_action - millis())/1000);
     } else if (r <= 65) {
       current_mode = AMBIANCE_REVEIL;
-      next_planned_action = millis() + random(4*60*1000l,15*60*1000l);
+      next_planned_action = millis() + random(4*60,15*60)*1000l;
       DEBUG_PRINT(F("mood strong in ")); DEBUG_PRINTLN((next_planned_action - millis())/1000);
     } else if (r <= 75) {
       current_mode = AMBIANCE_PREREVEIL;
-      next_planned_action = millis() + random(4*60*1000l,10*60*1000l);  
+      next_planned_action = millis() + random(4*60,10*60)*1000l;  
       DEBUG_PRINT(F("mood medium in ")); DEBUG_PRINTLN((next_planned_action - millis())/1000);
     } else {
       current_mode = AMBIANCE_TINTEMENT;
-      next_planned_action = millis() + random(1*10*1000l,7*60*1000l);
+      next_planned_action = millis() + random(1*10,7*60)*1000l;
       DEBUG_PRINT(F("mood slight in ")); DEBUG_PRINTLN((next_planned_action - millis())/1000);
     }
   }
@@ -206,28 +206,32 @@ void loop() {
   // INTENTION
 
   // maybe it's time to apply what we had planned?
-  if (next_planned_action >= millis()) {
+  if (next_planned_action <= millis()) {
     // time to act
     switch (current_mode) {
       case NOTHING:
       case SILENCE:
+          current_mode = NOTHING; 
           break;
       case PREALARM1:
       case PREALARM2:
       case AMBIANCE_PREREVEIL:
-        stepper.doPreReveil();
-        break;
+          stepper.doPreReveil();
+          current_mode = NOTHING;
+          break;
       case ALARM1:
       case ALARM2:
       case AMBIANCE_REVEIL:
       case WELCOME_SUN:
-        stepper.doReveil();
-        break;
+          stepper.doReveil();
+          current_mode = NOTHING;
+          break;
       case AMBIANCE_TINTEMENT:
-        stepper.doTintement();
-        break;
+          stepper.doTintement();
+          current_mode = NOTHING;
+          break;
     }
-    
+   
   }
   
   
