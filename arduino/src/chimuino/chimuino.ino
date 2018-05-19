@@ -4,6 +4,7 @@
 
 #include "debug.h"
 
+#include "chime.h"
 #include "chime_bluetooth.h"
 #include "chime_stepper.h"
 #include "chime_clock.h"
@@ -81,25 +82,23 @@ bool ambiance = true;             // play sound from time to time
 
 unsigned long next_planned_action = millis();
 
-enum mode {
-  
-  NOTHING,      // doing nothing
 
-  PREALARM1,
-  PREALARM2,
-  
-  ALARM1,       // being ringing alam1
-  ALARM2,       //               alarm2
-  
-  SILENCE,      // do not play sound
-
-  CALIBRATING,  // calibration of sound is ongoing
-  
-  AMBIANCE_TINTEMENT,    // hear a very light bell sound
-  AMBIANCE_PREREVEIL,    // hear the bell, enough to be conscious of their existence
-  AMBIANCE_REVEIL        // hear the bells so much it should awake you
+char* mode2str(enum mode v) {
+  switch (v) {
+    case NOTHING:             return ("nothing");
+    case WELCOME_SUN:         return ("welcome sun");
+    case PREALARM1:           return ("prealarm 1");
+    case PREALARM2:           return ("prealarm 2");
+    case ALARM1:              return ("alarm 1");
+    case ALARM2:              return ("alarm 2");
+    case SILENCE:             return ("silence");
+    case CALIBRATING:         return ("calibration");
+    case AMBIANCE_TINTEMENT:  return ("mood: tintement");
+    case AMBIANCE_PREREVEIL:  return ("mood: prereveil");
+    case AMBIANCE_REVEIL:     return ("mood: reveil");
+    default:                  return ("?");
+  };
 };
-
 
 mode current_mode = NOTHING;
 
@@ -152,23 +151,30 @@ void loop() {
     soundSensor.debugSerial();
     lightSensor.debugSerial();
     lastDisplayDebug = millis();
+    DEBUG_PRINT(F("mode: ")); DEBUG_PRINTLN(mode2str(current_mode));
+    if (current_mode != NOTHING) {
+      DEBUG_PRINT(F("next action in: ")); DEBUG_PRINTLN((next_planned_action - millis())/1000);
+    }
   }
 
   // DESIRE 
 
   // if an alarm should be rang, then override wathever current setting
-  if (alarm1.shouldPrering())      { if (current_mode != PREALARM1)  { current_mode = PREALARM1;   next_planned_action = millis() + random(1*60*1000l,5*60*1000l); } }
-  else if (alarm2.shouldPrering()) { if (current_mode != PREALARM2)  { current_mode = PREALARM2;   next_planned_action = millis() + random(1*60*1000l,5*60*1000l); } }
-  else if (alarm1.shouldRing())    { if (current_mode != ALARM1)     { current_mode = ALARM1;      next_planned_action = millis() + random(1*60*1000l,5*60*1000l); } }
-  else if (alarm2.shouldRing())    { if (current_mode != ALARM2)     { current_mode = ALARM2;      next_planned_action = millis() + random(1*60*1000l,5*60*1000l); } }
+  if (alarm1.shouldPrering())      { if (current_mode != PREALARM1)  { current_mode = PREALARM1;   next_planned_action = millis() + random(1*60*1000l,5*60*1000l); DEBUG_PRINTLN("alarm1 prering"); } }
+  else if (alarm2.shouldPrering()) { if (current_mode != PREALARM2)  { current_mode = PREALARM2;   next_planned_action = millis() + random(1*60*1000l,5*60*1000l); DEBUG_PRINTLN("alarm2 prering"); } }
+  else if (alarm1.shouldRing())    { if (current_mode != ALARM1)     { current_mode = ALARM1;      next_planned_action = millis() + random(1*60*1000l,5*60*1000l); DEBUG_PRINTLN("alarm1 ring"); } }
+  else if (alarm2.shouldRing())    { if (current_mode != ALARM2)     { current_mode = ALARM2;      next_planned_action = millis() + random(1*60*1000l,5*60*1000l); DEBUG_PRINTLN("alarm2 ring"); } }
   else if (current_mode == PREALARM1 or current_mode == PREALARM2 or current_mode == ALARM1 or current_mode == ALARM2) {
     // no alarm asked anymore, so it's not our current mode anymore
     current_mode = NOTHING;
+    DEBUG_PRINTLN(F("no more alarm."));
   }
 
   // if light just came, then celebrate it
   if (current_mode == NOTHING and !isDark and wasDark) {
-      current_mode = AMBIANCE_REVEIL;
+      current_mode = WELCOME_SUN;
+      DEBUG_PRINTLN(F("welcoming the sun ;-)"));
+      next_planned_action = millis();
   }
 
   // if nothing happens and we can play ambiance
@@ -176,16 +182,20 @@ void loop() {
     int r = random(0,100);
     if (r <= 60) { 
       current_mode = SILENCE;
-      next_planned_action = millis() + random(4*60*1000l,15*60*1000l);
+      next_planned_action = millis() + random(60*1000l,15*60*1000l);
+      DEBUG_PRINT(F("a bit of silence for ")); DEBUG_PRINTLN((next_planned_action - millis())/1000);
     } else if (r <= 65) {
       current_mode = AMBIANCE_REVEIL;
       next_planned_action = millis() + random(4*60*1000l,15*60*1000l);
+      DEBUG_PRINT(F("mood strong in ")); DEBUG_PRINTLN((next_planned_action - millis())/1000);
     } else if (r <= 75) {
       current_mode = AMBIANCE_PREREVEIL;
       next_planned_action = millis() + random(4*60*1000l,10*60*1000l);  
+      DEBUG_PRINT(F("mood medium in ")); DEBUG_PRINTLN((next_planned_action - millis())/1000);
     } else {
       current_mode = AMBIANCE_TINTEMENT;
       next_planned_action = millis() + random(1*10*1000l,7*60*1000l);
+      DEBUG_PRINT(F("mood slight in ")); DEBUG_PRINTLN((next_planned_action - millis())/1000);
     }
   }
   
@@ -199,23 +209,25 @@ void loop() {
   if (next_planned_action >= millis()) {
     // time to act
     switch (current_mode) {
+      case NOTHING:
       case SILENCE:
           break;
       case PREALARM1:
       case PREALARM2:
       case AMBIANCE_PREREVEIL:
-        //stepper.doPreReveil();
+        stepper.doPreReveil();
         break;
       case ALARM1:
       case ALARM2:
       case AMBIANCE_REVEIL:
-        //stepper.doReveil();
+      case WELCOME_SUN:
+        stepper.doReveil();
         break;
       case AMBIANCE_TINTEMENT:
-        //stepper.doTintement();
+        stepper.doTintement();
         break;
     }
-    current_mode = NOTHING;
+    
   }
   
   
