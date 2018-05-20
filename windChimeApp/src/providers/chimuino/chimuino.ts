@@ -45,6 +45,8 @@ export class ChimuinoProvider {
 
   sendMessage(message:string) {
 
+  		message = message.trim()+'\n';
+
 		//this.ble.stopScan();
 		this.ble.connect(this._device.id).subscribe(
 			(data) => {
@@ -129,11 +131,24 @@ export class ChimuinoProvider {
 
   	// .. adapt datetime
   	var now = new Date;
-	this.sendMessage("SET DATETIME "+now.getFullYear()+"-"+now.getMonth()+"-"+now.getDate()+" "+now.getHours()+":"+now.getMinutes()+":"+now.getSeconds());
+	this.sendMessage("SET DATETIME "+now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate()+" "+now.getHours()+":"+now.getMinutes()+":"+now.getSeconds());
   }
 
-  setAlarm1(hour:number, minutes:number, enabled:boolean) {
-  	this.sendMessage("SET ALARM1 "+hour+":"+minutes+" "+(enabled?"1":"0"));
+  setAmbiance(enabled:boolean) {
+  	this.sendMessage(
+  		"SET AMBIANCE "+
+  		(enabled?"1":"0")
+  		);
+  }
+
+  setAlarm1(hour:number, minutes:number, durationSoft:number, durationStrong:number, enabled:boolean, 
+  			sunday:boolean, monday:boolean, tuesday:boolean, wednesday:boolean, thursday:boolean, friday:boolean, saterday:boolean) {
+  	this.sendMessage(
+  		"SET ALARM1 "+hour+":"+minutes+" "+
+  		durationSoft + " " + durationStrong + " "+
+  		(enabled?"1":"0")+" "+
+  		(sunday?"1":"0")+(monday?"1":"0")+(tuesday?"1":"0")+(wednesday?"1":"0")+(thursday?"1":"0")+(friday?"1":"0")+(saterday?"1":"0")
+  		);
   }
 
   writeVersion() {

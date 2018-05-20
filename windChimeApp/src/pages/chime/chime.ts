@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { NavController } from 'ionic-angular';
 import { Storage } from '@ionic/storage';
+import { ChimuinoProvider } from '../../providers/chimuino/chimuino';
 
 @Component({
   selector: 'page-chime',
@@ -12,7 +13,8 @@ export class ChimePage {
   private _chimeLevel:number = 50;
 
   constructor(public navCtrl: NavController,
-  			  private storage: Storage) {
+  			   private storage: Storage,
+           private chimuino: ChimuinoProvider) {
 
 	this.storage.get('chime-activated')
 				.then((val) => { this._isChimeEnabled = val; } );
@@ -23,6 +25,7 @@ export class ChimePage {
   set chimeEnabled(value:boolean) {
   	this._isChimeEnabled = value;
   	this.storage.set('chime-activated', value);
+    this.chimuino.setAmbiance(this._isChimeEnabled);
   }
 
   get chimeEnabled():boolean {

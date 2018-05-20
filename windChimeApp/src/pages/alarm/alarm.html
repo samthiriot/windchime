@@ -21,6 +21,15 @@
 	  <ion-datetime displayFormat="HH:mm" [(ngModel)]="alarm1hour"></ion-datetime>
 	</ion-item>
 
+  <ion-range [(ngModel)]="alarm1soft" min="0" max="30" >
+        <ion-icon range-left small name="volume-down"></ion-icon>
+        <ion-icon range-right name="volume-up"></ion-icon>
+  </ion-range>
+  <ion-range [(ngModel)]="alarm1strong" min="5" max="30">
+        <ion-icon range-left small name="volume-down"></ion-icon>
+        <ion-icon range-right name="volume-up"></ion-icon>
+  </ion-range>
+
 	<h2>Alarm 2</h2>
 
     <ion-item>
