@@ -82,24 +82,6 @@ bool ambiance = true;             // play sound from time to time
 
 unsigned long next_planned_action = millis();
 
-
-char* mode2str(enum mode v) {
-  switch (v) {
-    case NOTHING:             return ("nothing");
-    case WELCOME_SUN:         return ("welcome sun");
-    case PREALARM1:           return ("prealarm 1");
-    case PREALARM2:           return ("prealarm 2");
-    case ALARM1:              return ("alarm 1");
-    case ALARM2:              return ("alarm 2");
-    case SILENCE:             return ("silence");
-    case CALIBRATING:         return ("calibration");
-    case AMBIANCE_TINTEMENT:  return ("mood: tintement");
-    case AMBIANCE_PREREVEIL:  return ("mood: prereveil");
-    case AMBIANCE_REVEIL:     return ("mood: reveil");
-    default:                  return ("?");
-  };
-};
-
 mode current_mode = NOTHING;
 
 

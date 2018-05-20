@@ -1,3 +1,7 @@
+#ifndef CHIME_ALARM_H
+#define CHIME_ALARM_H
+
+#include "chime_bluetooth.h"
 
 enum mode {
   
@@ -21,3 +25,27 @@ enum mode {
 };
 
 char* mode2str(enum mode v);
+
+
+class Chime: public BluetoothCommandListener {
+  
+  private:
+
+    
+  public:
+    // constructor
+    Chime();
+    void setup();
+    
+    void debugSerial();
+    
+    // inherited
+    virtual BluetoothListenerAnswer processBluetoothGet(char* str, SoftwareSerial* BTSerial);
+    virtual BluetoothListenerAnswer processBluetoothSet(char* str, SoftwareSerial* BTSerial);
+    virtual BluetoothListenerAnswer processBluetoothDo(char* str, SoftwareSerial* BTSerial);
+
+
+};
+
+#endif // CHIME_ALARM_H
+
