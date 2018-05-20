@@ -2,6 +2,7 @@
 #include "chime_alarm.h"
 
 #include "debug.h"
+#include "utils.h"
 
 #include <Arduino.h>
 #include <Streaming.h>
@@ -18,10 +19,6 @@ void ChimeAlarm::setup() {
 
 
   DEBUG_PRINT(F("init: ")); DEBUG_PRINT(name); DEBUG_PRINTLN(F(" ok"));
-}
-
-char bool2char(bool b) {
-  return (b);
 }
 
 void ChimeAlarm::debugSerial() {
@@ -53,10 +50,6 @@ BluetoothListenerAnswer ChimeAlarm::processBluetoothGet(char* str, SoftwareSeria
   return NOT_CONCERNED;
 }
 
-
-bool char2bool(char c) {
-  return (c == '1');
-}
 
 BluetoothListenerAnswer ChimeAlarm::processBluetoothSet(char* str, SoftwareSerial* BTSerial) {
   

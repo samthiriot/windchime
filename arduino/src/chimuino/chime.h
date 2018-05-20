@@ -1,7 +1,17 @@
-#ifndef CHIME_ALARM_H
-#define CHIME_ALARM_H
+#ifndef CHIME_H
+#define CHIME_H
 
 #include "chime_bluetooth.h"
+#include "chime_soundsensor.h"
+#include "chime_stepper.h"
+
+// ... current version of the firmware.
+//     should be upgraded at update time
+#define FIRMWARE_VERSION "alpha_2018_05_16"
+
+
+
+
 
 enum mode {
   
@@ -30,12 +40,13 @@ char* mode2str(enum mode v);
 class Chime: public BluetoothCommandListener {
   
   private:
-
+    ChimeSoundSensor* soundSensor;
+    ChimeStepper* stepper;
     
   public:
     // constructor
     Chime();
-    void setup();
+    void setup(ChimeSoundSensor* soundSensor, ChimeStepper* stepper);
     
     void debugSerial();
     
@@ -47,5 +58,5 @@ class Chime: public BluetoothCommandListener {
 
 };
 
-#endif // CHIME_ALARM_H
+#endif // CHIME_H
 

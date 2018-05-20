@@ -11,13 +11,10 @@
 #include "chime_alarm.h"
 #include "chime_soundsensor.h"
 #include "chime_lightsensor.h"
+#include "ambiance.h"
 
 
 // sketch settings
-
-// ... current version of the firmware.
-//     should be upgraded at update time
-#define FIRMWARE_VERSION "alpha_2018_05_16"
 
 #define DEBUG_SERIAL true                                         // config debug
 
@@ -53,7 +50,11 @@ ChimeBluetooth bluetooth(BLUETOOTH_RX, BLUETOOTH_TX);
 
 ChimeSoundSensor soundSensor(SOUND_PIN);
 ChimeLightSensor lightSensor(PHOTOCELL_PIN);
-   
+
+Chime chime;
+
+Ambiance ambiance;
+
 // +---------------------------------------------+
 // |      LIGHT SENSOR                           |
 // |            simple but smart                 |
@@ -78,7 +79,6 @@ bool wasDark = false;                                                     // tru
         randomSeed(seed);
     }
 
-bool ambiance = true;             // play sound from time to time 
 
 unsigned long next_planned_action = millis();
 
@@ -101,13 +101,17 @@ void setup() {
   alarm1.setup();
   alarm2.setup();
   bluetooth.setup();
+  chime.setup(&soundSensor, &stepper);
+  ambiance.setup();
 
-  // ... add the chain of listeners
+  // ... add the chain of listeners, which might react to bluetooth commands
   bluetooth.addCommandInterpreter(&alarm1);
   bluetooth.addCommandInterpreter(&alarm2);
   bluetooth.addCommandInterpreter(&clock);
   bluetooth.addCommandInterpreter(&lightSensor);
   bluetooth.addCommandInterpreter(&soundSensor);
+  bluetooth.addCommandInterpreter(&chime);
+  bluetooth.addCommandInterpreter(&ambiance);
 
   DEBUG_PRINTLN("init: end.");
 
@@ -125,7 +129,9 @@ void loop() {
   
   bool isDark = lightSensor.isDark();   // is there any light around? 
   bool isQuiet = soundSensor.isQuiet(); // is there any sound around?
-  //DateTime now = clock.now();           // what time is it ? 
+  bool isAmbianceEnabled = ambiance.isEnabled(); // should we play ambiance?
+  
+  // TODO ask chime what 
   
   // write debug info (from time to time)
   if (millis() - lastDisplayDebug >= FREQUENCY_DEBUG) {
@@ -160,7 +166,7 @@ void loop() {
   }
 
   // if nothing happens and we can play ambiance
-  if (current_mode == NOTHING and ambiance and !isDark and isQuiet) {
+  if (current_mode == NOTHING and isAmbianceEnabled and !isDark and isQuiet) {
     int r = random(0,100);
     if (r <= 60) { 
       current_mode = SILENCE;

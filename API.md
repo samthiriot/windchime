@@ -90,6 +90,16 @@ Returns the version of the firmware running the arduino.
 
 
 # settings
+## ambiance
+
+Get and set the fact the chime plays sound from time to time to create a nice atmosphere. 
+
+Enabled is 1 or 0
+
+	> SET AMBIANCE 1
+	< AMBIANCE SET
+
+
 ## datetime
 
 Get and set the current datetime of the Chimuino, that is the clock time.

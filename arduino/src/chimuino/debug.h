@@ -1,6 +1,8 @@
 
 #define DEBUG
 
+#include <Arduino.h>
+
 #ifdef DEBUG
 
   #define DEBUG_SETUP()       Serial.begin(9600)
