@@ -1,5 +1,7 @@
 #include "chime.h"
 
+#include "debug.h"
+
 #include <Arduino.h>
 #include <Streaming.h>
 
@@ -37,11 +39,13 @@ void Chime::setup(ChimeSoundSensor* _soundSensor, ChimeStepper* _stepper) {
 BluetoothListenerAnswer Chime::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
   
   if (strncmp_P(str, PSTR("VERSION"), 7) == 0) {
-    
+
     *BTSerial << F("VERSION IS ") 
               << FIRMWARE_VERSION
               << endl;
-              
+
+    DEBUG_PRINTLN(F("SENT VERSION"));
+     
     return SUCCESS;
   } 
   

@@ -65,6 +65,9 @@ class ChimeBluetooth {
   public:
     ChimeBluetooth(unsigned short pinRX, unsigned short pinTX);
     void setup();
+
+    void sendDebug();
+    
     // reads commands from bluetooth, and reacts if relevant
     void readAndReact();
     // sends an AT command to the chip
