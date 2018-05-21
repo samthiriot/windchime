@@ -21,13 +21,29 @@
 	  <ion-datetime displayFormat="HH:mm" [(ngModel)]="alarm1hour"></ion-datetime>
 	</ion-item>
 
-  <ion-range [(ngModel)]="alarm1soft" min="0" max="30" >
-        <ion-icon range-left small name="volume-down"></ion-icon>
-        <ion-icon range-right name="volume-up"></ion-icon>
+<ion-list>
+  <ion-item>
+    <ion-label>Days</ion-label>
+    <ion-select [(ngModel)]="alarm1days" multiple="true" cancelText="Cancel" okText="Done!">
+      <ion-option value="sun">Sunday</ion-option>
+      <ion-option value="mon">Monday</ion-option>
+      <ion-option value="tue">Tuesday</ion-option>
+      <ion-option value="wed">Wednesday</ion-option>
+      <ion-option value="thu">Thursday</ion-option>
+      <ion-option value="fri">Friday</ion-option>
+      <ion-option value="sat">Saterday</ion-option>
+    </ion-select>
+  </ion-item>
+</ion-list>
+
+
+  <ion-range [(ngModel)]="alarm1soft" debounce="100" min="0" max="30" >
+        <ion-label range-left>0 min</ion-label>
+        <ion-label range-right>30 min</ion-label>
   </ion-range>
-  <ion-range [(ngModel)]="alarm1strong" min="5" max="30">
-        <ion-icon range-left small name="volume-down"></ion-icon>
-        <ion-icon range-right name="volume-up"></ion-icon>
+  <ion-range [(ngModel)]="alarm1strong" debounce="100" min="5" max="30">
+        <ion-label range-left>5 min</ion-label>
+        <ion-label range-right>30 min</ion-label>
   </ion-range>
 
 	<h2>Alarm 2</h2>

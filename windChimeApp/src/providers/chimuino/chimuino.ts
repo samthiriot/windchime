@@ -92,14 +92,14 @@ export class ChimuinoProvider {
 		);
   }
 
-  connect() {
-  	this.ble.enable().then( (enabled) => {
+	connect() {
+		this.ble.enable().then( (enabled) => {
 	  		return this.storage.get('bluetooth-id');	
 	  	}).then( (id) => {
 	  		let toast = this.toastCtrl.create({
-		      message: 'scanning for '+id+'...',
-		      duration: 3000,
-		      position: 'top'
+				message: 'scanning for '+id+'...',
+				duration: 3000,
+				position: 'top'
 		    });
 		    toast.present();
 	  		this.ble.scan(["FFE0"], 5).subscribe(
@@ -111,9 +111,9 @@ export class ChimuinoProvider {
 
 	  				// inform the user
 	  				let toast = this.toastCtrl.create({
-				      message: 'found device '+device.name+'...',
-				      duration: 3000,
-				      position: 'top'
+						message: 'found device '+device.name+'...',
+						duration: 3000,
+						position: 'top'
 				    });
 				    toast.present();
 
@@ -122,34 +122,46 @@ export class ChimuinoProvider {
 	  			}
 	  		);
 	  	})
- 
-  }
 
-  reactFirstConnection() {
+	}
 
-  	// send information to the Chimuino
+	reactFirstConnection() {
 
-  	// .. adapt datetime
-  	var now = new Date;
-	this.sendMessage("SET DATETIME "+now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate()+" "+now.getHours()+":"+now.getMinutes()+":"+now.getSeconds());
-  }
+		// send information to the Chimuino
 
-  setAmbiance(enabled:boolean) {
-  	this.sendMessage(
-  		"SET AMBIANCE "+
-  		(enabled?"1":"0")
-  		);
-  }
+		// .. adapt datetime
+		var now = new Date;
+		this.sendMessage("SET DATETIME "+now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate()+" "+now.getHours()+":"+now.getMinutes()+":"+now.getSeconds());
+	}
 
-  setAlarm1(hour:number, minutes:number, durationSoft:number, durationStrong:number, enabled:boolean, 
+	setAmbiance(enabled:boolean) {
+		this.sendMessage(
+			"SET AMBIANCE "+
+			(enabled?"1":"0")
+			);
+	}
+
+	setAlarm1(hour:number, minutes:number, durationSoft:number, durationStrong:number, enabled:boolean, 
+			sunday:boolean, monday:boolean, tuesday:boolean, wednesday:boolean, thursday:boolean, friday:boolean, saterday:boolean) {
+		
+		this.sendMessage(
+			"SET ALARM1 "+hour+":"+minutes+" "+
+			durationSoft + " " + durationStrong + " "+
+			(enabled?"1":"0")+" "+
+			(sunday?"1":"0")+(monday?"1":"0")+(tuesday?"1":"0")+(wednesday?"1":"0")+(thursday?"1":"0")+(friday?"1":"0")+(saterday?"1":"0")
+			);
+	}
+
+  	setAlarm2(hour:number, minutes:number, durationSoft:number, durationStrong:number, enabled:boolean, 
   			sunday:boolean, monday:boolean, tuesday:boolean, wednesday:boolean, thursday:boolean, friday:boolean, saterday:boolean) {
-  	this.sendMessage(
-  		"SET ALARM1 "+hour+":"+minutes+" "+
-  		durationSoft + " " + durationStrong + " "+
-  		(enabled?"1":"0")+" "+
-  		(sunday?"1":"0")+(monday?"1":"0")+(tuesday?"1":"0")+(wednesday?"1":"0")+(thursday?"1":"0")+(friday?"1":"0")+(saterday?"1":"0")
-  		);
-  }
+	  	
+	  	this.sendMessage(
+	  		"SET ALARM2 "+hour+":"+minutes+" "+
+	  		durationSoft + " " + durationStrong + " "+
+	  		(enabled?"1":"0")+" "+
+	  		(sunday?"1":"0")+(monday?"1":"0")+(tuesday?"1":"0")+(wednesday?"1":"0")+(thursday?"1":"0")+(friday?"1":"0")+(saterday?"1":"0")
+	  		);
+	  }
 
   writeVersion() {
 	this.sendMessage("GET VERSION");
