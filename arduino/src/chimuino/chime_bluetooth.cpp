@@ -234,8 +234,7 @@ void ChimeBluetooth::readAndReact() {
     } else if (c == '\0') {
       // ignore some chars
     } else if (receivedCount < BLUETOOTH_LONGEST_COMMAND-1) {
-      //DEBUG_PRINT(F("bluetooth: added to command"));
-      DEBUG_PRINTLN(receivedCount);
+      //DEBUG_PRINT(F("bluetooth: added to command")); DEBUG_PRINTLN(receivedCount);
       received[ receivedCount++ ] = c;    // accumulate the character 
     } else {                                                // OOPS, seems like we have overflowed our buffer capabilities
       DEBUG_PRINTLN(F("ERROR: OVERFLOW OF BLUETOOTH BUFFER !?"));     // warn 
