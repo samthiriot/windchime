@@ -6,7 +6,7 @@
 #include "debug.h"
 #include "utils.h"
 
-Ambiance::Ambiance() {
+Ambiance::Ambiance(): BluetoothCommandListener() {
 
 }
 
@@ -27,10 +27,10 @@ BluetoothListenerAnswer Ambiance::processBluetoothGet(char* str, SoftwareSerial*
 }
 
 BluetoothListenerAnswer Ambiance::processBluetoothSet(char* str, SoftwareSerial* BTSerial) {
-
+  
   if (strncmp_P(str, PSTR("AMBIANCE "), 9) == 0) {
 
-    DEBUG_PRINT(F("received ambiance: ")); DEBUG_PRINTLN(str);
+    DEBUG_PRINTLN(F("Ambiance changed by bluetooth"));
 
     char cEnabled;
 

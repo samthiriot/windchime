@@ -138,14 +138,14 @@ void ChimeBluetooth::processGet(char* str) {
         // finished :-)
         return;
       case FAILURE:
-        DEBUG_PRINT(F("ERROR: failed processing bluetooth GET")); DEBUG_PRINTLN(str);
+        DEBUG_PRINT(F("ERROR: failed processing bluetooth GET ")); DEBUG_PRINTLN(str);
         break;
       case NOT_CONCERNED:
         break;  
     }
   }
   // no one used our message
-  DEBUG_PRINT(F("WARN: failed processing bluetooth GET"));
+  DEBUG_PRINT(F("WARN: no one used bluetooth GET "));
   DEBUG_PRINTLN(str);
 }
 
@@ -159,14 +159,14 @@ void ChimeBluetooth::processSet(char* str) {
       case SUCCESS:
         return;
       case FAILURE:
-        DEBUG_PRINT(F("ERROR: failed processing bluetooth GET")); DEBUG_PRINTLN(str);
+        DEBUG_PRINT(F("ERROR: failed processing bluetooth SET ")); DEBUG_PRINTLN(str);
         break;
       case NOT_CONCERNED:
         break;  
     }
   }
   // no one used our message
-  DEBUG_PRINT(F("WARN: failed processing bluetooth GET"));
+  DEBUG_PRINT(F("WARN: no one used bluetooth command SET "));
   DEBUG_PRINTLN(str);
 }
 
@@ -180,14 +180,14 @@ void ChimeBluetooth::processDo(char* str) {
       case SUCCESS:
         return;
       case FAILURE:
-        DEBUG_PRINT(F("ERROR: failed processing bluetooth GET")); DEBUG_PRINTLN(str);
+        DEBUG_PRINT(F("ERROR: failed processing bluetooth DO ")); DEBUG_PRINTLN(str);
         break;
       case NOT_CONCERNED:
         break;  
     }
   }
   // no one used our message
-  DEBUG_PRINT(F("WARN: failed processing bluetooth GET"));
+  DEBUG_PRINT(F("WARN: no one used bluetooth command DO "));
   DEBUG_PRINTLN(str);
 }
 
@@ -221,14 +221,21 @@ void ChimeBluetooth::readAndReact() {
   char c;
   while(BTSerial.available()) {                             // there is something to read
     c = (byte)BTSerial.read();                              // read it
+    //DEBUG_PRINT(F("bluetooth: received "));
+    //DEBUG_PRINTLN(c);
     if (c == '\n') {                                        // detect the end of a command
       if (receivedCount > 0) {
+        //DEBUG_PRINTLN(F("bluetooth: end of command"));
         received[ receivedCount ] = '\0';                     // terminate the accumulated string
         //bluetoothCommandAvailable = true;                     // the command is available for processing
         reactToCommand();                            // use the command
         receivedCount = 0;                           // restart reading from scratch
       }
+    } else if (c == '\0') {
+      // ignore some chars
     } else if (receivedCount < BLUETOOTH_LONGEST_COMMAND-1) {
+      //DEBUG_PRINT(F("bluetooth: added to command"));
+      DEBUG_PRINTLN(receivedCount);
       received[ receivedCount++ ] = c;    // accumulate the character 
     } else {                                                // OOPS, seems like we have overflowed our buffer capabilities
       DEBUG_PRINTLN(F("ERROR: OVERFLOW OF BLUETOOTH BUFFER !?"));     // warn 

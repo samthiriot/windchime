@@ -19,7 +19,7 @@
 #define DEBUG_SERIAL true                                         // config debug
 
 // frequency for displaying debug messages on the state
-#define FREQUENCY_DEBUG 2000
+#define FREQUENCY_DEBUG 5000
 long lastDisplayDebug = millis();
 
 
@@ -135,10 +135,13 @@ void loop() {
   
   // write debug info (from time to time)
   if (millis() - lastDisplayDebug >= FREQUENCY_DEBUG) {
+    lastDisplayDebug = millis();
+    
     clock.debugSerial();
     soundSensor.debugSerial();
     lightSensor.debugSerial();
-    lastDisplayDebug = millis();
+    ambiance.debugSerial();
+    
     DEBUG_PRINT(F("mode: ")); DEBUG_PRINTLN(mode2str(current_mode));
     if (current_mode != NOTHING) {
       DEBUG_PRINT(F("next action in: ")); DEBUG_PRINTLN((next_planned_action - millis())/1000);
@@ -185,7 +188,7 @@ void loop() {
       next_planned_action = millis() + random(1*10,7*60)*1000l;
       DEBUG_PRINT(F("mood slight in ")); DEBUG_PRINTLN((next_planned_action - millis())/1000);
     }
-  }
+  } // TODO disable planned ambiance if any ! else if (isAmbianceEnabled and current_mode == AMBIANCE_PREREVEIL
   
   
   // MEMORIZE THE WORLD
