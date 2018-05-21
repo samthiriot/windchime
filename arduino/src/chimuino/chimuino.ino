@@ -116,6 +116,7 @@ void setup() {
   DEBUG_PRINTLN("init: end.");
 
 }
+char truc[] = "GET VERSION\n";
 
 void loop() {
 
@@ -146,6 +147,8 @@ void loop() {
     if (current_mode != NOTHING) {
       DEBUG_PRINT(F("next action in: ")); DEBUG_PRINTLN((next_planned_action - millis())/1000);
     }
+
+    //bluetooth.sendDebug();
   }
 
   // DESIRE 

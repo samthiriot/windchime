@@ -78,7 +78,7 @@ float ChimeClock::getTemperature() {
 
 BluetoothListenerAnswer ChimeClock::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
   
-  if (strncmp_P(str, PSTR("DATETIME"), 8) == 0) {
+  if (strncmp_P(str, PSTR("TIME"), 8) == 0) {
 
     time_t now = RTC.get();
     *BTSerial << F("DATETIME IS ") 
@@ -99,32 +99,56 @@ BluetoothListenerAnswer ChimeClock::processBluetoothGet(char* str, SoftwareSeria
 }
 
 BluetoothListenerAnswer ChimeClock::processBluetoothSet(char* str, SoftwareSerial* BTSerial) {
-  
-  if (strncmp_P(str, PSTR("DATETIME "), 9) == 0) {
 
+  if (strncmp_P(str, PSTR("TIME "), 5) == 0) {
     DEBUG_PRINT(F("received time: ")); DEBUG_PRINTLN(str);
-
     time_t t;     // the time to forge
     tmElements_t tm;
 
-    int year, month, day, hour, minute, second;
-    sscanf(str + 9,                                                  // decode received datetime
-           "%u-%u-%u %u:%u:%u", 
-           &year, &month, &day, &hour, &minute, &second);    
+    int hour, minute, second;
+    sscanf(str + 5,                                                  // decode received datetime
+           "%u:%u:%u", 
+           &hour, &minute, &second);    
 
-    tm.Year = CalendarYrToTm(year);
-    tm.Month = month;
-    tm.Day = day;
+    tm.Year = CalendarYrToTm(year());
+    tm.Month = month();
+    tm.Day = day();
     tm.Hour = hour;
     tm.Minute = minute;
     tm.Second = second;
     t = makeTime(tm);
+    RTC.set(t);
+    setTime(t);
+    *BTSerial << F("TIME SET") << endl;
+    debugSerial();
 
-    // TODO reject invalid time 
+    return SUCCESS;
+  }
+  if (strncmp_P(str, PSTR("DATE "), 5) == 0) {
+
+    DEBUG_PRINT(F("received date: ")); DEBUG_PRINTLN(str);
+
+    time_t t;     // the time to forge
+    tmElements_t tm;
+
+    int year, month, day;
+    sscanf(str + 5,                                                  // decode received datetime
+           "%u-%u-%u", 
+           &year, &month, &day);    
+
+    tm.Year = CalendarYrToTm(year);
+    tm.Month = month;
+    tm.Day = day;
+    tm.Hour = hour();
+    tm.Minute = minute();
+    tm.Second = second();
+    t = makeTime(tm);
+
+    // TODO? reject invalid time 
     
     RTC.set(t);  // store the novel datetime into the RTC clock
     setTime(t);
-    *BTSerial << F("DATETIME SET") << endl;                               // acknowledge
+    *BTSerial << F("DATE SET") << endl;                               // acknowledge
       
     debugSerial();
 

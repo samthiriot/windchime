@@ -1,5 +1,12 @@
 
+
+// hardware note
+// * see http://www.martyncurrey.com/hm-10-bluetooth-4ble-modules/ 
+// * http://blog.blecentral.com/2015/05/05/hm-10-peripheral/
+
 #include "chime_bluetooth.h"
+
+#include <Streaming.h>
 
 #include "debug.h"
 
@@ -31,27 +38,47 @@ void ChimeBluetooth::setup() {
   
   BTSerial.listen();                                          // by default, listen to bluetooth serial
 
+  delay(400);
+  
   bluetoothConsume();
 
-  execAT(F("AT+RESET"));
-  delay(200);
-  
+  //execAT(F("AT+RESET"));
+  //delay(200);
+
   // define setup name
+  /*
   String bluetoothName = readATResult(F("AT+NAME?"));   // get the current name of the module
   // TODO why does that execute ? 
   if (bluetoothName != F("CHIMUINO")) {                          // change the name if not initialized properly
     execAT(F("AT+NAMECHIMUINO"));                       // TODO if another chimuino already exists (scan !) then add a number ?
+    DEBUG_PRINTLN(F("* set name to CHIMUINO"));
   } else {                            
     // TODO remove it
-    Serial.print(F("* name is already "));
-    Serial.println(bluetoothName);
+    DEBUG_PRINTLN(F("* name is already CHIMUINO"));
   }
-
+  */
+  
   // define services and characteristics
   // TODO define the right service!
-  execAT(F("AT+ROLE0"));                                // define as a peripherical
-  execAT(F("AT+UUID0xFFE0"));                           // define a service
-  execAT(F("AT+CHAR0xFFE1"));                           // define a characteristic
+
+  
+  readATResult(F("AT+NOTI0"));
+  readATResult(F("AT+ROLE0"));
+  readATResult(F("AT+NAMECHIMUINO"));
+  readATResult("AT+RESET");
+  delay(500);
+
+  readATResult("AT+NAME?");
+  //readATResult(F("AT+NOTI0"));
+  readATResult(F("AT+UUID0xFFE1"));
+  readATResult(F("AT+CHAR0xFFE1"));
+  
+  //execAT(F("AT+ROLE0"));                                // define as a peripherical
+  //execAT(F("AT+UUID0xFFE3"));                           // define a service
+  //execAT(F("AT+CHAR0xFFE1"));                           // define a characteristic
+  //execAT(F("AT+CHAR0xFFE2"));                           // define a characteristic
+  //execAT(F("AT+NOTI1"));
+  //execAT(F("AT+NOTI0"));
 
   DEBUG_PRINTLN(F("init: bluetooth ok"));
 }
@@ -70,8 +97,10 @@ void ChimeBluetooth::addCommandInterpreter(BluetoothCommandListener* listener) {
  * and reports result on the serial port
  */
 void ChimeBluetooth::execAT(String cmd) {
-  BTSerial.print(cmd);
+  bluetoothConsume();
   BTSerial.listen();
+
+  BTSerial.println(cmd);
   delay(800);                                       // wait a bit so the command is processed
 
   char c;
@@ -87,9 +116,10 @@ void ChimeBluetooth::execAT(String cmd) {
  * pending from bluetooth.
  */
 void ChimeBluetooth::bluetoothConsume() {
-  BTSerial.listen();
+  char c;
   while (BTSerial.available()) {
-    BTSerial.read();                                            // skip
+    c = BTSerial.read();                                            // skip
+    DEBUG_PRINT(F("bluetooth skip: ")); DEBUG_PRINTLN(c);
   }
 }
 
@@ -100,30 +130,25 @@ void ChimeBluetooth::bluetoothConsume() {
  */
 String ChimeBluetooth::readATResult(String cmd) {
 
-  bluetoothConsume();                                           // consume older things
+  DEBUG_PRINT(F("exec ")); DEBUG_PRINTLN(cmd);
+  
   BTSerial.print(cmd);                                          // send to the command to the chip
-  BTSerial.listen();
-  delay(200);                                                   // gives time for the bluetooth chip to process the demand
+  delay(1000);                                                   // gives time for the bluetooth chip to process the demand
 
   char serialdata[80];
   int count = 0;
-
-  // skip before : 
-  char r = BTSerial.available() ? BTSerial.read() : 0;
-  while (BTSerial.available() && (r !=':') ) {
-    // skip
-    r = BTSerial.read();
+  while (BTSerial.available() && count<80) 
+  {
+      serialdata[count++] = BTSerial.read();
   }
-    
-  // read data until EOL
-  count = BTSerial.readBytesUntil(CR, serialdata, 80);
+  serialdata[count] = '\0';
+
+  DEBUG_PRINT(F("read AT result:")); DEBUG_PRINTLN(serialdata);
 
   // remove additional null
   String str = String(serialdata);
-  str.remove(str.length());
+  //str.remove(str.length());
 
-  DEBUG_PRINT(F("read AT result:")); DEBUG_PRINTLN(str);
-  
   return str;
 }
 
@@ -189,6 +214,12 @@ void ChimeBluetooth::processDo(char* str) {
   // no one used our message
   DEBUG_PRINT(F("WARN: no one used bluetooth command DO "));
   DEBUG_PRINTLN(str);
+}
+
+void ChimeBluetooth::sendDebug() {
+  //BTSerial << "DEBUG" << endl;
+  BTSerial.println("DEBUG");
+  DEBUG_PRINTLN("bluetooth: sent debug");
 }
 
 void ChimeBluetooth::reactToCommand() {
