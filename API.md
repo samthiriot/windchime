@@ -108,8 +108,11 @@ The format of the date is TODO.
     > GET DATETIME
     < DATETIME IS TODO
 
-    > SET DATETIME TODO
-    < DATETIME SET
+    > SET DATE 2018-01-24
+    < DATE SET
+
+    > SET TIME 22:31:01
+    < TIME SET
 
 ## alarms
 
