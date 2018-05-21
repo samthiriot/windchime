@@ -19,139 +19,221 @@ import { BLE } from '@ionic-native/ble';
 @Injectable()
 export class ChimuinoProvider {
 
-  private _busy:boolean = false;
-  public _device = null;
+	private _busy:boolean = false;
+	public _device = null;
+	private SERVICE:string = "FFE0";
+	private CHARACTERISTIC:string = "FFE1";
+	private DURATION_SCAN:number = 5;
 
-  constructor(//public http: HttpClient,
+	constructor(//public http: HttpClient,
   			  private ble: BLE,
 			  //private bluetooth: BluetoothSerial,
   			  private storage: Storage,
   			  private toastCtrl: ToastController
   			  ) {
-    console.log('Hello ChimuinoProvider Provider');
 
-    // try to get a bluetooth connection
-	this.connect();
+	    console.log('Hello ChimuinoProvider Provider');
 
-    // test message
-    // TODO remove
-    let toast = this.toastCtrl.create({
-      message: 'Started ChimuinoProvider',
-      duration: 3000,
-      position: 'top'
-    });
-    toast.present();
-  }
+	    // try to get a bluetooth connection
+		this.connect();
 
-  sendMessage(message:string) {
+	    // test message
+	    // TODO remove
+	    let toast = this.toastCtrl.create({
+	      message: 'Started ChimuinoProvider',
+	      duration: 3000,
+	      position: 'top'
+	    });
+	    toast.present();
+	}
+
+	displayToastMessage(message:string) {
+
+		let toast = this.toastCtrl.create({
+	      message: message,
+	      duration: 3000,
+	      position: 'top'
+	    });
+	    toast.present();
+	}
+	/**
+	 * Sends a message to the Chimuino
+	 */
+	sendMessage(message:string, tryagain:boolean=true) {
 
   		message = message.trim()+'\n';
 
 		//this.ble.stopScan();
-		this.ble.connect(this._device.id).subscribe(
-			(data) => {
-				
-
-
-			let toast = this.toastCtrl.create({
-		      message: 'sending '+message+' to '+this._device.id+'...',
-		      duration: 3000,
-		      position: 'top'
-		    });
-		    toast.present();
-
-	    	// convert message to string
-	  		var buf = new ArrayBuffer(message.length*2);
-		    var bufView = new Uint8Array(buf);
-		    for (var i = 0, strLen = message.length; i < strLen; i++) {
-		      bufView[i] = message.charCodeAt(i);
-		    }
-
-			this.ble.write(this._device.id, "FFE0", "FFE1", buf).then(
+		this.displayToastMessage("should send "+message+"to"+this._device.id+"...");
+		
+		// convert message to string
+		var buf = new ArrayBuffer(message.length*2);
+	    var bufView = new Uint8Array(buf);
+	    for (var i = 0, strLen = message.length; i < strLen; i++) {
+	      bufView[i] = message.charCodeAt(i);
+	    }
+		this.ble.write(this._device.id, this.SERVICE, this.CHARACTERISTIC, buf).then(
 				(success) => {
-					let toast = this.toastCtrl.create({
-				      message: 'sent info :-)',
-				      duration: 3000,
-				      position: 'top'
-				    });
-				    toast.present();
-				    this.ble.disconnect(this._device.id);
+					this.displayToastMessage('sent info :-)');
 
 				},
 				(failure) => {
-					let toast = this.toastCtrl.create({
-				      message: 'failure info: '+failure,
-				      duration: 3000,
-				      position: 'top'
-				    });
-				    toast.present();	
-				    this.ble.disconnect(this._device.id);
+					if (tryagain) {
+						this.displayToastMessage("failure: "+failure+", retrying...");
+					    //this.ble.disconnect(this._device.id);
+					    // try to reconncet
+					    this.ble.connect(this._device.id).subscribe(
+							(data) => {
+								this.displayToastMessage("connected to device "+this._device.name+" with message "+data);
+								this.sendMessage(message, false); 
+							});
+					} else {
+						this.displayToastMessage("failure, not trying again.");
+					}
+				}
+			);
+	
+  	}
 
-				});
+  	readResult():string {
+  		return 'not yet implemented';
+  		//this.ble.stopScan();
+  		/*
+		this.ble.connect(this._device.id).subscribe(
+			(data) => {
+
+				let toast = this.toastCtrl.create({
+			      message: 'sending '+message+' to '+this._device.id+'...',
+			      duration: 3000,
+			      position: 'top'
+			    });
+			    toast.present();
+
+		    	// convert message to string
+		  		var buf = new ArrayBuffer(message.length*2);
+			    var bufView = new Uint8Array(buf);
+			    for (var i = 0, strLen = message.length; i < strLen; i++) {
+			      bufView[i] = message.charCodeAt(i);
+			    }
+
+				this.ble.write(this._device.id, "FFE0", "FFE1", buf).then(
+					(success) => {
+						this.displayToastMessage('sent info :-)');
+					    this.ble.disconnect(this._device.id);
+
+					},
+					(failure) => {
+						this.displayToastMessage("failure: "+failure);
+					    this.ble.disconnect(this._device.id);
+
+					});
+				},
+			(failure) => {
+				this.displayToastMessage("unable to connect the Chime :-(");
 			}
-		);
-  }
+		);*/
+  	}
 
-  connect() {
-  	this.ble.enable().then( (enabled) => {
+	connect() {
+		// enable bluetooth first
+		this.ble.enable().then( (enabled) => {
+			// then get the expected id of the device
 	  		return this.storage.get('bluetooth-id');	
 	  	}).then( (id) => {
-	  		let toast = this.toastCtrl.create({
-		      message: 'scanning for '+id+'...',
-		      duration: 3000,
-		      position: 'top'
-		    });
-		    toast.present();
-	  		this.ble.scan(["FFE0"], 5).subscribe(
-	  			(device) => {
-	  				if (device.name != "CHIMUINO") {
+	  		// then search for our device 
+	  		this.displayToastMessage('scanning for '+id+'...');
+		    this.ble.scan([this.SERVICE], this.DURATION_SCAN).subscribe(
+		    	(device) => {
+  					if (device.name != "CHIMUINO") {
+  						// TODO reject from ID instead !
+				  		this.displayToastMessage('rejected device '+device.name);
 	  					return;
 	  				}
+	  				// found our device
 	  				this._device = device;
-
-	  				// inform the user
-	  				let toast = this.toastCtrl.create({
-				      message: 'found device '+device.name+'...',
-				      duration: 3000,
-				      position: 'top'
-				    });
-				    toast.present();
-
 				    // react to the first connection
-				    this.reactFirstConnection();
-	  			}
-	  		);
-	  	})
- 
-  }
+		    		this.displayToastMessage('connecting device '+this._device.name+'...');
 
-  reactFirstConnection() {
+				    this.reactDeviceFound();
+  				}
+  				// TODO detection of failures ???
+		    );
+	  	});
 
-  	// send information to the Chimuino
+	}
 
-  	// .. adapt datetime
-  	var now = new Date;
-	this.sendMessage("SET DATETIME "+now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate()+" "+now.getHours()+":"+now.getMinutes()+":"+now.getSeconds());
-  }
+	/**
+	 * React when the bluetooth device was found; 
+	 * this._device is thus set.
+	 */
+	reactDeviceFound() {
 
-  setAmbiance(enabled:boolean) {
-  	this.sendMessage(
-  		"SET AMBIANCE "+
-  		(enabled?"1":"0")
-  		);
-  }
+		// display information to the user
+		this.displayToastMessage('connecting device '+this._device.name+'...');
 
-  setAlarm1(hour:number, minutes:number, durationSoft:number, durationStrong:number, enabled:boolean, 
+		this.ble.connect(this._device.id).subscribe(
+			(data) => {
+				this.displayToastMessage("connected to device "+this._device.name+" with message "+data);
+				this.reactDeviceConnected(); 
+			});
+
+	}
+
+	reactDeviceConnected() {
+
+		// register (=listen) to changes
+        this.ble.startNotification(this._device.id, this.SERVICE, this.CHARACTERISTIC).subscribe(
+			this.onDataNotified, this.onNotificationFailure
+        	);
+
+		// send information to the Chimuino
+		// .. adapt datetime
+		var now = new Date;
+		this.sendMessage("SET DATETIME "+now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate()+" "+now.getHours()+":"+now.getMinutes()+":"+now.getSeconds());
+	}
+
+	onDataNotified(buffer) {
+		var data = new Uint8Array(buffer);
+
+		var str = String.fromCharCode.apply(null, data);
+
+		this.displayToastMessage(str);
+	}
+
+	onNotificationFailure() {
+		this.displayToastMessage("notification failure :-(");
+	}	
+
+	setAmbiance(enabled:boolean) {
+		this.sendMessage(
+			"SET AMBIANCE "+
+			(enabled?"1":"0")
+			);
+	}
+
+	setAlarm1(hour:number, minutes:number, durationSoft:number, durationStrong:number, enabled:boolean, 
+			sunday:boolean, monday:boolean, tuesday:boolean, wednesday:boolean, thursday:boolean, friday:boolean, saterday:boolean) {
+		
+		this.sendMessage(
+			"SET ALARM1 "+hour+":"+minutes+" "+
+			durationSoft + " " + durationStrong + " "+
+			(enabled?"1":"0")+" "+
+			(sunday?"1":"0")+(monday?"1":"0")+(tuesday?"1":"0")+(wednesday?"1":"0")+(thursday?"1":"0")+(friday?"1":"0")+(saterday?"1":"0")
+			);
+	}
+
+  	setAlarm2(hour:number, minutes:number, durationSoft:number, durationStrong:number, enabled:boolean, 
   			sunday:boolean, monday:boolean, tuesday:boolean, wednesday:boolean, thursday:boolean, friday:boolean, saterday:boolean) {
-  	this.sendMessage(
-  		"SET ALARM1 "+hour+":"+minutes+" "+
-  		durationSoft + " " + durationStrong + " "+
-  		(enabled?"1":"0")+" "+
-  		(sunday?"1":"0")+(monday?"1":"0")+(tuesday?"1":"0")+(wednesday?"1":"0")+(thursday?"1":"0")+(friday?"1":"0")+(saterday?"1":"0")
-  		);
-  }
+	  	
+	  	this.sendMessage(
+	  		"SET ALARM2 "+hour+":"+minutes+" "+
+	  		durationSoft + " " + durationStrong + " "+
+	  		(enabled?"1":"0")+" "+
+	  		(sunday?"1":"0")+(monday?"1":"0")+(tuesday?"1":"0")+(wednesday?"1":"0")+(thursday?"1":"0")+(friday?"1":"0")+(saterday?"1":"0")
+	  		);
+	}
 
-  writeVersion() {
+	writeVersion() {
 	this.sendMessage("GET VERSION");
 	  	/*
 
@@ -172,59 +254,59 @@ export class ChimuinoProvider {
 			    });
 			    toast.present();
 			});
-  	*/
-  }
-
-  getVersion():Promise<String> {
-
-	return new Promise( (resolve,reject) => {
-
- 		// define we are busy
-	  	this._busy = true;
-
-		this.sendMessage("DIS MOI TRUC");
-
-	  	/*
-		// send question
-	  	this.bluetooth.write('GET VERSION\n')
-				  	  .then(
-						version => { 
-						  	this._busy = false;
-							resolve("sent mess "+version);
-							}, 
-						failure =>  { 
-							this._busy = false;
-							reject("error while writing.");
-						}
-						);
 		*/
- 	});
-  }
+	}
 
-  /*
-   * Gets the time from the Chuimuino,
-   * and returns it as a Promise. 
-   */
-  getDatetime() {
-  	
-  	// define we are busy
-  	this._busy = true;
+  	getVersion():Promise<String> {
 
-  	// send the message asking for the date 
-  	// "GET DATE"
-  	// wait for the answer 
+		return new Promise( (resolve,reject) => {
 
-  	// not busy anymore
-  	this._busy = false;
-  }
+	 		// define we are busy
+		  	this._busy = true;
 
-  /*
-   * Sets the time of the chimuino to 
-   * the current time of the system.
-   */
-  setDatetime() {
-  	// nothing
-  }
+			this.sendMessage("DIS MOI TRUC");
+
+		  	/*
+			// send question
+		  	this.bluetooth.write('GET VERSION\n')
+					  	  .then(
+							version => { 
+							  	this._busy = false;
+								resolve("sent mess "+version);
+								}, 
+							failure =>  { 
+								this._busy = false;
+								reject("error while writing.");
+							}
+							);
+			*/
+	 	});
+	}
+
+	/*
+	* Gets the time from the Chuimuino,
+	* and returns it as a Promise. 
+	*/
+	getDatetime() {
+		
+		// define we are busy
+		this._busy = true;
+
+		// send the message asking for the date 
+		// "GET DATE"
+		// wait for the answer 
+
+		// not busy anymore
+		this._busy = false;
+	}
+
+	/*
+	* Sets the time of the chimuino to 
+	* the current time of the system.
+	*/
+	setDatetime() {
+		// nothing
+	}
  	
 
 }
