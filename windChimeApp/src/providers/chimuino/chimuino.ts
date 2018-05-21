@@ -59,9 +59,9 @@ export class ChimuinoProvider {
 	/**
 	 * Sends a message to the Chimuino
 	 */
-	sendMessage(message:string, tryagain:boolean=true) {
+	sendMessage(messageRaw:string, tryagain:boolean=true) {
 
-  		message = message.trim()+'\n';
+  		let message = messageRaw.trim()+'\n';
 
 		//this.ble.stopScan();
 		this.displayToastMessage("should send "+message+"to"+this._device.id+"...");
@@ -72,7 +72,7 @@ export class ChimuinoProvider {
 	    for (var i = 0, strLen = message.length; i < strLen; i++) {
 	      bufView[i] = message.charCodeAt(i);
 	    }
-		this.ble.write(this._device.id, this.SERVICE, this.CHARACTERISTIC, buf).then(
+		this.ble.writeWithoutResponse(this._device.id, this.SERVICE, this.CHARACTERISTIC, buf).then(
 				(success) => {
 					this.displayToastMessage('sent info :-)');
 
@@ -96,42 +96,26 @@ export class ChimuinoProvider {
   	}
 
   	readResult():string {
+  		
+  		this.ble.read(this._device.id, this.SERVICE, this.CHARACTERISTIC).then(
+  			(buffer) => {
+  				var data = new Uint8Array(buffer);
+
+				var str = String.fromCharCode.apply(null, data);
+
+				if (str.startsWith("GET") || str.startsWith("SET") || str.startsWith("DO") ) {
+					// ignore the commands sent by someone
+					this.displayToastMessage("ignored from bluetooth: "+str);
+
+				} else {
+					this.displayToastMessage("received from bluetooth: "+str);	
+				}
+  				
+  			}
+  		);
+
   		return 'not yet implemented';
-  		//this.ble.stopScan();
-  		/*
-		this.ble.connect(this._device.id).subscribe(
-			(data) => {
 
-				let toast = this.toastCtrl.create({
-			      message: 'sending '+message+' to '+this._device.id+'...',
-			      duration: 3000,
-			      position: 'top'
-			    });
-			    toast.present();
-
-		    	// convert message to string
-		  		var buf = new ArrayBuffer(message.length*2);
-			    var bufView = new Uint8Array(buf);
-			    for (var i = 0, strLen = message.length; i < strLen; i++) {
-			      bufView[i] = message.charCodeAt(i);
-			    }
-
-				this.ble.write(this._device.id, "FFE0", "FFE1", buf).then(
-					(success) => {
-						this.displayToastMessage('sent info :-)');
-					    this.ble.disconnect(this._device.id);
-
-					},
-					(failure) => {
-						this.displayToastMessage("failure: "+failure);
-					    this.ble.disconnect(this._device.id);
-
-					});
-				},
-			(failure) => {
-				this.displayToastMessage("unable to connect the Chime :-(");
-			}
-		);*/
   	}
 
 	connect() {
@@ -187,9 +171,8 @@ export class ChimuinoProvider {
         	);
 
 		// send information to the Chimuino
-		// .. adapt datetime
-		var now = new Date;
-		this.sendMessage("SET DATETIME "+now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate()+" "+now.getHours()+":"+now.getMinutes()+":"+now.getSeconds());
+		this.sendDatetime();
+		
 	}
 
 	onDataNotified(buffer) {
@@ -197,7 +180,7 @@ export class ChimuinoProvider {
 
 		var str = String.fromCharCode.apply(null, data);
 
-		this.displayToastMessage(str);
+		this.displayToastMessage("received message from bluetooth: "+str);
 	}
 
 	onNotificationFailure() {
@@ -220,6 +203,7 @@ export class ChimuinoProvider {
 			(enabled?"1":"0")+" "+
 			(sunday?"1":"0")+(monday?"1":"0")+(tuesday?"1":"0")+(wednesday?"1":"0")+(thursday?"1":"0")+(friday?"1":"0")+(saterday?"1":"0")
 			);
+		this.readResult(); // TODO
 	}
 
   	setAlarm2(hour:number, minutes:number, durationSoft:number, durationStrong:number, enabled:boolean, 
@@ -235,6 +219,7 @@ export class ChimuinoProvider {
 
 	writeVersion() {
 	this.sendMessage("GET VERSION");
+	this.readResult();
 	  	/*
 
 		this.bluetooth.write('GET VERSION\n').then(
@@ -304,8 +289,13 @@ export class ChimuinoProvider {
 	* Sets the time of the chimuino to 
 	* the current time of the system.
 	*/
-	setDatetime() {
-		// nothing
+	sendDatetime() {
+		// .. adapt datetime
+		var now = new Date;
+		this.sendMessage(
+			"SET DATE "+now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate());
+		this.sendMessage(
+			"SET TIME "+now.getHours()+":"+now.getMinutes()+":"+now.getSeconds());
 	}
  	
 

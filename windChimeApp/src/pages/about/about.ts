@@ -13,15 +13,26 @@ export class AboutPage {
   	constructor(public navCtrl: NavController,
   				private chimuino: ChimuinoProvider) {
 
-		this.chimuino.getVersion()
+          /*
+  		this.chimuino.getVersion()
 					 .then(
 					 	(version) => { this.firmwareVersion = version; } 
 					 	);
+            */
   	}
+
 
   	writeSomething() {
   		this.chimuino.writeVersion();
   	}
+
+    sendDate()  {
+    this.chimuino.sendDatetime();
+    }
+
+    listen() {
+      this.chimuino.readResult();
+    }
 
   	doChime() {
   	  	this.chimuino.sendMessage("DO CHIME");
