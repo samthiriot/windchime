@@ -72,9 +72,9 @@ export class ChimuinoProvider {
 	    for (var i = 0, strLen = message.length; i < strLen; i++) {
 	      bufView[i] = message.charCodeAt(i);
 	    }
-		this.ble.writeWithoutResponse(this._device.id, this.SERVICE, this.CHARACTERISTIC, buf).then(
+		this.ble.write(this._device.id, this.SERVICE, this.CHARACTERISTIC, buf).then( // WithoutResponse
 				(success) => {
-					this.displayToastMessage('sent info :-)');
+					this.displayToastMessage('sent info :-) '+success);
 
 				},
 				(failure) => {
