@@ -62,16 +62,17 @@ void ChimeBluetooth::setup() {
   // TODO define the right service!
 
   
-  readATResult(F("AT+NOTI0"));
+  readATResult(F("AT+NOTI1"));
   readATResult(F("AT+ROLE0"));
   readATResult(F("AT+NAMECHIMUINO"));
-  readATResult("AT+RESET");
+  readATResult(F("AT+RESET"));
   delay(500);
 
-  readATResult("AT+NAME?");
+  readATResult(F("AT+NOTI1"));
+  readATResult(F("AT+NAME?"));
   //readATResult(F("AT+NOTI0"));
   readATResult(F("AT+UUID0xFFE1"));
-  readATResult(F("AT+CHAR0xFFE1"));
+  readATResult(F("AT+CHAR0xFFE2"));
   
   //execAT(F("AT+ROLE0"));                                // define as a peripherical
   //execAT(F("AT+UUID0xFFE3"));                           // define a service
