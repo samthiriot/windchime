@@ -1,10 +1,12 @@
 #ifndef CHIME_ALARM_H
 #define CHIME_ALARM_H
 
+#include "chime.h"
 #include "chime_bluetooth.h"
 
 
-class ChimeAlarm: public BluetoothCommandListener {
+class ChimeAlarm: public BluetoothCommandListener,
+                  public IntentionProvider {
   
   private:
 
@@ -25,14 +27,14 @@ class ChimeAlarm: public BluetoothCommandListener {
     bool sunday = true;
     
     // other
-    const char* name;                                 // the name of the alarm (like ALARM1, ALARM2...)
+    byte id;                                    // the id of the name of the alarm (like ALARM1, ALARM2...)
     unsigned short name_length;                 // the length of the name
     
     bool rightWeekdayForRing();                 // returns true if the weekday is compliant with our settings
     
   public:
     // constructor
-    ChimeAlarm(const char* name);
+    ChimeAlarm(byte id);
     void setup();
     
     // prints the state of the alarm in the serial 
@@ -45,6 +47,7 @@ class ChimeAlarm: public BluetoothCommandListener {
     virtual BluetoothListenerAnswer processBluetoothGet(char* str, SoftwareSerial* BTSerial);
     virtual BluetoothListenerAnswer processBluetoothSet(char* str, SoftwareSerial* BTSerial);
     virtual BluetoothListenerAnswer processBluetoothDo(char* str, SoftwareSerial* BTSerial);
+    virtual Intention proposeNextMode(enum mode current_mode);
 
 
 };

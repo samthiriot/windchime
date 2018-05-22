@@ -10,9 +10,6 @@
 #define FIRMWARE_VERSION "alpha_2018_05_16"
 
 
-
-
-
 enum mode {
   
   NOTHING,      // doing nothing
@@ -32,6 +29,21 @@ enum mode {
   AMBIANCE_TINTEMENT,    // hear a very light bell sound
   AMBIANCE_PREREVEIL,    // hear the bell, enough to be conscious of their existence
   AMBIANCE_REVEIL        // hear the bells so much it should awake you
+};
+
+struct Intention {
+  enum mode what;
+  unsigned long when;  
+};
+
+class IntentionProvider {
+    public:
+ 
+      // called when a GET <SOMETHING> was received
+      // will receive as arguments the <SOMETHING> char*, 
+      // and a pointer to serial port to use to answer
+      virtual Intention proposeNextMode(enum mode current_mode);
+
 };
 
 char* mode2str(enum mode v);
