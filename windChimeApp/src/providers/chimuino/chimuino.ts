@@ -6,6 +6,7 @@
 
 import { Injectable } from '@angular/core';
 import { ToastController } from 'ionic-angular';
+import { Events } from 'ionic-angular';
 import { Storage } from '@ionic/storage';
 //import { BluetoothSerial } from '@ionic-native/bluetooth-serial';
 import { BLE } from '@ionic-native/ble';
@@ -21,15 +22,16 @@ export class ChimuinoProvider {
 
 	private _busy:boolean = false;
 	public _device = null;
-	private SERVICE:string = "FFE0";
-	private CHARACTERISTIC:string = "FFE1";
+	private SERVICE:string = "FFE1";
+	private CHARACTERISTIC:string = "FFE2";
 	private DURATION_SCAN:number = 5;
 
 	constructor(//public http: HttpClient,
   			  private ble: BLE,
 			  //private bluetooth: BluetoothSerial,
   			  private storage: Storage,
-  			  private toastCtrl: ToastController
+  			  private toastCtrl: ToastController,
+  			  public events: Events
   			  ) {
 
 	    console.log('Hello ChimuinoProvider Provider');
@@ -72,7 +74,7 @@ export class ChimuinoProvider {
 	    for (var i = 0, strLen = message.length; i < strLen; i++) {
 	      bufView[i] = message.charCodeAt(i);
 	    }
-		this.ble.write(this._device.id, this.SERVICE, this.CHARACTERISTIC, buf).then( // WithoutResponse
+		this.ble.writeWithoutResponse(this._device.id, this.SERVICE, this.CHARACTERISTIC, buf).then( 
 				(success) => {
 					this.displayToastMessage('sent info :-) '+success);
 
@@ -103,7 +105,7 @@ export class ChimuinoProvider {
 
 				var str = String.fromCharCode.apply(null, data);
 
-				if (str.startsWith("GET") || str.startsWith("SET") || str.startsWith("DO") ) {
+				if (str.startsWith("GET") || str.startsWith("SET") || str.startsWith("DO") || str.startsWith("DEBUG")) {
 					// ignore the commands sent by someone
 					this.displayToastMessage("ignored from bluetooth: "+str);
 
@@ -166,9 +168,11 @@ export class ChimuinoProvider {
 	reactDeviceConnected() {
 
 		// register (=listen) to changes
+		// TODO patch for IOS https://github.com/don/cordova-plugin-ble-central#typed-arrays
         this.ble.startNotification(this._device.id, this.SERVICE, this.CHARACTERISTIC).subscribe(
-			this.onDataNotified, this.onNotificationFailure
-        	);
+			(data) => { this.onDataNotified(data); }, 
+			(error) => { this.onNotificationFailure(); }
+		);
 
 		// send information to the Chimuino
 		this.sendDatetime();
@@ -176,11 +180,17 @@ export class ChimuinoProvider {
 	}
 
 	onDataNotified(buffer) {
-		var data = new Uint8Array(buffer);
 
-		var str = String.fromCharCode.apply(null, data);
+		//this.displayToastMessage("notified by bluetooth: "+ buffer);
 
-		this.displayToastMessage("received message from bluetooth: "+str);
+		var str = String.fromCharCode.apply(null, new Uint8Array(buffer));
+
+		if (str.startsWith("GET") || str.startsWith("SET") || str.startsWith("DO") || str.startsWith("DEBUG")) {
+			// ignore the commands sent by someone
+			this.displayToastMessage("ignored notified from bluetooth: "+str);
+		} else {
+			this.displayToastMessage("received notified from bluetooth: "+str);	
+		}
 	}
 
 	onNotificationFailure() {
@@ -220,6 +230,7 @@ export class ChimuinoProvider {
 	writeVersion() {
 	this.sendMessage("GET VERSION");
 	this.readResult();
+
 	  	/*
 
 		this.bluetooth.write('GET VERSION\n').then(
