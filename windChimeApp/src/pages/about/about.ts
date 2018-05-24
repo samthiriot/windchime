@@ -10,6 +10,9 @@ import { Events } from 'ionic-angular';
 export class AboutPage {
 
   public firmwareVersion:String = "???";
+  public temperature:String = "???";
+  public lightLevel:String = "???";
+  public isDark:String = "???";
 
 	constructor(public navCtrl: NavController,
 				      private chimuino: ChimuinoProvider,
@@ -23,6 +26,20 @@ export class AboutPage {
           this.firmwareVersion = version;
       });
 
+    this.events.subscribe(
+      'get-temperature',   
+      (temperature) => { 
+          this.temperature = String(temperature);
+      });
+
+    this.events.subscribe(
+      'get-lightlevel',   
+      (level,isDark) => { 
+          this.lightLevel = String(level);
+          this.isDark = (isDark?"DARK":"LIT");
+      });
+
+    
     // when bluetooth will be connected, then load info
     this.events.subscribe(
       'connected',
@@ -49,6 +66,7 @@ export class AboutPage {
 
   loadInfoFromChimuino() {
     this.chimuino.askVersion();
+    this.chimuino.askTemperature();
   }
 
 

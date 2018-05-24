@@ -143,20 +143,23 @@ if error (no alarm ongoing)
 
 Gets the sound level measured by the Chuimuino. 
 This sound level is used for the Chuimuino to decide to act or not. 
+The sound level is an int between 0 and 100. It corresponds to the actual raw value in the sound envelope.
 
 level is either NOISY or QUIET
 the sound threshold is a value between 0 and 100. 
 
 
 	> GET SOUNDLEVEL
-	< SOUNDLEVEL IS 110 NOISY [50:165]
+	< SOUNDLEVEL IS 110 NOISY
 
 	> GET SOUNDTHRESHOLD
-	< SOUNDTHRESHOLD IS 50 
+	< SOUNDTHRESHOLD IS 75 
 
 	> SET SOUNDTHRESHOLD 75
 	< SOUNDTHRESHOLD SET
 
+	> GET SOUNDENVELOPE
+	< SOUNDENVELOPE IS 50 165
 
 ## light level and threshold
 
@@ -165,11 +168,13 @@ Gets the light level measured by the Chimuino.
 Detected status is either DARK or LIT
 
 	> GET LIGHTLEVEL
-	< LIGHTLEVEL IS 72 LIT
+	< LIGHTLEVEL IS 72 LIT 
 
 	> GET LIGHTTHRESHOLD
-	< LIGHTTHRESHOLD IS 80
+	< LIGHTTHRESHOLD IS 80 
 
 	> SET LIGHTTHRESHOLD 72
 	< LIGHTTHRESHOLD IS 72
 
+	> GET LIGHTENVELOPE
+	< LIGHTENVELOPE IS 50 165

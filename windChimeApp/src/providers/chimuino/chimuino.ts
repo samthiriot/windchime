@@ -42,6 +42,10 @@ import { BLE } from '@ionic-native/ble';
 @Injectable()
 export class ChimuinoProvider {
 
+	// switch to true to have plenty of toast messages
+	// displaying what happens with bluetooth at every step.
+	public DEBUG = true;
+
 	private _busy:boolean = false;
 	private _isConnected:boolean = false;
 	public _device = null;
@@ -83,7 +87,6 @@ export class ChimuinoProvider {
 		this.events.publish("get-alarm2", null);
 		this.events.publish("set-alarm2", false);
 		
-
 	    // try to get a bluetooth connection
 		this.connect();
 
@@ -103,6 +106,13 @@ export class ChimuinoProvider {
 	    toast.present();
 	}
 
+	private displayDebug(message:string) {
+		if (this.DEBUG) {
+			this.displayToastMessage(message);
+		}
+	}
+
+
 	private sendPendingMessages() {
 		if (this._pendingCommands.length == 0) {
 			// nothing to send yet
@@ -110,7 +120,7 @@ export class ChimuinoProvider {
 		}
 		// there is something to send !
 		var message:string = this._pendingCommands.shift();
-		this.displayToastMessage("sending pending: "+message);
+		this.displayDebug("sending pending: "+message);
 		this.sendMessage(message);
 	}
 
@@ -125,7 +135,7 @@ export class ChimuinoProvider {
 			return;
 		}
 		this._pendingCommands.push(message);
-		this.displayToastMessage("queuing "+message);
+		this.displayDebug("queuing "+message);
 	}
 
 	/**
@@ -152,7 +162,7 @@ export class ChimuinoProvider {
   		this._busy = true;
 
 		//this.ble.stopScan();
-		this.displayToastMessage("sending "+message+"to"+this._device.id+"...");
+		this.displayDebug("sending "+message+"to"+this._device.id+"...");
 		
 		// convert message to string
 		var buf = new ArrayBuffer(message.length*2);
@@ -172,12 +182,12 @@ export class ChimuinoProvider {
 				(failure) => {
 					this._busy = false;
 					if (tryagain) {
-						this.displayToastMessage("failure: "+failure+", will retry later...");
+						this.displayDebug("failure: "+failure+", will retry later...");
 						this.queueMessage(message);
 						this.connect();
 					} else {
 						this._busy = false;
-						this.displayToastMessage("failure, not trying again.");
+						this.displayDebug("failure, not trying again.");
 					}
 				}
 			);
@@ -191,18 +201,18 @@ export class ChimuinoProvider {
 	  		return this.storage.get('bluetooth-id');	
 	  	}).then( (id) => {
 	  		// then search for our device 
-	  		this.displayToastMessage('scanning for '+id+'...');
+	  		this.displayDebug('scanning for '+id+'...');
 		    this.ble.scan([this.SERVICE], this.DURATION_SCAN).subscribe(
 		    	(device) => {
   					if (device.name != "CHIMUINO") {
   						// TODO reject from ID instead !
-				  		this.displayToastMessage('rejected device '+device.name);
+				  		this.displayDebug('rejected device '+device.name);
 	  					return;
 	  				}
 	  				// found our device
 	  				this._device = device;
 				    // react to the first connection
-		    		this.displayToastMessage('connecting device '+this._device.name+'...');
+		    		this.displayDebug('connecting device '+this._device.name+'...');
 
 				    this.reactDeviceFound();
   				}
@@ -223,7 +233,7 @@ export class ChimuinoProvider {
 
 		this.ble.connect(this._device.id).subscribe(
 			(data) => {
-				this.displayToastMessage("connected to device "+this._device.name+" with message "+data);
+				this.displayToastMessage("connected to device "+this._device.name);
 				this.reactDeviceConnected(); 
 			});
 
@@ -261,7 +271,7 @@ export class ChimuinoProvider {
 
 		var code:string = str.trim().toLowerCase();
 		this.events.publish("set-"+code, true);
-		this.displayToastMessage("acknowledged: set "+code);
+		this.displayDebug("acknowledged: set "+code);
 
 	}
 
@@ -294,12 +304,31 @@ export class ChimuinoProvider {
 										 saterday);
 	}
 
+	private decodeLightLevel(valueStr:string) {
+		// input format is:
+		// <72> [LIT|DARK]
+		var tokens = valueStr.split(' ');
+		var level:number = parseInt(tokens[0]);
+		var dark:boolean = tokens[1] == "DARK";
+		this.events.publish("get-lightlevel", 
+							level, dark);
+	}
+
+	private decodeSoundLevel(valueStr:string) {
+		// input format is:
+		// <42> [NOISY|QUIET]
+		var tokens = valueStr.split(' ');
+		var level:number = parseInt(tokens[0]);
+		var quiet:boolean = tokens[1] == "QUIET";
+		this.events.publish("get-soundlevel", 
+							level, quiet);
+	}
+
 	/**
 	 * Receive the answer with the value of something.
 	 * Will propagate an event with the decoded value.
 	 */
 	private onGetReceived(what:string, valueStr:string) {
-		var data = null;
 		if (what == "AMBIANCE") {
 			var enabled:boolean = valueStr[0]=='1';
 			this.events.publish("get-ambiance", enabled);
@@ -311,15 +340,16 @@ export class ChimuinoProvider {
 			// values containing just one int
 			var valueInt = parseInt(valueStr);
 			this.events.publish("get-"+what.toLowerCase(), valueInt);
-
-		// TODO decode levels
+		} else if (what == "LIGHTLEVEL") {
+			this.decodeLightLevel(valueStr);
+		} else if (what == "SOUNDLEVEL") {
+			this.decodeSoundLevel(valueStr);
 		} else if (what == "VERSION") {
 			// values decoded as pure strings
 			this.events.publish("get-"+what.toLowerCase(), valueStr);
 		} else {
-			this.displayToastMessage("unknown value received: "+what+" IS "+valueStr);
+			this.displayDebug("unknown value received: "+what+" IS "+valueStr);
 		}
-
 	}
 
 	/**
@@ -339,7 +369,7 @@ export class ChimuinoProvider {
 			// this input is not complete; let's concatenate it
 			this.currentBuffer = this.currentBuffer+str;
 			if (this.currentBuffer.length > 255) {
-				this.displayToastMessage("ignoring too long message: "+this.currentBuffer);
+				this.displayDebug("ignoring too long message: "+this.currentBuffer);
 				this.currentBuffer = "";
 			}
 			return;
@@ -359,7 +389,7 @@ export class ChimuinoProvider {
 			// should not happen
 			this.displayToastMessage("ignored notified from bluetooth: "+str);
 		} */ else {
-			this.displayToastMessage("ignored from bluetooth: "+str);	
+			this.displayDebug("ignored from bluetooth: "+str);	
 		}
 	}
 
@@ -382,9 +412,11 @@ export class ChimuinoProvider {
 	askSoundThreshold()	{ this.sendMessage("GET SOUNDTHRESHOLD"); 	}
 	askSoundLevel()		{ this.sendMessage("GET SOUNDLEVEL");		}
 	askLightThreshold()	{ this.sendMessage("GET LIGHTTHRESHOLD"); 	}
-	askLightevel()		{ this.sendMessage("GET LIGHTLEVEL");		}
+	askLightLevel()		{ this.sendMessage("GET LIGHTLEVEL");		}
 	askDatetime()		{ this.sendMessage("GET DATETIME");			}
 	askTemperature()	{ this.sendMessage("GET TEMPERATURE");		}
+	
+	// TODO envelopes
 
 	doChime()			{ this.sendMessage("DO CHIME");				}
 	doSnooze()			{ this.sendMessage("DO SNOOZE");			}

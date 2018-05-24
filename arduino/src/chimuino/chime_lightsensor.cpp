@@ -69,7 +69,7 @@ BluetoothListenerAnswer ChimeLightSensor::processBluetoothGet(char* str, Softwar
   if (strncmp_P(str, PSTR("LIGHTLEVEL"), 10) == 0) {
     
     *BTSerial << F("LIGHTLEVEL IS ") 
-              << _DEC(getLightLevel()) << ' ' 
+              << _DEC( int(float(getLightLevel() - sensor.envelopeMin())/float(sensor.envelopeMax()-sensor.envelopeMin())*100.) ) << ' ' 
               << (isDark() ? F("DARK"): F("LIT"))
               << endl;
               
@@ -79,9 +79,16 @@ BluetoothListenerAnswer ChimeLightSensor::processBluetoothGet(char* str, Softwar
   if (strncmp_P(str, PSTR("LIGHTTHRESHOLD"), 14) == 0) {
     
     *BTSerial << F("LIGHTTHRESHOLD IS ")
-              << _DEC(factorThreshold) << ' '
-              << _DEC(darkThreshold) 
-              << F(" [") << _DEC(sensor.envelopeMin()) << ':' << _DEC(sensor.envelopeMax()) << ']'
+              << _DEC(factorThreshold)
+              << endl;
+              
+    return SUCCESS;
+  } 
+
+  if (strncmp_P(str, PSTR("LIGHTENVELOPE"), 13) == 0) {
+    
+    *BTSerial << F("LIGHTENVELOPE IS ")
+              << _DEC(sensor.envelopeMin()) << ' ' << _DEC(sensor.envelopeMax())
               << endl;
               
     return SUCCESS;

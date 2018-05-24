@@ -36,7 +36,20 @@
 
 <ion-card>
   <ion-card-header>
-  <ion-icon name="contacts"></ion-icon> Community<
+  <ion-icon name="information-circle"></ion-icon> State
+  </ion-card-header>
+  <ion-card-content>
+  <ul>
+    <li>Temperature is: {{temperature}}°C</li>
+    <li>Light level is: {{isDark}} ({{lightLevel}})</li>    
+  </ul>
+  <button ion-button full (click)="loadInfoFromChimuino()">update</button>
+  </ion-card-content>
+</ion-card>
+
+<ion-card>
+  <ion-card-header>
+  <ion-icon name="contacts"></ion-icon> Community
   </ion-card-header>
   <ion-card-content>
   Follow us on TODO twitter. 
