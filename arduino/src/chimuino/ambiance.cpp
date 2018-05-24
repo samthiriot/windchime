@@ -30,7 +30,7 @@ BluetoothListenerAnswer Ambiance::processBluetoothGet(char* str, SoftwareSerial*
 
   if (strncmp_P(str, PSTR("AMBIANCE"), 8) == 0) {
     *BTSerial << F("AMBIANCE IS ") 
-              << this.enabled?'1':'0';
+              << (enabled?'1':'0')
               << endl;
     DEBUG_PRINTLN(F("SENT AMBIANCE"));
     return SUCCESS;
