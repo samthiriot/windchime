@@ -1,7 +1,10 @@
 import { Component } from '@angular/core';
 import { NavController } from 'ionic-angular';
 import { Storage } from '@ionic/storage';
+import { Events } from 'ionic-angular';
 import { ChimuinoProvider } from '../../providers/chimuino/chimuino';
+
+// TODO after testing the GUI for alarm1, do the same for alarm2
 
 @Component({
   selector: 'page-alarm',
@@ -9,12 +12,14 @@ import { ChimuinoProvider } from '../../providers/chimuino/chimuino';
 })
 export class AlarmPage {
 
+  alarm1loaded:boolean = false;
   _alarm1hour:string = "07:30";
   _alarm1enabled:boolean = false;
   _alarm1soft:number = 10;
   _alarm1strong:number = 15;
   _alarm1days:string = "mon,tue,wed,thu,fri";
   
+  alarm2loaded:boolean = false;
   _alarm2hour:string = "09:30";
   _alarm2enabled:boolean = false;
   _alarm2soft:number = 10;
@@ -22,9 +27,69 @@ export class AlarmPage {
   _alarm2days:string = "sun,sat";
   
   constructor(public navCtrl: NavController,
-  			   private storage: Storage,
-			     private chimuino: ChimuinoProvider) {
+    			    private storage: Storage,
+  			      private chimuino: ChimuinoProvider,
+              private events: Events
+              ) {
 
+    // when bluetooth informs us of the availability of information 
+    // from the actual chime, then display it
+    this.events.subscribe(
+      'get-alarm1',   
+      (hours, minutes, 
+        durationSoft, durationStrong, 
+        enabled, 
+        sunday, monday, tuesday, 
+        wednesday, thursday, friday, 
+        saterday) => { 
+          this._alarm1hour = hours+":"+minutes; 
+          this._alarm1enabled = enabled;
+          this._alarm1soft = durationSoft;
+          this._alarm1strong = durationStrong;
+          this._alarm1days = ""; 
+          this._alarm1days = this.encoreDaysFromBooleans(sunday,monday,tuesday,wednesday,thursday,friday,saterday);
+          this.alarm1loaded = true;
+          // TODO save into storage?
+      });
+    this.events.subscribe(
+      'get-alarm2',   
+      (hours, minutes, 
+        durationSoft, durationStrong, 
+        enabled, 
+        sunday, monday, tuesday, 
+        wednesday, thursday, friday, 
+        saterday) => { 
+          this._alarm2hour = hours+":"+minutes; 
+          this._alarm2enabled = enabled;
+          this._alarm2soft = durationSoft;
+          this._alarm2strong = durationStrong;
+          this._alarm2days = ""; 
+          this._alarm2days = this.encoreDaysFromBooleans(sunday,monday,tuesday,wednesday,thursday,friday,saterday);
+          this.alarm2loaded = true;
+          // TODO save into storage?
+      });   
+    
+     // when bluetooth will be connected, then load info
+    this.events.subscribe(
+      'connected',
+      (isConnected) => {
+        if (isConnected) {
+          // ask through bluetooth the current settings
+          if (!this.alarm1loaded && !this.alarm2loaded) { // avoid infinite looping
+            this.loadInfoFromChimuino();
+          }
+        } else {
+          this.alarm1loaded = false;
+          this.alarm2loaded = false;
+       }
+      });  
+
+    // maybe the Chimuino is connected already? 
+    if (this.chimuino.isConnected()) {  
+      // in this case, let's load the info right now.
+      this.loadInfoFromChimuino();
+    }
+    /*
   	this.storage.get('alarm-1-hour').then(     (val) => { this._alarm1hour = val;    } );
   	this.storage.get('alarm-1-enabled').then(  (val) => { this._alarm1enabled = val; } );
     this.storage.get('alarm-1-soft').then(     (val) => { this._alarm1soft = val;    } );
@@ -35,7 +100,26 @@ export class AlarmPage {
   	this.storage.get('alarm-2-enabled').then(  (val) => { this._alarm2enabled = val; } );
     this.storage.get('alarm-2-soft').then(     (val) => { this._alarm2soft = val;    } );
     this.storage.get('alarm-2-strong').then(   (val) => { this._alarm2strong = val;  } );
-    this.storage.get('alarm-2-days').then(     (val) => { this._alarm2days = val;    } );    
+    this.storage.get('alarm-2-days').then(     (val) => { this._alarm2days = val;    } ); 
+    */   
+  }
+
+  loadInfoFromChimuino() {
+    this.chimuino.askAlarm1();
+    this.chimuino.askAlarm2();
+  }
+
+  encoreDaysFromBooleans(sunday:boolean,monday:boolean,tuesday:boolean,wednesday:boolean,thursday:boolean,friday:boolean,saterday:boolean) {
+    var daysBool = [sunday,monday,tuesday,wednesday,thursday,friday,saterday];
+    var daysNames = ["sun","mon","tue","wed","thu","fri","sat"];
+    var res:string = "";
+    for (let i=0; i<daysBool.length; i++) {
+      if (!daysBool[i])
+        continue;
+      if (res.length) { res += ","; };
+      res += daysNames[i];
+    }
+    return res;
   }
 
   decodeDaysFromString(value:string) {
@@ -55,7 +139,7 @@ export class AlarmPage {
     var days = this.decodeDaysFromString(this._alarm1days);
   	this.chimuino.setAlarm1(
       parseInt(tokens[0]), parseInt(tokens[1]), 
-      10, 15,
+      this._alarm1soft, this._alarm1strong,
       this._alarm1enabled,
       days.sun, days.mon, days.tue, days.wed, days.thu, days.fri, days.sat
       );

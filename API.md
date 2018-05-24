@@ -99,14 +99,13 @@ Enabled is 1 or 0
 	> SET AMBIANCE 1
 	< AMBIANCE SET
 
+	> GET AMBIANCE
+	< AMBIANCE IS 1
 
 ## datetime
 
 Get and set the current datetime of the Chimuino, that is the clock time.
 The format of the date is TODO. 
-
-    > GET DATETIME
-    < DATETIME IS TODO
 
     > SET DATE 2018-01-24
     < DATE SET
@@ -146,10 +145,10 @@ the sound threshold is a value between 0 and 100.
 
 
 	> GET SOUNDLEVEL
-	< SOUNDLEVEL IS 110 NOISY
+	< SOUNDLEVEL IS 110 NOISY [50:165]
 
 	> GET SOUNDTHRESHOLD
-	< SOUNDTHRESHOLD IS 50 110 [50:165]
+	< SOUNDTHRESHOLD IS 50 
 
 	> SET SOUNDTHRESHOLD 75
 	< SOUNDTHRESHOLD SET

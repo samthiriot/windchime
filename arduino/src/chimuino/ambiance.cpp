@@ -27,6 +27,15 @@ void Ambiance::debugSerial() {
 }
 
 BluetoothListenerAnswer Ambiance::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
+
+  if (strncmp_P(str, PSTR("AMBIANCE"), 8) == 0) {
+    *BTSerial << F("AMBIANCE IS ") 
+              << this.enabled?'1':'0';
+              << endl;
+    DEBUG_PRINTLN(F("SENT AMBIANCE"));
+    return SUCCESS;
+  }
+  
   return NOT_CONCERNED;
 }
 

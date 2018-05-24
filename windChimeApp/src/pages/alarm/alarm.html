@@ -12,19 +12,19 @@
 
     <ion-item>
       <ion-label>Enabled</ion-label>
-      <ion-toggle [(ngModel)]="alarm1enabled"></ion-toggle>
+      <ion-toggle [disabled]="!alarm1loaded" [(ngModel)]="alarm1enabled"></ion-toggle>
     </ion-item>
 
 
 	<ion-item>
 	  <ion-label>Alarm</ion-label>
-	  <ion-datetime displayFormat="HH:mm" [(ngModel)]="alarm1hour"></ion-datetime>
+	  <ion-datetime [disabled]="!alarm1loaded" displayFormat="HH:mm" [(ngModel)]="alarm1hour"></ion-datetime>
 	</ion-item>
 
 <ion-list>
   <ion-item>
     <ion-label>Days</ion-label>
-    <ion-select [(ngModel)]="alarm1days" multiple="true" cancelText="Cancel" okText="Done!">
+    <ion-select [disabled]="!alarm1loaded" [(ngModel)]="alarm1days" multiple="true" cancelText="Cancel" okText="Done!">
       <ion-option value="sun">Sunday</ion-option>
       <ion-option value="mon">Monday</ion-option>
       <ion-option value="tue">Tuesday</ion-option>
@@ -37,11 +37,11 @@
 </ion-list>
 
 
-  <ion-range [(ngModel)]="alarm1soft" debounce="100" min="0" max="30" >
+  <ion-range [disabled]="!alarm1loaded" [(ngModel)]="alarm1soft" debounce="100" min="0" max="30" >
         <ion-label range-left>0 min</ion-label>
         <ion-label range-right>30 min</ion-label>
   </ion-range>
-  <ion-range [(ngModel)]="alarm1strong" debounce="100" min="5" max="30">
+  <ion-range [disabled]="!alarm1loaded" [(ngModel)]="alarm1strong" debounce="100" min="5" max="30">
         <ion-label range-left>5 min</ion-label>
         <ion-label range-right>30 min</ion-label>
   </ion-range>
