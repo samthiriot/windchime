@@ -82,7 +82,7 @@ float ChimeClock::getTemperature() {
 
 BluetoothListenerAnswer ChimeClock::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
   
-  if (strncmp_P(str, PSTR("TIME"), 8) == 0) {
+  if (strncmp_P(str, PSTR("DATETIME"), 8) == 0) {
 
     time_t now = RTC.get();
     *BTSerial << F("DATETIME IS ") 

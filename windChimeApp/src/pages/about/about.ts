@@ -48,25 +48,22 @@ export class AboutPage {
 	}
 
   loadInfoFromChimuino() {
-    this.chimuino.getVersion();
+    this.chimuino.askVersion();
   }
 
 
-	writeSomething() {
-		this.chimuino.writeVersion();
+	askVersion() {
+		this.chimuino.askVersion();
 	}
 
   sendDate()  {
-  this.chimuino.sendDatetime();
-  }
-
-  listen() {
-    this.chimuino.readResult();
+    this.chimuino.sendDatetime();
   }
 
 	doChime() {
-	  	this.chimuino.sendMessage("DO CHIME");
+	  	this.chimuino.doChime();
 	}
+
 
 
 

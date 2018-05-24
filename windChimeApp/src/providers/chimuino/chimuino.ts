@@ -11,12 +11,34 @@ import { Storage } from '@ionic/storage';
 //import { BluetoothSerial } from '@ionic-native/bluetooth-serial';
 import { BLE } from '@ionic-native/ble';
 
-/*
-  Generated class for the ChimuinoProvider provider.
-
-  See https://angular.io/guide/dependency-injection for more info on providers
-  and Angular DI.
-*/
+/**
+ * Mediates all the interactions between the arduino on the chimuino through bluetooth.
+ * Implements the APIs, and provides plain TypeScript interfaces to hide them. 
+ * Internally manages a list of messages pending and sends them each after each other. 
+ * Publishes events using the ionic Events service, so GUI controllers can detect 
+ * connections and diconnections, and also receive data they are interested in.  
+ * 
+ * The standard flow to get an information A from the Chimuino is:
+ * - register the event "get-A" 
+ * - call this provider's method askA()
+ * - (internal) sendMessage("GET A")
+ * - (internal) <bluetooth message sent>
+ * - (internal) <arduino replying the message>
+ * - (internal) onDataNotified -> onGetReceived
+ * - (internal) onGetReceived -> [maybe a decoding function] -> sendEvent
+ * - (internal) events.publish("get-A", data...)
+ * - wait until you get your event coming with the decoded data 
+ *
+ * The standard flow to send an information A to the Chimuino is:
+ * - cann this provider's method sendA(args...);
+ *
+ * The connection steps for this provider are (in case of success):
+ * - created -> connect
+ * - connect -> reactDeviceFound
+ * - reactDeviceFound -> reactDeviceConnected
+ * - reactDeviceConnected -> events.publish("connected", true)
+ *
+ */
 @Injectable()
 export class ChimuinoProvider {
 
@@ -65,21 +87,13 @@ export class ChimuinoProvider {
 	    // try to get a bluetooth connection
 		this.connect();
 
-	    // test message
-	    // TODO remove
-	    let toast = this.toastCtrl.create({
-	      message: 'Started ChimuinoProvider',
-	      duration: 3000,
-	      position: 'top'
-	    });
-	    toast.present();
 	}
 
 	isConnected():boolean {
 		return this._isConnected = false;
 	}
 
-	displayToastMessage(message:string) {
+	private displayToastMessage(message:string) {
 
 		let toast = this.toastCtrl.create({
 	      message: message,
@@ -89,14 +103,14 @@ export class ChimuinoProvider {
 	    toast.present();
 	}
 
-	sendPendingMessages() {
+	private sendPendingMessages() {
 		if (this._pendingCommands.length == 0) {
 			// nothing to send yet
 			return;
 		}
 		// there is something to send !
 		var message:string = this._pendingCommands.shift();
-		this.displayToastMessage("processing pending: "+message);
+		this.displayToastMessage("sending pending: "+message);
 		this.sendMessage(message);
 	}
 
@@ -104,7 +118,7 @@ export class ChimuinoProvider {
 	 * queues a message in the list of messages to send
 	 * when bluetooth will be ready (again?)
 	 */
-	queueMessage(message:string) {
+	private queueMessage(message:string) {
 		// queue this demand
 		if (this._pendingCommands.indexOf(message) > -1) {
 			// already queued.
@@ -113,10 +127,11 @@ export class ChimuinoProvider {
 		this._pendingCommands.push(message);
 		this.displayToastMessage("queuing "+message);
 	}
+
 	/**
 	 * Sends a message to the Chimuino
 	 */
-	sendMessage(messageRaw:string, tryagain:boolean=true) {
+	private sendMessage(messageRaw:string, tryagain:boolean=true) {
 
   		let message = messageRaw.trim()+'\n';
 
@@ -137,7 +152,7 @@ export class ChimuinoProvider {
   		this._busy = true;
 
 		//this.ble.stopScan();
-		this.displayToastMessage("should send "+message+"to"+this._device.id+"...");
+		this.displayToastMessage("sending "+message+"to"+this._device.id+"...");
 		
 		// convert message to string
 		var buf = new ArrayBuffer(message.length*2);
@@ -169,30 +184,7 @@ export class ChimuinoProvider {
 	
   	}
 
-  	readResult():string {
-  		
-  		this.ble.read(this._device.id, this.SERVICE, this.CHARACTERISTIC).then(
-  			(buffer) => {
-  				var data = new Uint8Array(buffer);
-
-				var str = String.fromCharCode.apply(null, data);
-
-				if (str.startsWith("GET") || str.startsWith("SET") || str.startsWith("DO") || str.startsWith("DEBUG")) {
-					// ignore the commands sent by someone
-					this.displayToastMessage("ignored from bluetooth: "+str);
-
-				} else {
-					this.displayToastMessage("received from bluetooth: "+str);	
-				}
-  				
-  			}
-  		);
-
-  		return 'not yet implemented';
-
-  	}
-
-	connect() {
+	private connect() {
 		// enable bluetooth first
 		this.ble.enable().then( (enabled) => {
 			// then get the expected id of the device
@@ -224,7 +216,7 @@ export class ChimuinoProvider {
 	 * React when the bluetooth device was found; 
 	 * this._device is thus set.
 	 */
-	reactDeviceFound() {
+	private reactDeviceFound() {
 
 		// display information to the user
 		this.displayToastMessage('connecting device '+this._device.name+'...');
@@ -237,7 +229,7 @@ export class ChimuinoProvider {
 
 	}
 
-	reactDeviceConnected() {
+	private reactDeviceConnected() {
 
 		// register (=listen) to changes
 		// TODO patch for IOS https://github.com/don/cordova-plugin-ble-central#typed-arrays
@@ -265,7 +257,7 @@ export class ChimuinoProvider {
 	 * an action. We update the corresponding SET event with true, which means
 	 * "this was updated" (true does not mean anything related to the actual value)
 	 */
-	onSetAcknowledged(str:string) {
+	private onSetAcknowledged(str:string) {
 
 		var code:string = str.trim().toLowerCase();
 		this.events.publish("set-"+code, true);
@@ -274,9 +266,9 @@ export class ChimuinoProvider {
 	}
 
 	/**
-	 *
+	 * decodes an alarm from data received from bluetooth
 	 */
-	decodeAlarm(name:string, str:string) {
+	private decodeAlarm(name:string, str:string) {
 		// input format is: 
 		// 09:11 10 15 0 0111110
 		var tokens = str.split(' ');
@@ -306,7 +298,7 @@ export class ChimuinoProvider {
 	 * Receive the answer with the value of something.
 	 * Will propagate an event with the decoded value.
 	 */
-	onGetReceived(what:string, valueStr:string) {
+	private onGetReceived(what:string, valueStr:string) {
 		var data = null;
 		if (what == "AMBIANCE") {
 			var enabled:boolean = valueStr[0]=='1';
@@ -319,6 +311,8 @@ export class ChimuinoProvider {
 			// values containing just one int
 			var valueInt = parseInt(valueStr);
 			this.events.publish("get-"+what.toLowerCase(), valueInt);
+
+		// TODO decode levels
 		} else if (what == "VERSION") {
 			// values decoded as pure strings
 			this.events.publish("get-"+what.toLowerCase(), valueStr);
@@ -328,7 +322,10 @@ export class ChimuinoProvider {
 
 	}
 
-	onDataNotified(buffer) {
+	/**
+	 * called when a bluetooth notification is received 
+	 */
+	private onDataNotified(buffer) {
 
 		//this.displayToastMessage("notified by bluetooth: "+ buffer);
 
@@ -366,27 +363,39 @@ export class ChimuinoProvider {
 		}
 	}
 
-	onNotificationFailure() {
+	/**
+	 * Called when the notification demand fails. 
+	 * Usually means we are disconnected.
+	 */
+	private onNotificationFailure() {
 		this._isConnected = false;
 		this.displayToastMessage("notification failure :-(");
 		this.events.publish("connected", false);
 	}	
 
-	setSoundThreshold(t:number) {
-		this.sendMessage("SET SOUNDTHRESHOLD "+t);
-	}
 
-	setLightThreshold(t:number) {
-		this.sendMessage("SET LIGHTTHRESHOLD "+t);
-	}
+	// ask for characteristics
+	askAlarm1()			{ this.sendMessage("GET ALARM1"); 			}
+	askAlarm2()			{ this.sendMessage("GET ALARM1"); 			}
+	askAmbiance()		{ this.sendMessage("GET AMBIANCE"); 		}
+	askVersion()		{ this.sendMessage("GET VERSION"); 			}
+	askSoundThreshold()	{ this.sendMessage("GET SOUNDTHRESHOLD"); 	}
+	askSoundLevel()		{ this.sendMessage("GET SOUNDLEVEL");		}
+	askLightThreshold()	{ this.sendMessage("GET LIGHTTHRESHOLD"); 	}
+	askLightevel()		{ this.sendMessage("GET LIGHTLEVEL");		}
+	askDatetime()		{ this.sendMessage("GET DATETIME");			}
+	askTemperature()	{ this.sendMessage("GET TEMPERATURE");		}
 
-	setAmbiance(enabled:boolean) {
-		this.sendMessage(
-			"SET AMBIANCE "+
-			(enabled?"1":"0")
-			);
-	}
+	doChime()			{ this.sendMessage("DO CHIME");				}
+	doSnooze()			{ this.sendMessage("DO SNOOZE");			}
 
+	setSoundThreshold(t:number) { this.sendMessage("SET SOUNDTHRESHOLD "+t); }
+	setLightThreshold(t:number) { this.sendMessage("SET LIGHTTHRESHOLD "+t); }
+
+	// setters for one Boolean
+	setAmbiance(enabled:boolean) { this.sendMessage("SET AMBIANCE "+(enabled?"1":"0")); }
+
+	// setters for alarms
 	setAlarm1(hour:number, minutes:number, durationSoft:number, durationStrong:number, enabled:boolean, 
 			sunday:boolean, monday:boolean, tuesday:boolean, wednesday:boolean, thursday:boolean, friday:boolean, saterday:boolean) {
 		
@@ -396,7 +405,6 @@ export class ChimuinoProvider {
 			(enabled?"1":"0")+" "+
 			(sunday?"1":"0")+(monday?"1":"0")+(tuesday?"1":"0")+(wednesday?"1":"0")+(thursday?"1":"0")+(friday?"1":"0")+(saterday?"1":"0")
 			);
-		this.readResult(); // TODO
 	}
 
   	setAlarm2(hour:number, minutes:number, durationSoft:number, durationStrong:number, enabled:boolean, 
@@ -408,82 +416,6 @@ export class ChimuinoProvider {
 	  		(enabled?"1":"0")+" "+
 	  		(sunday?"1":"0")+(monday?"1":"0")+(tuesday?"1":"0")+(wednesday?"1":"0")+(thursday?"1":"0")+(friday?"1":"0")+(saterday?"1":"0")
 	  		);
-	}
-
-	askAlarm1() {
-		this.sendMessage("GET ALARM1");
-	}
-	askAlarm2() {
-		this.sendMessage("GET ALARM1");
-	}
-
-	writeVersion() {
-
-		this.sendMessage("GET VERSION");
-		this.readResult();
-
-	  	/*
-
-		this.bluetooth.write('GET VERSION\n').then(
-			(success) => { 
-				let toast = this.toastCtrl.create({
-			      message: 'success: '+success,
-			      duration: 3000,
-			      position: 'top'
-			    });
-			    toast.present();
-			},
-			(failure) => {
-				let toast = this.toastCtrl.create({
-			      message: 'failure: '+failure,
-			      duration: 3000,
-			      position: 'top'
-			    });
-			    toast.present();
-			});
-		*/
-	}
-
-  	getVersion():Promise<String> {
-
-		return new Promise( (resolve,reject) => {
-
-	 		// define we are busy
-
-			this.sendMessage("DIS MOI TRUC");
-
-		  	/*
-			// send question
-		  	this.bluetooth.write('GET VERSION\n')
-					  	  .then(
-							version => { 
-							  	this._busy = false;
-								resolve("sent mess "+version);
-								}, 
-							failure =>  { 
-								this._busy = false;
-								reject("error while writing.");
-							}
-							);
-			*/
-	 	});
-	}
-
-	/*
-	* Gets the time from the Chuimuino,
-	* and returns it as a Promise. 
-	*/
-	getDatetime() {
-		
-		// define we are busy
-		this._busy = true;
-
-		// send the message asking for the date 
-		// "GET DATE"
-		// wait for the answer 
-
-		// not busy anymore
-		this._busy = false;
 	}
 
 	/*
@@ -499,5 +431,4 @@ export class ChimuinoProvider {
 			"SET TIME "+now.getHours()+":"+now.getMinutes()+":"+now.getSeconds());
 	}
  	
-
 }

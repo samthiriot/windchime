@@ -10,35 +10,29 @@ several basic messages can be exchanged throught bluetooth.
 ## actions
 action demands are in the form
 
-	> DO <ACTION>
+	> DO <ACTION>\n
 
 The Chuimuino acknowledges it understood the demand and applied it by answering
 
-	< DOING <ACTION> 
+	< DOING <ACTION>\n
 
-## parameters
+## settings
 Asking for the value of parameters (settings) and setting their value is done in the form:
 
-	> GET <SETTING>
-	< <SETTING> IS <VALUE>
+	> GET <SETTING>\n
+	< <SETTING> IS <VALUE>\n
 
-	> SET <SETTING> VALUE
-	< <SETTING> SET
+	> SET <SETTING> VALUE\n
+	< <SETTING> SET\n
 
 ## state
 Asking for the value of a state or characteristic of the Chimuino.
 
-	> GET <SOMETHING>
-	< <SOMETHING> IS <VALUE>
+	> GET <SOMETHING>\n
+	< <SOMETHING> IS <VALUE>\n
 
-## others
-Other demands can be sent to the arduino. 
-For instance:
 
-	> PLEASE <DEMAND>
-	< OK <DEMAND>
-
-Below you'll find the complete list of actions and settings.
+Below you'll find the complete list of actions, settings and states.
 
 
 # actions
@@ -113,6 +107,10 @@ The format of the date is TODO.
     > SET TIME 22:31:01
     < TIME SET
 
+    > GET DATETIME 
+    < DATETIME IS 2018-01-24 22:31:01
+
+
 ## alarms
 
 There are two alarms which can be activated in the Chuimino.
@@ -128,17 +126,23 @@ The format is made of:
 	> SET ALARM1 09:11 10 15 1 0111110
 	< ALARM1 SET
 
-	> PLEASE SNOOZE
-	< OK SNOOZE
-
 same with "ALARM2"
+
+Snooze asks to report a bit the current alarm (NOT YET IMPLEMENTED)
+
+	> DO SNOOZE
+	< DOING SNOOZE
+
+if error (no alarm ongoing)
+
+	> DO SNOOZE
+	< FAILED SNOOZE
+
 
 ## sound level
 
 Gets the sound level measured by the Chuimuino. 
 This sound level is used for the Chuimuino to decide to act or not. 
-
-TODO
 
 level is either NOISY or QUIET
 the sound threshold is a value between 0 and 100. 
