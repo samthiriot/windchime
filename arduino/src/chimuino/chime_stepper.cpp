@@ -30,7 +30,7 @@ void ChimeStepper::setup() {
     pull_medium = steps/11;
     pull_strong = steps/9;
 
-    DEBUG_PRINTLN("init: going to position free");
+    DEBUG_PRINTLN(F("init: going to position free"));
  
     motor.setSpeed(MOTOR_SPEED_SLOW);
     motor.step(pull_medium);

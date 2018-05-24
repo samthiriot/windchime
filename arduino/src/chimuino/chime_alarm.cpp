@@ -39,7 +39,7 @@ BluetoothListenerAnswer ChimeAlarm::processBluetoothGet(char* str, SoftwareSeria
 
   if ( (strncmp_P(str, PSTR("ALARM"), 5) == 0) && (str[6] == char(id)) ) {
     
-    *BTSerial << "ALARM" << id << F(" IS ")
+    *BTSerial << F("ALARM") << id << F(" IS ")
               << start_hour << ':' << start_minutes << ' ' 
               << durationSoft << ' ' << durationStrong << ' '
               << bool2char(enabled) << ' ' 
