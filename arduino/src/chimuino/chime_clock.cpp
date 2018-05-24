@@ -41,7 +41,7 @@ void ChimeClock::setup() {
   setSyncProvider(RTC.get);
   setSyncInterval(1);         // only one second for resync
 
-  if (timeStatus() == timeNotSet) {
+  if (timeStatus() == timeNotSet or RTC.oscStopped(false)) {
      DEBUG_PRINTLN(F("WARN: RTC is NOT running! Initializing with compilation time."));
      time_t compilation_time = compileTime();
      RTC.set(compilation_time);
