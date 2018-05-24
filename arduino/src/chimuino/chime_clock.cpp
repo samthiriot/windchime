@@ -49,8 +49,12 @@ void ChimeClock::setup() {
   }
 
   // disable interrupts
+  // TODO maybe to reactivate to space arduino consumption
   RTC.alarmInterrupt(ALARM_1, false);
   RTC.alarmInterrupt(ALARM_2, false);
+
+  // save power by disabling the square wave
+  RTC.squareWave(SQWAVE_NONE);
 
   DEBUG_PRINTLN(F("init: RTC ok"));
 
