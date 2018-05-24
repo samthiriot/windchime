@@ -13,7 +13,7 @@ class LowPassFilterSensor {
   
   private:
 
-    float ETA;                  // the smoothing constant in 0:100. 50 = mean, 90 strong weight on last value, 100 smooth a lot
+    float ETA;                  // the smoothing constant in 0:1. 0.5= mean, 0.9 strong weight on last value, 0.1 smooth a lot
     byte pin;                   // the pin to read data from
     unsigned int period;        // how often to listen for the value (in milliseconds)
 

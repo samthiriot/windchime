@@ -203,7 +203,6 @@ export class AlarmPage {
     this.updateChimuinoAlarm2();
   }
 
-
   get alarm1enabled():boolean {
   	return this._alarm1enabled;
   }
