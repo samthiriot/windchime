@@ -64,6 +64,7 @@ void ChimeBluetooth::setup() {
   
   readATResult(F("AT+NOTI1"));
   readATResult(F("AT+ROLE0"));
+  readATResult(F("AT+PASS050183"));
   readATResult(F("AT+NAMECHIMUINO"));
   readATResult(F("AT+RESET"));
   delay(500);
