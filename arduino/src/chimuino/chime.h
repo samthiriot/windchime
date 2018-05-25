@@ -42,7 +42,7 @@ class IntentionProvider {
       // called when a GET <SOMETHING> was received
       // will receive as arguments the <SOMETHING> char*, 
       // and a pointer to serial port to use to answer
-      virtual Intention proposeNextMode(enum mode current_mode);
+      virtual Intention proposeNextMode(enum mode current_mode, unsigned long next_planned_action);
 
 };
 

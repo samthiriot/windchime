@@ -1,5 +1,4 @@
 
-
 // hardware note
 // * see http://www.martyncurrey.com/hm-10-bluetooth-4ble-modules/ 
 // * http://blog.blecentral.com/2015/05/05/hm-10-peripheral/
@@ -228,18 +227,25 @@ void ChimeBluetooth::sendDebug() {
 void ChimeBluetooth::reactToCommand() {
   DEBUG_PRINT(F("bluetooth: processing command "));
   DEBUG_PRINTLN(received);
+  char * received2 = received;
+  // the AT messages might interfer; remove the known ones
+  if (strncmp_P(received, PSTR("OK+CONN"), 7) == 0) {
+    received2 = received+7; 
+    DEBUG_PRINT(F("bluetooth: processing instead command "));
+    DEBUG_PRINTLN(received2);
+  }
   // received
   // receivedCount
-  if (strncmp_P(received, PSTR("GET "), 4) == 0) {
+  if (strncmp_P(received2, PSTR("GET "), 4) == 0) {
     // the command starts with GET
-    processGet(received + 4);
-  } else if (strncmp_P(received, PSTR("SET "), 4) == 0) {
-    processSet(received + 4);
-  } else if (strncmp_P(received, PSTR("DO "), 3) == 0) {
-    processDo(received + 3);
+    processGet(received2 + 4);
+  } else if (strncmp_P(received2, PSTR("SET "), 4) == 0) {
+    processSet(received2 + 4);
+  } else if (strncmp_P(received2, PSTR("DO "), 3) == 0) {
+    processDo(received2 + 3);
   } else {
     DEBUG_PRINT(F("ERROR: command ignored "));
-    DEBUG_PRINTLN(received);
+    DEBUG_PRINTLN(received2);
     bluetoothConsume();
     receivedCount = 0;
   }

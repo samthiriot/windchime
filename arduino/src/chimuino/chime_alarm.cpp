@@ -163,11 +163,10 @@ bool ChimeAlarm::shouldRing() {
   
 }
 
-Intention ChimeAlarm::proposeNextMode(enum mode current_mode) {
+Intention ChimeAlarm::proposeNextMode(enum mode current_mode, unsigned long next_planned_action) {
 
   enum mode PREALARM = id==1 ? PREALARM1: PREALARM2;
   enum mode ALARM = id==1 ? ALARM1: ALARM2;
-  
   
   if (shouldPrering()) {
     if (current_mode != PREALARM) {
@@ -187,7 +186,7 @@ Intention ChimeAlarm::proposeNextMode(enum mode current_mode) {
     return Intention { SILENCE,  millis() + 60*1000l };
   }
 
-  return Intention { NOTHING,  millis() };
+  return Intention { current_mode, next_planned_action };
   
 }
 
