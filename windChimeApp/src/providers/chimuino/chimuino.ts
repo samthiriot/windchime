@@ -129,7 +129,8 @@ export class ChimuinoProvider {
 	    toast.present();
 	}
 
-	private displayDebug(message:string) {
+	//private 
+	displayDebug(message:string) {
 		if (this.DEBUG) {
 			this.displayToastMessage(message);
 		}
@@ -369,6 +370,7 @@ export class ChimuinoProvider {
 		var tokensTime = tokens[0].split(":");
 		var hours:number = parseInt(tokensTime[0]);
 		var minutes:number = parseInt(tokensTime[1]);
+		//this.displayDebug("decoded for "+name+" "+hours+":"+minutes);
 		var durationSoft:number = parseInt(tokens[1]);
 		var durationStrong:number = parseInt(tokens[2]);
 		var enabled:boolean = tokens[3]=='1';

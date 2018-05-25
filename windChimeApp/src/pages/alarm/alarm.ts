@@ -56,7 +56,8 @@ export class AlarmPage {
         sunday, monday, tuesday, 
         wednesday, thursday, friday, 
         saterday) => { 
-          this._alarm1hour = hours+":"+minutes; 
+          this._alarm1hour = (hours<10?"0":"")+hours+":"+(minutes<10?"0":"")+minutes; 
+          //this.chimuino.displayDebug("alarm set to "+this._alarm1hour);
           this._alarm1enabled = enabled;
           this._alarm1soft = durationSoft;
           this._alarm1strong = durationStrong;
@@ -77,7 +78,8 @@ export class AlarmPage {
         sunday, monday, tuesday, 
         wednesday, thursday, friday, 
         saterday) => { 
-          this._alarm2hour = hours+":"+minutes; 
+          this._alarm2hour = (hours<10?"0":"")+hours+":"+(minutes<10?"0":"")+minutes; 
+          //this.chimuino.displayDebug("alarm set to "+this._alarm2hour);
           this._alarm2enabled = enabled;
           this._alarm2soft = durationSoft;
           this._alarm2strong = durationStrong;

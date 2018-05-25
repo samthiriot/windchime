@@ -11,14 +11,9 @@
     
   <ion-card>
     <ion-card-header>
-      Alarm 1
+      Alarm 1 <ion-toggle [disabled]="!alarm1loaded" [(ngModel)]="alarm1enabled"></ion-toggle>
     </ion-card-header>
     <ion-card-content>
-
-      <ion-item>
-        <ion-label>Enabled</ion-label>
-        <ion-toggle [disabled]="!alarm1loaded" [(ngModel)]="alarm1enabled"></ion-toggle>
-      </ion-item>
 
       <ion-item>
         <ion-label>Alarm</ion-label>
@@ -53,14 +48,9 @@
   
   <ion-card>
     <ion-card-header>
-      Alarm 2
+      Alarm 2 <ion-toggle [disabled]="!alarm2loaded" [(ngModel)]="alarm2enabled"></ion-toggle>
     </ion-card-header>
     <ion-card-content>
-
-      <ion-item>
-        <ion-label>Enabled</ion-label>
-        <ion-toggle [disabled]="!alarm2loaded" [(ngModel)]="alarm2enabled"></ion-toggle>
-      </ion-item>
 
       <ion-item>
         <ion-label>Alarm</ion-label>
