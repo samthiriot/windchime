@@ -8,22 +8,24 @@
 #include <Streaming.h>
 #include <TimeLib.h>
 
-ChimeAlarm::ChimeAlarm(const char* _name) {
-  name = _name;
-  name_length = strlen(name);
+ChimeAlarm::ChimeAlarm(byte _id):
+            BluetoothCommandListener(),
+            IntentionProvider() {
+  id = _id;
 }
 
 void ChimeAlarm::setup() {
 
-  DEBUG_PRINT(F("init: ")); DEBUG_PRINT(name); DEBUG_PRINTLN(F("..."));
+  DEBUG_PRINT(F("init: ALARM")); DEBUG_PRINT_DEC(id); DEBUG_PRINTLN(F("..."));
 
+  
 
-  DEBUG_PRINT(F("init: ")); DEBUG_PRINT(name); DEBUG_PRINTLN(F(" ok"));
+  DEBUG_PRINT(F("init: ALARM")); DEBUG_PRINT_DEC(id); DEBUG_PRINTLN(F(" ok"));
 }
 
 void ChimeAlarm::debugSerial() {
   #ifdef DEBUG
-  Serial << F("Alarm ") << name << F(": ") 
+  Serial << F("Alarm ALARM") << id << F(": ") 
          << _DEC(start_hour) << ':' << _DEC(start_minutes) << ' ' 
          << (enabled ? F("enabled") : F("disabled")) << ' '
          << _DEC(durationSoft) << ' ' << _DEC(durationStrong) << F(" days:")
@@ -35,9 +37,9 @@ void ChimeAlarm::debugSerial() {
 
 BluetoothListenerAnswer ChimeAlarm::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
 
-  if (strncmp(str, name, name_length) == 0) {
+  if ( (strncmp_P(str, PSTR("ALARM"), 5) == 0) && (str[6] == char(id)) ) {
     
-    *BTSerial << name << F(" IS ")
+    *BTSerial << F("ALARM") << id << F(" IS ")
               << start_hour << ':' << start_minutes << ' ' 
               << durationSoft << ' ' << durationStrong << ' '
               << bool2char(enabled) << ' ' 
@@ -53,7 +55,7 @@ BluetoothListenerAnswer ChimeAlarm::processBluetoothGet(char* str, SoftwareSeria
 
 BluetoothListenerAnswer ChimeAlarm::processBluetoothSet(char* str, SoftwareSerial* BTSerial) {
   
-  if (strncmp(str, name, name_length) == 0) {
+  if ( (strncmp_P(str, PSTR("ALARM"), 5) == 0) && (str[6] == char(id))) {
 
     DEBUG_PRINT(F("received alarm")); DEBUG_PRINTLN(str);
 
@@ -86,7 +88,7 @@ BluetoothListenerAnswer ChimeAlarm::processBluetoothSet(char* str, SoftwareSeria
     if (start_hour > 23) { start_hour = 23; }
     if (start_minutes > 59) { start_minutes = 59; }
 
-    *BTSerial << name << F(" SET") << endl;
+    *BTSerial << F("ALARM") << id << F(" SET") << endl;
     
     // TODO persist somewhere else?
     // TODO activate an alarm in the RTC chip?
@@ -158,6 +160,34 @@ bool ChimeAlarm::shouldRing() {
 
   int currentMinutes = hour() * 60 + minute();
   return (ringMinutesStart <= currentMinutes) and (currentMinutes <= ringMinutesEnd);
+  
+}
+
+Intention ChimeAlarm::proposeNextMode(enum mode current_mode) {
+
+  enum mode PREALARM = id==1 ? PREALARM1: PREALARM2;
+  enum mode ALARM = id==1 ? ALARM1: ALARM2;
+  
+  
+  if (shouldPrering()) {
+    if (current_mode != PREALARM) {
+      // we should prering, but we don't; let's propose to act !
+      DEBUG_PRINT(F("alarm")); DEBUG_PRINT_DEC(id); DEBUG_PRINTLN(F(" prering"));
+      return Intention { PREALARM,  millis() + random(1*60*1000l,5*60*1000l) };
+    }
+  } else if (shouldRing()) {
+    if (current_mode != ALARM) {
+      // we should ring, but we don't; let's propose to ring !
+      DEBUG_PRINT(F("alarm")); DEBUG_PRINT_DEC(id); DEBUG_PRINTLN(F(" ring"));
+      return Intention { ALARM,  millis() + random(1*60*1000l,5*60*1000l) };
+    }
+  } else if (current_mode == PREALARM or current_mode == ALARM) {
+    // we were intending to alarm, but it's no time anymore; let's stop and leave some silence
+    DEBUG_PRINT(F("no more alarm ALARM"));DEBUG_PRINTLN(id);
+    return Intention { SILENCE,  millis() + 60*1000l };
+  }
+
+  return Intention { NOTHING,  millis() };
   
 }
 

@@ -10,35 +10,29 @@ several basic messages can be exchanged throught bluetooth.
 ## actions
 action demands are in the form
 
-	> DO <ACTION>
+	> DO <ACTION>\n
 
 The Chuimuino acknowledges it understood the demand and applied it by answering
 
-	< DOING <ACTION> 
+	< DOING <ACTION>\n
 
-## parameters
+## settings
 Asking for the value of parameters (settings) and setting their value is done in the form:
 
-	> GET <SETTING>
-	< <SETTING> IS <VALUE>
+	> GET <SETTING>\n
+	< <SETTING> IS <VALUE>\n
 
-	> SET <SETTING> VALUE
-	< <SETTING> SET
+	> SET <SETTING> VALUE\n
+	< <SETTING> SET\n
 
 ## state
 Asking for the value of a state or characteristic of the Chimuino.
 
-	> GET <SOMETHING>
-	< <SOMETHING> IS <VALUE>
+	> GET <SOMETHING>\n
+	< <SOMETHING> IS <VALUE>\n
 
-## others
-Other demands can be sent to the arduino. 
-For instance:
 
-	> PLEASE <DEMAND>
-	< OK <DEMAND>
-
-Below you'll find the complete list of actions and settings.
+Below you'll find the complete list of actions, settings and states.
 
 
 # actions
@@ -99,20 +93,23 @@ Enabled is 1 or 0
 	> SET AMBIANCE 1
 	< AMBIANCE SET
 
+	> GET AMBIANCE
+	< AMBIANCE IS 1
 
 ## datetime
 
 Get and set the current datetime of the Chimuino, that is the clock time.
 The format of the date is TODO. 
 
-    > GET DATETIME
-    < DATETIME IS TODO
-
     > SET DATE 2018-01-24
     < DATE SET
 
     > SET TIME 22:31:01
     < TIME SET
+
+    > GET DATETIME 
+    < DATETIME IS 2018-01-24 22:31:01
+
 
 ## alarms
 
@@ -129,17 +126,24 @@ The format is made of:
 	> SET ALARM1 09:11 10 15 1 0111110
 	< ALARM1 SET
 
-	> PLEASE SNOOZE
-	< OK SNOOZE
-
 same with "ALARM2"
+
+Snooze asks to report a bit the current alarm (NOT YET IMPLEMENTED)
+
+	> DO SNOOZE
+	< DOING SNOOZE
+
+if error (no alarm ongoing)
+
+	> DO SNOOZE
+	< FAILED SNOOZE
+
 
 ## sound level
 
 Gets the sound level measured by the Chuimuino. 
 This sound level is used for the Chuimuino to decide to act or not. 
-
-TODO
+The sound level is an int between 0 and 100. It corresponds to the actual raw value in the sound envelope.
 
 level is either NOISY or QUIET
 the sound threshold is a value between 0 and 100. 
@@ -149,11 +153,13 @@ the sound threshold is a value between 0 and 100.
 	< SOUNDLEVEL IS 110 NOISY
 
 	> GET SOUNDTHRESHOLD
-	< SOUNDTHRESHOLD IS 50 110 [50:165]
+	< SOUNDTHRESHOLD IS 75 
 
 	> SET SOUNDTHRESHOLD 75
 	< SOUNDTHRESHOLD SET
 
+	> GET SOUNDENVELOPE
+	< SOUNDENVELOPE IS 50 165
 
 ## light level and threshold
 
@@ -162,11 +168,13 @@ Gets the light level measured by the Chimuino.
 Detected status is either DARK or LIT
 
 	> GET LIGHTLEVEL
-	< LIGHTLEVEL IS 72 LIT
+	< LIGHTLEVEL IS 72 LIT 
 
 	> GET LIGHTTHRESHOLD
-	< LIGHTTHRESHOLD IS 80
+	< LIGHTTHRESHOLD IS 80 
 
 	> SET LIGHTTHRESHOLD 72
 	< LIGHTTHRESHOLD IS 72
 
+	> GET LIGHTENVELOPE
+	< LIGHTENVELOPE IS 50 165

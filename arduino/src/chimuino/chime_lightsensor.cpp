@@ -6,6 +6,8 @@
 #include "debug.h"
 
 ChimeLightSensor::ChimeLightSensor(const byte _pin):
+              BluetoothCommandListener(),
+              IntentionProvider(),
               sensor( CHIME_LIGHTSENSOR_MEASURES_ETA, _pin, 
                       CHIME_LIGHTSENSOR_MEASURES_FREQUENCY,// read every 100ms
                       CHIME_LIGHTSENSOR_ENVELOPE_ETA_SLOW, CHIME_LIGHTSENSOR_ENVELOPE_ETA_QUICK
@@ -67,7 +69,7 @@ BluetoothListenerAnswer ChimeLightSensor::processBluetoothGet(char* str, Softwar
   if (strncmp_P(str, PSTR("LIGHTLEVEL"), 10) == 0) {
     
     *BTSerial << F("LIGHTLEVEL IS ") 
-              << _DEC(getLightLevel()) << ' ' 
+              << _DEC( int(float(getLightLevel() - sensor.envelopeMin())/float(sensor.envelopeMax()-sensor.envelopeMin())*100.) ) << ' ' 
               << (isDark() ? F("DARK"): F("LIT"))
               << endl;
               
@@ -77,9 +79,16 @@ BluetoothListenerAnswer ChimeLightSensor::processBluetoothGet(char* str, Softwar
   if (strncmp_P(str, PSTR("LIGHTTHRESHOLD"), 14) == 0) {
     
     *BTSerial << F("LIGHTTHRESHOLD IS ")
-              << _DEC(factorThreshold) << ' '
-              << _DEC(darkThreshold) 
-              << F(" [") << _DEC(sensor.envelopeMin()) << ':' << _DEC(sensor.envelopeMax()) << ']'
+              << _DEC(factorThreshold)
+              << endl;
+              
+    return SUCCESS;
+  } 
+
+  if (strncmp_P(str, PSTR("LIGHTENVELOPE"), 13) == 0) {
+    
+    *BTSerial << F("LIGHTENVELOPE IS ")
+              << _DEC(sensor.envelopeMin()) << ' ' << _DEC(sensor.envelopeMax())
               << endl;
               
     return SUCCESS;
@@ -120,3 +129,16 @@ BluetoothListenerAnswer ChimeLightSensor::processBluetoothDo(char* str, Software
 }
 
 
+Intention ChimeLightSensor::proposeNextMode(enum mode current_mode) {
+  
+  bool isDarkNow = isDark();
+  bool wasDark = previousIsDark;
+  previousIsDark = isDarkNow;
+  if ( (current_mode == NOTHING) && (!isDarkNow) && (wasDark) ) {
+      // light just came back; welcome it!
+      DEBUG_PRINTLN(F("welcoming the sun ;-)"));
+      return Intention { WELCOME_SUN,  millis() };
+  }
+  return Intention { NOTHING,  millis() };
+  
+}

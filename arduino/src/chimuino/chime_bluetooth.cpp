@@ -64,6 +64,7 @@ void ChimeBluetooth::setup() {
   
   readATResult(F("AT+NOTI1"));
   readATResult(F("AT+ROLE0"));
+  readATResult(F("AT+PASS050183"));
   readATResult(F("AT+NAMECHIMUINO"));
   readATResult(F("AT+RESET"));
   delay(500);
@@ -218,8 +219,10 @@ void ChimeBluetooth::processDo(char* str) {
 }
 
 void ChimeBluetooth::sendDebug() {
-  BTSerial << "DEBUG" << endl;
-  DEBUG_PRINTLN("bluetooth: sent debug");
+  #ifdef DEBUG
+  BTSerial << F("DEBUG") << endl;
+  DEBUG_PRINTLN(F("bluetooth: sent debug"));
+  #endif
 }
 
 void ChimeBluetooth::reactToCommand() {

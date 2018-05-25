@@ -55,14 +55,6 @@ Chime chime;
 
 Ambiance ambiance;
 
-// +---------------------------------------------+
-// |      LIGHT SENSOR                           |
-// |            simple but smart                 |
-// +---------------------------------------------+
-    
-   
-bool wasDark = false;                                                     // true if was dark before
-
 
 // +---------------------------------------------+
 // |      RANDOM                                 |
@@ -102,7 +94,7 @@ void setup() {
   alarm2.setup();
   bluetooth.setup();
   chime.setup(&soundSensor, &stepper);
-  ambiance.setup();
+  ambiance.setup(&soundSensor, &lightSensor);
 
   // ... add the chain of listeners, which might react to bluetooth commands
   bluetooth.addCommandInterpreter(&alarm1);
@@ -153,49 +145,24 @@ void loop() {
 
   // DESIRE 
 
-  // if an alarm should be rang, then override wathever current setting
-  if (alarm1.shouldPrering())      { if (current_mode != PREALARM1)  { current_mode = PREALARM1;   next_planned_action = millis() + random(1*60*1000l,5*60*1000l); DEBUG_PRINTLN("alarm1 prering"); } }
-  else if (alarm2.shouldPrering()) { if (current_mode != PREALARM2)  { current_mode = PREALARM2;   next_planned_action = millis() + random(1*60*1000l,5*60*1000l); DEBUG_PRINTLN("alarm2 prering"); } }
-  else if (alarm1.shouldRing())    { if (current_mode != ALARM1)     { current_mode = ALARM1;      next_planned_action = millis() + random(1*60*1000l,5*60*1000l); DEBUG_PRINTLN("alarm1 ring"); } }
-  else if (alarm2.shouldRing())    { if (current_mode != ALARM2)     { current_mode = ALARM2;      next_planned_action = millis() + random(1*60*1000l,5*60*1000l); DEBUG_PRINTLN("alarm2 ring"); } }
-  else if (current_mode == PREALARM1 or current_mode == PREALARM2 or current_mode == ALARM1 or current_mode == ALARM2) {
-    // no alarm asked anymore, so it's not our current mode anymore
-    current_mode = NOTHING;
-    DEBUG_PRINTLN(F("no more alarm."));
-  }
+  // alarms have the power to override past settings (alarm 1 has priority)
+  Intention proposedIntention = alarm2.proposeNextMode(current_mode);
+  current_mode = proposedIntention.what; 
+  next_planned_action = proposedIntention.when;
+  
+  proposedIntention = alarm1.proposeNextMode(current_mode);
+  current_mode = proposedIntention.what; 
+  next_planned_action = proposedIntention.when;
 
-  // if light just came, then celebrate it
-  if (current_mode == NOTHING and !isDark and wasDark) {
-      current_mode = WELCOME_SUN;
-      DEBUG_PRINTLN(F("welcoming the sun ;-)"));
-      next_planned_action = millis();
-  }
+  // maybe the light sensor would like to propose welcoming the sun? 
+  proposedIntention = lightSensor.proposeNextMode(current_mode);
+  current_mode = proposedIntention.what; 
+  next_planned_action = proposedIntention.when;
 
   // if nothing happens and we can play ambiance
-  if (current_mode == NOTHING and isAmbianceEnabled and !isDark and isQuiet) {
-    int r = random(0,100);
-    if (r <= 60) { 
-      current_mode = SILENCE;
-      next_planned_action = millis() + random(10,60)*1000l;
-      DEBUG_PRINT(F("a bit of silence for ")); DEBUG_PRINTLN((next_planned_action - millis())/1000);
-    } else if (r <= 65) {
-      current_mode = AMBIANCE_REVEIL;
-      next_planned_action = millis() + random(4*60,15*60)*1000l;
-      DEBUG_PRINT(F("mood strong in ")); DEBUG_PRINTLN((next_planned_action - millis())/1000);
-    } else if (r <= 75) {
-      current_mode = AMBIANCE_PREREVEIL;
-      next_planned_action = millis() + random(4*60,10*60)*1000l;  
-      DEBUG_PRINT(F("mood medium in ")); DEBUG_PRINTLN((next_planned_action - millis())/1000);
-    } else {
-      current_mode = AMBIANCE_TINTEMENT;
-      next_planned_action = millis() + random(1*10,7*60)*1000l;
-      DEBUG_PRINT(F("mood slight in ")); DEBUG_PRINTLN((next_planned_action - millis())/1000);
-    }
-  } // TODO disable planned ambiance if any ! else if (isAmbianceEnabled and current_mode == AMBIANCE_PREREVEIL
-  
-  
-  // MEMORIZE THE WORLD
-  wasDark = isDark;
+  proposedIntention = ambiance.proposeNextMode(current_mode);
+  current_mode = proposedIntention.what; 
+  next_planned_action = proposedIntention.when;
 
   // INTENTION
 

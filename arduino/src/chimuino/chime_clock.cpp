@@ -41,7 +41,7 @@ void ChimeClock::setup() {
   setSyncProvider(RTC.get);
   setSyncInterval(1);         // only one second for resync
 
-  if (timeStatus() == timeNotSet) {
+  if (timeStatus() == timeNotSet or RTC.oscStopped(false)) {
      DEBUG_PRINTLN(F("WARN: RTC is NOT running! Initializing with compilation time."));
      time_t compilation_time = compileTime();
      RTC.set(compilation_time);
@@ -49,8 +49,12 @@ void ChimeClock::setup() {
   }
 
   // disable interrupts
+  // TODO maybe to reactivate to space arduino consumption
   RTC.alarmInterrupt(ALARM_1, false);
   RTC.alarmInterrupt(ALARM_2, false);
+
+  // save power by disabling the square wave
+  RTC.squareWave(SQWAVE_NONE);
 
   DEBUG_PRINTLN(F("init: RTC ok"));
 
@@ -78,7 +82,7 @@ float ChimeClock::getTemperature() {
 
 BluetoothListenerAnswer ChimeClock::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
   
-  if (strncmp_P(str, PSTR("TIME"), 8) == 0) {
+  if (strncmp_P(str, PSTR("DATETIME"), 8) == 0) {
 
     time_t now = RTC.get();
     *BTSerial << F("DATETIME IS ") 

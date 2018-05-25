@@ -6,42 +6,172 @@
   </ion-navbar>
 </ion-header>
 
+
 <ion-content padding>
-Your Chimuino contains:
 
-	<ul class="my-nav">
-    	<li>a basic microphone able to measure the level of sound (but not able to recode)</li>
-    	<li>List item</li>
-  	</ul>
+<button ion-button full (click)="askVersion()">Ask for version</button>
+<button ion-button full (click)="doChime()">Chime now</button>
+<button ion-button full (click)="sendDate()">Synchronize clock</button>
+
+// TODO fold cards
+
+<ion-card>
+  <ion-card-header>
+    <ion-icon name="information-circle"></ion-icon> Your Chime learns every day!
+  </ion-card-header>
+  <ion-card-content>
+    <p>
+    Your chime will not chime when it's too dark (to let you sleep peacefully) or if 
+    that's too noisy (for not disturbing your nice music listening session).
+    </p>
+    <p> 
+    Well, it's not very smart, but it remembers how much light and sound it is used to see, 
+    so it adapts itself to season and environments variations to detect night/day.
+    </p>
+    <p>
+    You teach your chime when it should not have considered it is dark. 
+    </p>
+  </ion-card-content>
+</ion-card>
+
+<ion-card>
+  <ion-card-header>
+  <ion-icon name="information-circle"></ion-icon> State
+  </ion-card-header>
+  <ion-card-content>
+  <ul>
+    <li>Temperature is: {{temperature}}°C</li>
+    <li>Light level is: {{isDark}} ({{lightLevel}})</li>    
+  </ul>
+  <button ion-button full (click)="loadInfoFromChimuino()">update</button>
+  </ion-card-content>
+</ion-card>
+
+<ion-card>
+  <ion-card-header>
+  <ion-icon name="contacts"></ion-icon> Community
+  </ion-card-header>
+  <ion-card-content>
+  Follow us on TODO twitter. 
+  Wanna share what others do with their chime? 
+  </ion-card-content>
+</ion-card>
+
+<ion-card>
+  <ion-card-header>
+    <ion-icon name="hammer"></ion-icon> Hardware
+  </ion-card-header>
+  <ion-card-content>
+    Your Chimuino contains:
+    <ul class="my-nav">
+      <li>an Arduino (Arduino Uno R3), that is an open hardware programmable chip belonging a large community and ecosystem</li>
+      <li>a stepper engine (BYJ48) that moves quietly the Chime to ring it, and the associate controller</li>
+      <li>a photovoltaic diod for measuring the light level</li>
+      <li>a basic microphone able to measure the level of sound</li>
+      <li>a real time clock (RTC DS3231) so alarms ring when expected</li>
+      <li>a bluetooth (HM-10 Bluetooth-4.0 V2 based on the TI CC2541 chip) to communicate with a smartphone or tablet</li>
+      <li>a software in version: {{firmwareVersion}}</li>
+    </ul>
+  </ion-card-content>
+</ion-card>
 
 
-Version: {{firmwareVersion}}
+<ion-card>
+  <ion-card-header>
+  ion-icon name="people"></ion-icon> You can contribute:
+  </ion-card-header>
+  <ion-card-content>
 
-  <button ion-button full (click)="writeSomething()">Write something</button>
-  <button ion-button full (click)="doChime()">Chime now</button>
-  <button ion-button full (click)="listen()">Read bluetooth</button>
-  <button ion-button full (click)="sendDate()">Synchronize clock</button>
+  <p>
+  For support or suggestions of improvement, <a href="https://github.com/samthiriot/windchime/issues">please contact the community</a>.
+  </p>
+  <p>
+  You're free to enhance the software of this project, both the software into the Chimuino and the smartphone application. 
+  Both are open-source. Fork them, update your Arduino or app, do what you wish; this product is yours. 
+  We just ask you to give back this result to the community. Of course, if you break it, we cannot support you anymore.
+  </p>
+  <p>
+  You will find everything in our github repository <a href="https://github.com/samthiriot/windchime/issues">github.com/samthiriot/windchime</a>.
+  </p>
+  <p>
+  If you wish to tune the hardware, you're welcome to do it too! Just be careful to your safety and the safety of people around... and enjoy. 
+  Of course, should you break you product, that would be your responsibility only.
+  </p>
 
-<h3><ion-icon name="contacts"></ion-icon> Community</h3>
+  </ion-card-content>
+</ion-card>
 
-Follow us on TODO. 
-Wanna share what others do with their chime? 
+<ion-card>
+  <ion-card-header>
+  <ion-icon name="leaf"></ion-icon> We love nature
+  </ion-card-header>
+  <ion-card-content>
+  <p>
+  We try to lower ecologic footprint by working on ecodesign. 
+  It includes reducing the energy consumption, design for disassembly and avoiding obsolescence.
+  </p>
 
-<h3><ion-icon name="bug"></ion-icon> Support</h3>
+  <p>
+  <b>Energy consumption</b> is a permanent effort. 
+  We chose the Bluetooth Low Energy technology which is much more energy efficient for data transmission.
+  We use the technical possibilities by disabling useless features: the stepper engine in free wheel as soon as possible, 
+  we activate Arduino power sleep mode, and disabled useless Real-Time-Clock features.
+  </p>
 
-For support or suggestions of improvement, <a href="https://github.com/samthiriot/windchime/issues">please contact the community</a>.
+  <p>
+  We <b>designed Chuimuino for disassembly</b>. If you don't want this product anymore or it is broken beyond repair, 
+  you can open it with standard tools. You can reuse the standard electronic parts for DIY projects, or donate them to a local electronics club. 
+  See the hardware list below (TODO).
+  </p>
 
-<h3><ion-icon name="lock"></ion-icon> Privacy</h3>
+  <p>
+  <b>Obsolescence</b> of this product is neither planned nor built-in! 
+  If we cannot support this product anymore by ourself, you or third-party might do it. 
+  We used standard on-the-shelf hardware components, so you should be able to find spare parts without our help. 
+  The software is opensource, so anyone (able to develop) can upgrade it when required. 
+  </p>
+  </ion-card-content>
+</ion-card>
 
-<p>
-This device is so simple it cannot, by design, collect private information nor transmit them.
-So even if a pirate was able to hack your device or our servers, he would not be able to access any type of private information.
-</p>
+<ion-card>
+  <ion-card-header>
+  <ion-icon name="lock"></ion-icon> Your privacy matters
+  </ion-card-header>
+  <ion-card-content>
+  <p>
+  The bluetooth connection is encrypted, and is only broadcasted about 100m away. 
+  The only information the Chuimuino knows about you is light level, noise level, temperature, 
+  and alarms. So it's likely no one will take the troube to hack the device to spy you.
+  </p>
 
-<p>
-The microphone is a simple device which is only able to measure the level of noise, but can not technically record any voice. 
-</p>
+  <p>
+  To be entirely secure, you can just switch the bluetooth off on the device using the switch. 
+  </p>
 
+  <p>
+  This device is so simple it cannot, by design, collect too much sensitive information nor transmit it.
+  So even if a pirate was able to hack your device or our servers, s/he would not be able to access a lot of sensitive information:
+  </p>
+  <ul>
+    <li>The microphone is only able to measure a level of noise (more or less noisy)</li>
+    <li>The light sensor is only able to measure a level of light</li>
+    <li>The chips embbeded in the Chimuino are so simple they cannot do a lot</li>
+    <li>The only way information would be transmitted is through bluetooth</li>
+  </ul>
 
+  What can others learn of your private life through this device? Here are a few attack scenarii:
+  <ul>
+    <li>The fact the device is on or off can be detected by anyone nearby who will see the bluetooth device.</li>
+    <li>Accessing the state of the device (alarm defined, your place being lit or dark) can be done by going over the bluetooth security.
+        It probably might be done by a pirate trying the one million possible pin codes (brute force attack).
+        It might be done either by breaking the encryption (AES-128) implemented in the bluetooth chip. As any encryption, 
+        it might be broken if someone has enough interest in the limited information we listed before.</li>
+    <li>a pirate might install a spyware by physically accessing your device (that would be complicated on these very simple chips).
+        If they do that, they might be able to know how much light or noise there is in your place, when you intend to wake up, what 
+        the temperature is, and brodcast that information through bluetooth (100meters range).</li>
+  </ul>
+
+  </ion-card-content>
+</ion-card>
 
 </ion-content>

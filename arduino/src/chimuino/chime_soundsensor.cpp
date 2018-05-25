@@ -72,7 +72,7 @@ BluetoothListenerAnswer ChimeSoundSensor::processBluetoothGet(char* str, Softwar
   if (strncmp_P(str, PSTR("SOUNDLEVEL"), 10) == 0) {
     
     *BTSerial << F("SOUNDLEVEL IS ") 
-              << _DEC(getSoundLevel()) << ' ' 
+              << _DEC( int(float(getSoundLevel() - sensor.envelopeMin())/float(sensor.envelopeMax()-sensor.envelopeMin())*100.) ) << ' ' 
               << (isQuiet() ? F("QUIET"): F("NOISY"))
               << endl;
               
@@ -82,14 +82,20 @@ BluetoothListenerAnswer ChimeSoundSensor::processBluetoothGet(char* str, Softwar
   if (strncmp_P(str, PSTR("SOUNDTHRESHOLD"), 14) == 0) {
  
     *BTSerial << F("SOUNDTHRESHOLD IS ")
-              << _DEC(factorThreshold) << ' '
-              << _DEC(quietThreshold) 
-              << F(" [") << _DEC(sensor.envelopeMin()) << ':' << _DEC(sensor.envelopeMax()) << ']'
+              << _DEC(factorThreshold)
               << endl;
               
     return SUCCESS;
   } 
+
+  if (strncmp_P(str, PSTR("SOUNDENVELOPE"), 13) == 0) {
     
+    *BTSerial << F("SOUNDENVELOPE IS ")
+              << _DEC(sensor.envelopeMin()) << ' ' << _DEC(sensor.envelopeMax())
+              << endl;
+              
+    return SUCCESS;
+  } 
   return NOT_CONCERNED;
 }
 
