@@ -37,7 +37,7 @@ void ChimeAlarm::debugSerial() {
 
 BluetoothListenerAnswer ChimeAlarm::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
 
-  if ( (strncmp_P(str, PSTR("ALARM"), 5) == 0) && (str[6] == char(id)) ) {
+  if ( (strncmp_P(str, PSTR("ALARM"), 5) == 0) && (str[5] == (id==1?'1':'2') ) ) {
     
     *BTSerial << F("ALARM") << id << F(" IS ")
               << start_hour << ':' << start_minutes << ' ' 
