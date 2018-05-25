@@ -187,7 +187,7 @@ void loop() {
   
 
   // maybe it's time to apply what we had planned?
-  if (next_planned_action <= millis()) {
+  if (current_mode != NOTHING and next_planned_action <= millis()) {
     DEBUG_PRINTLN(F("time to act!"));
     // time to act
     switch (current_mode) {
