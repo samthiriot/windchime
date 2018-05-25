@@ -218,8 +218,7 @@ void ChimeBluetooth::processDo(char* str) {
 }
 
 void ChimeBluetooth::sendDebug() {
-  //BTSerial << "DEBUG" << endl;
-  BTSerial.println("DEBUG");
+  BTSerial << "DEBUG" << endl;
   DEBUG_PRINTLN("bluetooth: sent debug");
 }
 

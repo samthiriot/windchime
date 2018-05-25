@@ -148,7 +148,7 @@ void loop() {
       DEBUG_PRINT(F("next action in: ")); DEBUG_PRINTLN((next_planned_action - millis())/1000);
     }
 
-    //bluetooth.sendDebug();
+    bluetooth.sendDebug();
   }
 
   // DESIRE 

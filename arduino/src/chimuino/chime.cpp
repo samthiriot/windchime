@@ -41,8 +41,8 @@ BluetoothListenerAnswer Chime::processBluetoothGet(char* str, SoftwareSerial* BT
   if (strncmp_P(str, PSTR("VERSION"), 7) == 0) {
 
     *BTSerial << F("VERSION IS ") 
-              << FIRMWARE_VERSION;
-              //<< endl;
+              << FIRMWARE_VERSION
+              << endl;
 
     DEBUG_PRINTLN(F("SENT VERSION"));
      
