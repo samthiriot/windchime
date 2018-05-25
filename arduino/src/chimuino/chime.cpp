@@ -50,8 +50,8 @@ BluetoothListenerAnswer Chime::processBluetoothGet(char* str, SoftwareSerial* BT
     DEBUG_PRINTLN(F("SENT VERSION"));
      
     return SUCCESS;
-  } 
-  
+  }
+
   return NOT_CONCERNED;
 }
 
@@ -87,7 +87,9 @@ Intention Chime::proposeNextMode(enum mode current_mode, unsigned long next_plan
 
   if (demoAsked != NOTHING) {
     DEBUG_PRINT("Doing demo of "); DEBUG_PRINTLN(mode2str(demoAsked));
-    return Intention { demoAsked,  millis() }; 
+    enum mode demoAsked2 = demoAsked;
+    demoAsked = NOTHING;
+    return Intention { demoAsked2,  millis() }; 
   }
 
   return Intention { current_mode, next_planned_action };
