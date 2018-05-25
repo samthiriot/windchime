@@ -19,6 +19,9 @@ char* mode2str(enum mode v) {
     case AMBIANCE_TINTEMENT:  return ("mood: tintement");
     case AMBIANCE_PREREVEIL:  return ("mood: prereveil");
     case AMBIANCE_REVEIL:     return ("mood: reveil");
+    case DEMO_LIGHT:          return ("demo light");
+    case DEMO_MEDIUM:         return ("demo medium");
+    case DEMO_STRONG:         return ("demo strong");
     default:                  return ("?");
   };
 };
@@ -47,8 +50,8 @@ BluetoothListenerAnswer Chime::processBluetoothGet(char* str, SoftwareSerial* BT
     DEBUG_PRINTLN(F("SENT VERSION"));
      
     return SUCCESS;
-  } 
-  
+  }
+
   return NOT_CONCERNED;
 }
 
@@ -58,10 +61,19 @@ BluetoothListenerAnswer Chime::processBluetoothSet(char* str, SoftwareSerial* BT
     
 BluetoothListenerAnswer Chime::processBluetoothDo(char* str, SoftwareSerial* BTSerial) {
 
-  if (strncmp_P(str, PSTR("CHIME"), 5) == 0) {
+  if (strncmp_P(str, PSTR("CHIME "), 6) == 0) {
 
-    // TODO chime !!!
-    *BTSerial << F("DOING CHIME") 
+    if (strncmp_P(str+6, PSTR("LIGHT"), 5) == 0) {
+      DEBUG_PRINTLN("Asked for demo light");
+      demoAsked = DEMO_LIGHT;
+    } else if (strncmp_P(str+6, PSTR("MEDIUM"), 6) == 0) {
+      DEBUG_PRINTLN("Asked for demo medium");
+      demoAsked = DEMO_MEDIUM;
+    }  else if (strncmp_P(str+6, PSTR("STRONG"), 6) == 0) {
+      DEBUG_PRINTLN("Asked for demo strong");
+      demoAsked = DEMO_STRONG;
+    }
+    *BTSerial << F("DOING DEMO") 
               << endl;
               
     return SUCCESS;
@@ -71,4 +83,15 @@ BluetoothListenerAnswer Chime::processBluetoothDo(char* str, SoftwareSerial* BTS
 
 }
 
+Intention Chime::proposeNextMode(enum mode current_mode, unsigned long next_planned_action) {
 
+  if (demoAsked != NOTHING) {
+    DEBUG_PRINT("Doing demo of "); DEBUG_PRINTLN(mode2str(demoAsked));
+    enum mode demoAsked2 = demoAsked;
+    demoAsked = NOTHING;
+    return Intention { demoAsked2,  millis() }; 
+  }
+
+  return Intention { current_mode, next_planned_action };
+  
+}

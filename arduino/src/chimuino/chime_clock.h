@@ -24,6 +24,8 @@ class ChimeClock: public BluetoothCommandListener {
     
     // prints debug information in the Serial port
     void debugSerial();
+
+    unsigned long startTimestamp;
     
     // return current datetime
     time_t now(); 

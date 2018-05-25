@@ -56,6 +56,8 @@ void ChimeClock::setup() {
   // save power by disabling the square wave
   RTC.squareWave(SQWAVE_NONE);
 
+  startTimestamp = millis();
+  
   DEBUG_PRINTLN(F("init: RTC ok"));
 
 }
@@ -92,6 +94,18 @@ BluetoothListenerAnswer ChimeClock::processBluetoothGet(char* str, SoftwareSeria
  
     return SUCCESS;
   }
+
+  if (strncmp_P(str, PSTR("UPTIME"), 6) == 0) {
+
+    *BTSerial << F("UPTIME IS ") 
+              << (millis() - startTimestamp)/(60l*1000l)
+              << endl;
+
+    DEBUG_PRINTLN(F("SENT VERSION"));
+     
+    return SUCCESS;
+  }
+
 
   if (strncmp_P(str, PSTR("TEMPERATURE"), 11) == 0) {
     float temp = getTemperature();
