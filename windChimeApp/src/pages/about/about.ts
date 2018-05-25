@@ -9,11 +9,24 @@ import { Events } from 'ionic-angular';
 })
 export class AboutPage {
 
+  public versionLoaded:boolean = false;
   public firmwareVersion:String = "???";
+
+  public temperatureLoaded:boolean = false;
   public temperature:String = "???";
+  
+  public lightLevelLoaded:boolean = false;
   public lightLevel:String = "???";
   public isDark:String = "???";
+  public lightMinMaxLoaded:boolean = false;
+  public lightMinMax:String = "?:?";
 
+  public soundLevelLoaded:boolean = false;
+  public soundLevel:String = "???";
+  public isQuiet:String = "???";
+  public soundMinMaxLoaded:boolean = false;
+  public soundMinMax:String = "?:?";
+  
 	constructor(public navCtrl: NavController,
 				      private chimuino: ChimuinoProvider,
               private events: Events) {
@@ -24,12 +37,14 @@ export class AboutPage {
       'get-version',   
       (version) => { 
           this.firmwareVersion = version;
+          this.versionLoaded = true;
       });
 
     this.events.subscribe(
       'get-temperature',   
       (temperature) => { 
           this.temperature = String(temperature);
+          this.temperatureLoaded = true;
       });
 
     this.events.subscribe(
@@ -37,8 +52,27 @@ export class AboutPage {
       (level,isDark) => { 
           this.lightLevel = String(level);
           this.isDark = (isDark?"DARK":"LIT");
+          this.lightLevelLoaded = true;
       });
-
+    this.events.subscribe(
+      'get-lightenvelope',   
+      (min,max) => { 
+          this.lightMinMax = ""+min+":"+max;
+          this.lightMinMaxLoaded = true;
+      });
+    this.events.subscribe(
+      'get-soundlevel',   
+      (level,isQuiet) => { 
+          this.soundLevel = String(level);
+          this.isQuiet = (isQuiet?"QUIET":"NOISY");
+          this.soundLevelLoaded = true;
+      });
+    this.events.subscribe(
+      'get-soundenvelope',   
+      (min,max) => { 
+          this.soundMinMax = ""+min+":"+max;
+          this.soundMinMaxLoaded = true;
+      });
     
     // when bluetooth will be connected, then load info
     this.events.subscribe(
@@ -64,9 +98,26 @@ export class AboutPage {
           */
 	}
 
+  ionViewWillEnter() {
+    if (!this.isFullyLoaded()) {
+      this.loadInfoFromChimuino();
+    }
+  }
+
+  isFullyLoaded():boolean {
+    return this.versionLoaded && 
+           this.lightLevelLoaded && this.lightMinMaxLoaded &&
+           this.soundLevelLoaded && this.soundMinMaxLoaded && 
+           this.temperatureLoaded;
+  }
+
   loadInfoFromChimuino() {
-    this.chimuino.askVersion();
-    this.chimuino.askTemperature();
+    if (!this.lightLevelLoaded) { this.chimuino.askLightLevel(); }
+    if (!this.lightMinMaxLoaded) { this.chimuino.askLightEnvelope(); }
+    if (!this.soundLevelLoaded) { this.chimuino.askSoundLevel(); }
+    if (!this.soundMinMaxLoaded) { this.chimuino.askSoundEnvelope(); }
+    if (!this.temperatureLoaded) { this.chimuino.askTemperature(); }
+    if (!this.versionLoaded) { this.chimuino.askVersion(); }
   }
 
 

@@ -44,7 +44,9 @@ export class ChimuinoProvider {
 
 	// switch to true to have plenty of toast messages
 	// displaying what happens with bluetooth at every step.
-	public DEBUG = true;
+	public DEBUG:boolean = true;
+	private MAX_MTU_STRING:number = 20; 
+	private DELAY_BETWEEN_COMMANDS_MS = 200;
 
 	private _busy:boolean = false;
 	private _isConnected:boolean = false;
@@ -57,6 +59,8 @@ export class ChimuinoProvider {
 	// strings received so far from bluetooth which don't yet end with carriage return
 	private currentBuffer = "";
 
+	private _firstConnection:boolean = true;
+
 	constructor(//public http: HttpClient,
   			  private ble: BLE,
 			  //private bluetooth: BluetoothSerial,
@@ -65,7 +69,8 @@ export class ChimuinoProvider {
   			  private events: Events
   			  ) {
 
-	    console.log('Hello ChimuinoProvider Provider');
+
+		this.displayDebug("creating a ChimuinoProvider");
 
 	    // publish the events related to connection
 	    // ... are we connected or not?
@@ -93,7 +98,7 @@ export class ChimuinoProvider {
 	}
 
 	isConnected():boolean {
-		return this._isConnected = false;
+		return this._isConnected;
 	}
 
 	private displayToastMessage(message:string) {
@@ -121,12 +126,13 @@ export class ChimuinoProvider {
 		// there is something to send !
 		var message:string = this._pendingCommands.shift();
 		this.displayDebug("sending pending: "+message);
-		this.sendMessage(message);
+		this.sendMessageRaw(message);
 	}
 
 	/**
 	 * queues a message in the list of messages to send
-	 * when bluetooth will be ready (again?)
+	 * when bluetooth will be ready (again?). 
+	 * Only queues messages not being queued already.
 	 */
 	private queueMessage(message:string) {
 		// queue this demand
@@ -135,23 +141,74 @@ export class ChimuinoProvider {
 			return;
 		}
 		this._pendingCommands.push(message);
-		this.displayDebug("queuing "+message);
+		//this.displayDebug("queuing "+message);
+		if (!this._busy) {
+			this.attemptReconnect();
+		}
 	}
 
 	/**
-	 * Sends a message to the Chimuino
+	 * Sends a message without any transformation.
+	 */ 
+	private sendMessageRaw(message:string) {
+
+		this.displayDebug("sending raw "+message+"to"+this._device.id+"...");
+
+		// convert message to string
+		var buf = new ArrayBuffer(message.length*2);
+	    var bufView = new Uint8Array(buf);
+	    for (var i = 0, strLen = message.length; i < strLen; i++) {
+	      bufView[i] = message.charCodeAt(i);
+	    }
+
+	    // actually send it 
+	    // (here we use writeWithoutResponse to save time; 
+	    //  but in this case the automatic fragmentation compliant with MTU is not activated.
+	    //  so we rely on a fragmentation mechanism of our own)
+		this.ble.writeWithoutResponse(this._device.id, this.SERVICE, this.CHARACTERISTIC, buf).then(  
+				(success) => {
+					this._busy = false;
+					// nota: we will be notified by another method of the actual success
+					//this.displayToastMessage('sent info :-) '+success);
+					if (message.endsWith("\n")) {
+						// this is a complete command; let's give some time for the Chime to process it
+						setTimeout(
+							() => { this.sendPendingMessages() }, 
+					    	this.DELAY_BETWEEN_COMMANDS_MS);
+					} else { // we just sent a chunk, let's continue ASAP
+						this.sendPendingMessages();
+					}
+				},
+				(failure) => {
+					this._busy = false;
+					this.displayDebug("failure: "+failure+", will retry later...");
+					// add the message as the first message in the list of pending messages
+					this._pendingCommands.unshift(message);
+					// try to reconnect; in case of success the message will be sent !
+					this.attemptReconnect();
+				}
+			);
+	
+	}
+
+
+	/**
+	 * Sends a message to the Chimuino. 
+	 * Trims it and adds a cariage return to close the command.
 	 */
-	private sendMessage(messageRaw:string, tryagain:boolean=true) {
+	private sendMessage(messageRaw:string) {
 
   		let message = messageRaw.trim()+'\n';
 
   		// if we are busy, it's not yet time to send an additional query
-  		if ( (this._busy && tryagain) || !this._isConnected) {
+  		if ( this._busy || !this._isConnected) {
+  			this.displayDebug("not sending now because "+(this._busy?"busy":"not connected"));
   			this.queueMessage(message);
   			return;
   		}
 
   		if (!this.ble.isEnabled() || !this.ble.isConnected(this._device.id)) {
+  			//this.displayDebug("not sending now because "+(!this.ble.isEnabled()?"no bluetooth":"not connected to device"));
   			this.queueMessage(message);
   			this.connect();
   			return;
@@ -162,39 +219,40 @@ export class ChimuinoProvider {
   		this._busy = true;
 
 		//this.ble.stopScan();
-		this.displayDebug("sending "+message+"to"+this._device.id+"...");
+		//this.displayDebug("sending "+message+"to"+this._device.name+"...");
 		
-		// convert message to string
-		var buf = new ArrayBuffer(message.length*2);
-	    var bufView = new Uint8Array(buf);
-	    for (var i = 0, strLen = message.length; i < strLen; i++) {
-	      bufView[i] = message.charCodeAt(i);
-	    }
+		// split the messages longer than MTU into several messages
+		let messagesThen:string[] = []; // the fragments of messages to be sent
+		while (message.length > this.MAX_MTU_STRING) {
+			messagesThen.push(message.substring(0,this.MAX_MTU_STRING));
+			message = message.substring(this.MAX_MTU_STRING);
+		}
+		if (message.length > 0) {
+			messagesThen.push(message);
+		}
+		let messageFirst = messagesThen.shift();
+		this._pendingCommands =  [ ...messagesThen , ...this._pendingCommands ];
 
-	    // actually send it 
-		this.ble.writeWithoutResponse(this._device.id, this.SERVICE, this.CHARACTERISTIC, buf).then( 
-				(success) => {
-					this._busy = false;
-					// nota: we will be notified by another method of the actual success
-					//this.displayToastMessage('sent info :-) '+success);
-					this.sendPendingMessages();
-				},
-				(failure) => {
-					this._busy = false;
-					if (tryagain) {
-						this.displayDebug("failure: "+failure+", will retry later...");
-						this.queueMessage(message);
-						this.connect();
-					} else {
-						this._busy = false;
-						this.displayDebug("failure, not trying again.");
-					}
-				}
-			);
-	
+		// send the first message; the next ones will follow because they are queued.
+
+		this.sendMessageRaw(messageFirst);
+
   	}
 
+  	/**
+  	 * called when something when wrong in bluetooth communication.
+  	 * Attempts to restore a connection.
+  	 */
+	private attemptReconnect() {
+		this.reactDeviceFound();
+	}
+
 	private connect() {
+
+		/*if ((this._device != null) && (this.ble.isConnected(this._device.id))) {
+			this.ble.dis
+		}
+		*/
 		// enable bluetooth first
 		this.ble.enable().then( (enabled) => {
 			// then get the expected id of the device
@@ -251,8 +309,11 @@ export class ChimuinoProvider {
 		this._isConnected = true;
 
 		// send information to the Chimuino
-		this.sendDatetime();
-		
+		if (this._firstConnection) {
+			this.sendDatetime();
+			this._firstConnection = false;
+		}
+
 		// start pushing the messages which were pending 
 		this.sendPendingMessages();
 
@@ -284,7 +345,7 @@ export class ChimuinoProvider {
 		var tokens = str.split(' ');
 		var tokensTime = tokens[0].split(":");
 		var hours:number = parseInt(tokensTime[0]);
-		var minutes:number = parseInt(tokensTime[2]);
+		var minutes:number = parseInt(tokensTime[1]);
 		var durationSoft:number = parseInt(tokens[1]);
 		var durationStrong:number = parseInt(tokens[2]);
 		var enabled:boolean = tokens[3]=='1';
@@ -332,14 +393,25 @@ export class ChimuinoProvider {
 		if (what == "AMBIANCE") {
 			var enabled:boolean = valueStr[0]=='1';
 			this.events.publish("get-ambiance", enabled);
+		
+		// ALARMS
 		} else if (what == "ALARM1") {
 			this.decodeAlarm("alarm1", valueStr);
 		} else if (what == "ALARM2") {
 			this.decodeAlarm("alarm2", valueStr);
-		} else if (what == "SOUNDTHRESHOLD" || what == "LIGHTTHRESHOLD") {
-			// values containing just one int
+
+		// VALUES WITH ONE INT
+		} else if (what == "SOUNDTHRESHOLD" 
+				   || what == "LIGHTTHRESHOLD"
+				   || what == "TEMPERATURE") {
 			var valueInt = parseInt(valueStr);
 			this.events.publish("get-"+what.toLowerCase(), valueInt);
+		} else if (what == "LIGHTENVELOPE" 
+					|| what == "SOUNDENVELOPE") {
+			var tokens = valueStr.split(" ");
+			var min:number = parseInt(tokens[0]);
+			var max:number = parseInt(tokens[1]);
+			this.events.publish("get-"+what.toLowerCase(), min, max);
 		} else if (what == "LIGHTLEVEL") {
 			this.decodeLightLevel(valueStr);
 		} else if (what == "SOUNDLEVEL") {
@@ -375,20 +447,23 @@ export class ChimuinoProvider {
 			return;
 		}
 
+		// remove the trailing carriage return
+		str = str.trim();
+
 		// process
 		if (str.endsWith(" SET")) {
 			// received a message in the form "<SOMETHING> SET"
 			this.onSetAcknowledged(str.substring(0,str.length-4));
 		} else if (str.includes(" IS ")) {
 			var idx = str.indexOf(" IS "); 
-			var what:string = str.substring(0,idx-1);
+			var what:string = str.substring(0,idx);
 			var value:string = str.substring(idx+4);
 			this.onGetReceived(what, value);
 		} /*else if (str.startsWith("GET ") || str.startsWith("SET ") || str.startsWith("DO ") || str.startsWith("DEBUG")) {
 			// ignore the commands sent by someone
 			// should not happen
 			this.displayToastMessage("ignored notified from bluetooth: "+str);
-		} */ else {
+		} */else {
 			this.displayDebug("ignored from bluetooth: "+str);	
 		}
 	}
@@ -401,21 +476,30 @@ export class ChimuinoProvider {
 		this._isConnected = false;
 		this.displayToastMessage("notification failure :-(");
 		this.events.publish("connected", false);
+		this.attemptReconnect();
 	}	
 
 
 	// ask for characteristics
 	askAlarm1()			{ this.sendMessage("GET ALARM1"); 			}
 	askAlarm2()			{ this.sendMessage("GET ALARM1"); 			}
+
 	askAmbiance()		{ this.sendMessage("GET AMBIANCE"); 		}
+	
 	askVersion()		{ this.sendMessage("GET VERSION"); 			}
+	
 	askSoundThreshold()	{ this.sendMessage("GET SOUNDTHRESHOLD"); 	}
 	askSoundLevel()		{ this.sendMessage("GET SOUNDLEVEL");		}
+	askSoundEnvelope()	{ this.sendMessage("GET SOUNDENVELOPE");	}
+	
 	askLightThreshold()	{ this.sendMessage("GET LIGHTTHRESHOLD"); 	}
 	askLightLevel()		{ this.sendMessage("GET LIGHTLEVEL");		}
-	askDatetime()		{ this.sendMessage("GET DATETIME");			}
-	askTemperature()	{ this.sendMessage("GET TEMPERATURE");		}
+	askLightEnvelope()	{ this.sendMessage("GET LIGHTENVELOPE");	}
 	
+	askDatetime()		{ this.sendMessage("GET DATETIME");			}
+	
+	askTemperature()	{ this.sendMessage("GET TEMPERATURE");		}
+
 	// TODO envelopes
 
 	doChime()			{ this.sendMessage("DO CHIME");				}
@@ -458,9 +542,14 @@ export class ChimuinoProvider {
 		// .. adapt datetime
 		var now = new Date;
 		this.sendMessage(
+			"SET DATETIME "
+			+String(now.getFullYear())+"-"+String(now.getMonth()+1)+"-"+String(now.getDate())
+			+" "+now.getHours()+":"+now.getMinutes()+":"+now.getSeconds());
+		/*this.sendMessage(
 			"SET DATE "+now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate());
 		this.sendMessage(
 			"SET TIME "+now.getHours()+":"+now.getMinutes()+":"+now.getSeconds());
+		*/
 	}
  	
 }

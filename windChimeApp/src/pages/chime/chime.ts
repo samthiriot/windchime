@@ -20,8 +20,10 @@ export class ChimePage {
   public isSoundThresholdLoaded:boolean = false;
   private _soundThreshold:number = 50;
   
+  public isLightLevelLoaded:boolean = false;
   public lightLevel:number = 50;
 
+  public isSoundLevelLoaded:boolean = false;
   public soundLevel:number = 50;
 
   constructor(public navCtrl: NavController,
@@ -53,11 +55,13 @@ export class ChimePage {
       'get-lightlevel',
       (value) => {
         this.lightLevel = value;
+        this.isLightLevelLoaded = true;
       });
     this.events.subscribe(
       'get-soundlevel',
       (value) => {
         this.soundLevel = value;
+        this.isSoundLevelLoaded = true;
       });
 
     // when bluetooth will be connected, then load info
@@ -67,11 +71,11 @@ export class ChimePage {
         if (isConnected) {
           // ask through bluetooth the current settings 
           this.loadInfoFromChimuino();
-        } else {
+        } /*else {
           this.isAmbianceLoaded = false;
           this.isLightThresholdLoaded = false;
           this.isSoundThresholdLoaded = false;
-        }
+        }*/
       });  
     
     if (this.chimuino.isConnected()) {
@@ -82,12 +86,30 @@ export class ChimePage {
 
   }
 
+  ionViewWillEnter() {
+    if (!this.isFullyLoaded()) {
+      this.loadInfoFromChimuino();
+    }
+  }
+
+  isFullyLoaded():boolean {
+    return this.isAmbianceLoaded && 
+           this.isLightThresholdLoaded &&
+           this.isSoundThresholdLoaded &&
+           this.isSoundLevelLoaded &&
+           this.isLightLevelLoaded;
+  }
+
   loadInfoFromChimuino() {
-    this.chimuino.askAmbiance();
-    this.chimuino.askLightThreshold();
-    this.chimuino.askLightLevel();
-    this.chimuino.askSoundThreshold();
-    this.chimuino.askSoundLevel();
+    if (!this.isAmbianceLoaded) { this.chimuino.askAmbiance(); }
+      
+    if (!this.isSoundThresholdLoaded) { this.chimuino.askSoundThreshold(); }
+  
+    if (!this.isSoundLevelLoaded) { this.chimuino.askSoundLevel(); }
+
+    if (!this.isLightThresholdLoaded) { this.chimuino.askLightThreshold(); }
+    if (!this.isLightLevelLoaded) { this.chimuino.askLightLevel(); }
+
   }
 
   set chimeEnabled(value:boolean) {

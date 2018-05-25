@@ -13,12 +13,18 @@ import { ChimuinoProvider } from '../../providers/chimuino/chimuino';
 export class AlarmPage {
 
   alarm1loaded:boolean = false;
-  _alarm1hour:string = "07:30";
+  _alarm1hour:string = "07:25";
   _alarm1enabled:boolean = false;
   _alarm1soft:number = 10;
   _alarm1strong:number = 15;
-  _alarm1days:string = "mon,tue,wed,thu,fri";
-  
+  _alarm1sunday:boolean = false;
+  _alarm1monday:boolean = true;
+  _alarm1tuesday:boolean = true;
+  _alarm1wednesday:boolean = true;
+  _alarm1thursday:boolean = true;
+  _alarm1friday:boolean = true;
+  _alarm1saterday:boolean = false;
+
   alarm2loaded:boolean = false;
   _alarm2hour:string = "09:30";
   _alarm2enabled:boolean = false;
@@ -46,8 +52,13 @@ export class AlarmPage {
           this._alarm1enabled = enabled;
           this._alarm1soft = durationSoft;
           this._alarm1strong = durationStrong;
-          this._alarm1days = ""; 
-          this._alarm1days = this.encoreDaysFromBooleans(sunday,monday,tuesday,wednesday,thursday,friday,saterday);
+          this._alarm1sunday = sunday;
+          this._alarm1monday = monday;
+          this._alarm1tuesday = tuesday;
+          this._alarm1wednesday = wednesday;
+          this._alarm1thursday = thursday;
+          this._alarm1friday = friday;
+          this._alarm1saterday = saterday;
           this.alarm1loaded = true;
           // TODO save into storage?
       });
@@ -104,9 +115,19 @@ export class AlarmPage {
     */   
   }
 
+  ionViewWillEnter() {
+    if (!this.isFullyLoaded()) {
+      this.loadInfoFromChimuino();
+    }
+  }
+
+  isFullyLoaded():boolean {
+    return this.alarm2loaded && this.alarm2loaded;
+  }
+
   loadInfoFromChimuino() {
-    this.chimuino.askAlarm1();
-    this.chimuino.askAlarm2();
+    if (!this.alarm1loaded) { this.chimuino.askAlarm1(); }
+    if (!this.alarm2loaded) { this.chimuino.askAlarm2(); }
   }
 
   encoreDaysFromBooleans(sunday:boolean,monday:boolean,tuesday:boolean,wednesday:boolean,thursday:boolean,friday:boolean,saterday:boolean) {
@@ -136,12 +157,17 @@ export class AlarmPage {
   
   updateChimuinoAlarm1() {
   	var tokens = this._alarm1hour.split(":");
-    var days = this.decodeDaysFromString(this._alarm1days);
+    var hour:number = parseInt(tokens[0]);
+    var minutes:number = parseInt(tokens[1]);
+    if (isNaN(hour) || isNaN(minutes)) {
+      // warn ?!
+      return;
+    }
   	this.chimuino.setAlarm1(
-      parseInt(tokens[0]), parseInt(tokens[1]), 
+      hour, minutes, 
       this._alarm1soft, this._alarm1strong,
       this._alarm1enabled,
-      days.sun, days.mon, days.tue, days.wed, days.thu, days.fri, days.sat
+      this._alarm1sunday, this._alarm1monday, this._alarm1tuesday, this._alarm1wednesday, this._alarm1thursday, this._alarm1friday, this._alarm1saterday
       );
   }
   
@@ -176,12 +202,15 @@ export class AlarmPage {
     this.storage.set('alarm-1-strong', value);
     this.updateChimuinoAlarm1();
   }
-  set alarm1days(value:string) {
-    this._alarm1days = value;
-    this.storage.set('alarm-1-days', value);
-    this.updateChimuinoAlarm1();
-  }
+  set alarm1sunday(value:boolean)     { this._alarm1sunday = value;     this.updateChimuinoAlarm1(); }
+  set alarm1monday(value:boolean)     { this._alarm1monday = value;     this.updateChimuinoAlarm1(); }
+  set alarm1tuesday(value:boolean)    { this._alarm1tuesday = value;    this.updateChimuinoAlarm1(); }
+  set alarm1wednesday(value:boolean)  { this._alarm1wednesday = value;  this.updateChimuinoAlarm1(); }
+  set alarm1thursday(value:boolean)   { this._alarm1thursday = value;   this.updateChimuinoAlarm1(); }
+  set alarm1friday(value:boolean)     { this._alarm1friday = value;     this.updateChimuinoAlarm1(); }
+  set alarm1saterday(value:boolean)   { this._alarm1saterday = value;   this.updateChimuinoAlarm1(); }
 
+  
   set alarm2enabled(value:boolean) {
   	this._alarm2enabled = value;
    	this.storage.set('alarm-2-enabled', value);
@@ -215,6 +244,14 @@ export class AlarmPage {
   get alarm1strong():number {
     return this._alarm1strong;
   }
+  get alarm1sunday():boolean { return this._alarm1sunday; }
+  get alarm1monday():boolean { return this._alarm1monday; }
+  get alarm1tuesday():boolean { return this._alarm1tuesday; }
+  get alarm1wednesday():boolean { return this._alarm1wednesday; }
+  get alarm1thursday():boolean { return this._alarm1thursday; }
+  get alarm1friday():boolean { return this._alarm1friday; }
+  get alarm1saterday():boolean { return this._alarm1saterday; }
+
 
   get alarm2enabled():boolean {
    	return this._alarm2enabled;
@@ -228,6 +265,8 @@ export class AlarmPage {
   get alarm2strong():number {
     return this._alarm2strong;
   }
+
+
 
 
 }
