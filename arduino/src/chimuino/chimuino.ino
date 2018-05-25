@@ -43,8 +43,8 @@ ChimeStepper stepper(MOTOR_TOTAL_STEPS, STEPPER_PIN_1, STEPPER_PIN_2, STEPPER_PI
 
 ChimeClock clock;
 
-ChimeAlarm alarm1("ALARM1");
-ChimeAlarm alarm2("ALARM2");
+ChimeAlarm alarm1(1);
+ChimeAlarm alarm2(2);
 
 ChimeBluetooth bluetooth(BLUETOOTH_RX, BLUETOOTH_TX);
 
@@ -109,9 +109,14 @@ void setup() {
 
 }
 char truc[] = "GET VERSION\n";
-
+bool debugNow = false;
 void loop() {
 
+  debugNow = millis() - lastDisplayDebug >= FREQUENCY_DEBUG;
+  if (debugNow) {
+        lastDisplayDebug = millis();
+  }
+  
   // BELIEFS 
   
   bluetooth.readAndReact();
@@ -127,47 +132,57 @@ void loop() {
   // TODO ask chime what 
   
   // write debug info (from time to time)
-  if (millis() - lastDisplayDebug >= FREQUENCY_DEBUG) {
-    lastDisplayDebug = millis();
+   
+  if (debugNow) {
     
     clock.debugSerial();
     soundSensor.debugSerial();
     lightSensor.debugSerial();
     ambiance.debugSerial();
     
-    DEBUG_PRINT(F("mode: ")); DEBUG_PRINTLN(mode2str(current_mode));
+    DEBUG_PRINT(F("mode: ")); DEBUG_PRINT(mode2str(current_mode));
     if (current_mode != NOTHING) {
-      DEBUG_PRINT(F("next action in: ")); DEBUG_PRINTLN((next_planned_action - millis())/1000);
+      DEBUG_PRINT(F(" in: ")); DEBUG_PRINT((next_planned_action - millis())/1000); DEBUG_PRINTLN('s');
     }
-
-    bluetooth.sendDebug();
+    //bluetooth.sendDebug();
   }
 
   // DESIRE 
 
   // alarms have the power to override past settings (alarm 1 has priority)
-  Intention proposedIntention = alarm2.proposeNextMode(current_mode);
+  Intention proposedIntention = alarm2.proposeNextMode(current_mode, next_planned_action);
   current_mode = proposedIntention.what; 
   next_planned_action = proposedIntention.when;
   
-  proposedIntention = alarm1.proposeNextMode(current_mode);
+  proposedIntention = alarm1.proposeNextMode(current_mode, next_planned_action);
   current_mode = proposedIntention.what; 
   next_planned_action = proposedIntention.when;
 
   // maybe the light sensor would like to propose welcoming the sun? 
-  proposedIntention = lightSensor.proposeNextMode(current_mode);
+  proposedIntention = lightSensor.proposeNextMode(current_mode, next_planned_action);
   current_mode = proposedIntention.what; 
   next_planned_action = proposedIntention.when;
 
   // if nothing happens and we can play ambiance
-  proposedIntention = ambiance.proposeNextMode(current_mode);
+  proposedIntention = ambiance.proposeNextMode(current_mode, next_planned_action);
   current_mode = proposedIntention.what; 
   next_planned_action = proposedIntention.when;
 
+
+  if (debugNow) {
+    DEBUG_PRINT(F("new mode: ")); DEBUG_PRINT(mode2str(current_mode));
+    if (current_mode != NOTHING) {
+      DEBUG_PRINT(F(" in: ")); DEBUG_PRINT((next_planned_action - millis())/1000); DEBUG_PRINTLN('s');
+    }
+    DEBUG_PRINTLN();
+  }
+
   // INTENTION
+  
 
   // maybe it's time to apply what we had planned?
   if (next_planned_action <= millis()) {
+    DEBUG_PRINTLN(F("time to act!"));
     // time to act
     switch (current_mode) {
       case NOTHING:

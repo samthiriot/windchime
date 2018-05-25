@@ -129,7 +129,7 @@ BluetoothListenerAnswer ChimeLightSensor::processBluetoothDo(char* str, Software
 }
 
 
-Intention ChimeLightSensor::proposeNextMode(enum mode current_mode) {
+Intention ChimeLightSensor::proposeNextMode(enum mode current_mode, unsigned long next_planned_action) {
   
   bool isDarkNow = isDark();
   bool wasDark = previousIsDark;
@@ -139,6 +139,6 @@ Intention ChimeLightSensor::proposeNextMode(enum mode current_mode) {
       DEBUG_PRINTLN(F("welcoming the sun ;-)"));
       return Intention { WELCOME_SUN,  millis() };
   }
-  return Intention { NOTHING,  millis() };
+  return Intention { current_mode, next_planned_action };
   
 }

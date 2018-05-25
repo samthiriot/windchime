@@ -58,7 +58,7 @@ class ChimeLightSensor: public BluetoothCommandListener,
     virtual BluetoothListenerAnswer processBluetoothGet(char* str, SoftwareSerial* BTSerial);
     virtual BluetoothListenerAnswer processBluetoothSet(char* str, SoftwareSerial* BTSerial);
     virtual BluetoothListenerAnswer processBluetoothDo(char* str, SoftwareSerial* BTSerial);
-    virtual Intention proposeNextMode(enum mode current_mode);
+    virtual Intention proposeNextMode(enum mode current_mode, unsigned long next_planned_action);
 
 };
 

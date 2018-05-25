@@ -65,7 +65,7 @@ BluetoothListenerAnswer Ambiance::processBluetoothDo(char* str, SoftwareSerial* 
   return NOT_CONCERNED;
 }
 
-Intention Ambiance::proposeNextMode(enum mode current_mode) {
+Intention Ambiance::proposeNextMode(enum mode current_mode, unsigned long next_planned_action) {
   
    if (current_mode == NOTHING and isEnabled() and !lightSensor->isDark() and soundSensor->isQuiet()) {
 
@@ -95,7 +95,7 @@ Intention Ambiance::proposeNextMode(enum mode current_mode) {
       return Intention { NOTHING,  millis() };
   }
   
-  return Intention { NOTHING,  millis() };
+  return Intention { current_mode, next_planned_action };
   
 }
 
