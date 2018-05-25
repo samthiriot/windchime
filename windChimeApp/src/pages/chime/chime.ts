@@ -71,11 +71,13 @@ export class ChimePage {
         if (isConnected) {
           // ask through bluetooth the current settings 
           this.loadInfoFromChimuino();
-        } /*else {
+        } else {
           this.isAmbianceLoaded = false;
           this.isLightThresholdLoaded = false;
           this.isSoundThresholdLoaded = false;
-        }*/
+          this.isSoundLevelLoaded = false;
+          this.isLightLevelLoaded = false;
+        }
       });  
     
     if (this.chimuino.isConnected()) {

@@ -26,6 +26,9 @@ export class AboutPage {
   public isQuiet:String = "???";
   public soundMinMaxLoaded:boolean = false;
   public soundMinMax:String = "?:?";
+
+  public uptimeLoaded = false;
+  public uptime:String = "???";
   
 	constructor(public navCtrl: NavController,
 				      private chimuino: ChimuinoProvider,
@@ -73,7 +76,13 @@ export class AboutPage {
           this.soundMinMax = ""+min+":"+max;
           this.soundMinMaxLoaded = true;
       });
-    
+    this.events.subscribe(
+      'get-uptime',   
+      (uptimeMin) => { 
+          this.uptime = uptimeMin+" minutes";
+          this.uptimeLoaded = true;
+      });
+
     // when bluetooth will be connected, then load info
     this.events.subscribe(
       'connected',
@@ -108,16 +117,24 @@ export class AboutPage {
     return this.versionLoaded && 
            this.lightLevelLoaded && this.lightMinMaxLoaded &&
            this.soundLevelLoaded && this.soundMinMaxLoaded && 
-           this.temperatureLoaded;
+           this.temperatureLoaded &&
+           this.uptimeLoaded;
   }
 
   loadInfoFromChimuino() {
-    if (!this.lightLevelLoaded) { this.chimuino.askLightLevel(); }
-    if (!this.lightMinMaxLoaded) { this.chimuino.askLightEnvelope(); }
-    if (!this.soundLevelLoaded) { this.chimuino.askSoundLevel(); }
-    if (!this.soundMinMaxLoaded) { this.chimuino.askSoundEnvelope(); }
-    if (!this.temperatureLoaded) { this.chimuino.askTemperature(); }
+    //if (!this.lightLevelLoaded) { 
+    this.chimuino.askLightLevel(); // }
+    //if (!this.lightMinMaxLoaded) { 
+    this.chimuino.askLightEnvelope(); // }
+    //if (!this.soundLevelLoaded) { 
+    this.chimuino.askSoundLevel(); // }
+    //if (!this.soundMinMaxLoaded) { 
+    this.chimuino.askSoundEnvelope(); // }
+    //if (!this.temperatureLoaded) { 
+    this.chimuino.askTemperature(); // }
     if (!this.versionLoaded) { this.chimuino.askVersion(); }
+    //if (!this.uptimeLoaded) { 
+    this.chimuino.askUptime(); // }
   }
 
 
@@ -128,11 +145,6 @@ export class AboutPage {
   sendDate()  {
     this.chimuino.sendDatetime();
   }
-
-	doChime() {
-	  	this.chimuino.doChime();
-	}
-
 
 
 

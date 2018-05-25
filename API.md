@@ -66,7 +66,7 @@ Do wakeup
 
 Do a strong chime
 
-	> DO CHIME
+	> DO CHIME [LIGHT|MEDIUM|STRONG]
 	< DOING CHIME 
 
 	> GET ACTION
@@ -81,6 +81,11 @@ Returns the version of the firmware running the arduino.
 
 	> GET VERSION
 	< VERSION IS alpha_2018_05_10
+
+Returns the uptime in minutes
+
+	> GET UPTIME
+	< UPTIME IS 454232
 
 
 # settings

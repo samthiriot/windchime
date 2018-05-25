@@ -10,6 +10,7 @@ import { Events } from 'ionic-angular';
 import { Storage } from '@ionic/storage';
 //import { BluetoothSerial } from '@ionic-native/bluetooth-serial';
 import { BLE } from '@ionic-native/ble';
+import {Platform} from 'ionic-angular';
 
 /**
  * Mediates all the interactions between the arduino on the chimuino through bluetooth.
@@ -46,7 +47,7 @@ export class ChimuinoProvider {
 	// displaying what happens with bluetooth at every step.
 	public DEBUG:boolean = true;
 	private MAX_MTU_STRING:number = 20; 
-	private DELAY_BETWEEN_COMMANDS_MS = 200;
+	private DELAY_BETWEEN_COMMANDS_MS = 200; // TODO how to define that?
 
 	private _busy:boolean = false;
 	private _isConnected:boolean = false;
@@ -66,9 +67,13 @@ export class ChimuinoProvider {
 			  //private bluetooth: BluetoothSerial,
   			  private storage: Storage,
   			  private toastCtrl: ToastController,
-  			  private events: Events
+  			  private events: Events,
+  			  private platform: Platform
   			  ) {
 
+		this.platform.pause.subscribe(() => {
+		  this.onApplicationLeft();
+		});
 
 		this.displayDebug("creating a ChimuinoProvider");
 
@@ -95,6 +100,19 @@ export class ChimuinoProvider {
 	    // try to get a bluetooth connection
 		this.connect();
 
+	}
+
+	onApplicationLeft() {
+		this.disconnect();
+	}
+
+	disconnect() {
+		if (this._device != null && this._isConnected) {
+			// disconnect the device
+			this.ble.disconnect(this._device.id);
+			this._isConnected = false;
+			this.events.publish("connected", false);
+		}
 	}
 
 	isConnected():boolean {
@@ -125,7 +143,7 @@ export class ChimuinoProvider {
 		}
 		// there is something to send !
 		var message:string = this._pendingCommands.shift();
-		this.displayDebug("sending pending: "+message);
+		//this.displayDebug("sending pending: "+message);
 		this.sendMessageRaw(message);
 	}
 
@@ -152,7 +170,7 @@ export class ChimuinoProvider {
 	 */ 
 	private sendMessageRaw(message:string) {
 
-		this.displayDebug("sending raw "+message+"to"+this._device.id+"...");
+		// this.displayDebug("sending raw "+message+"to"+this._device.id+"...");
 
 		// convert message to string
 		var buf = new ArrayBuffer(message.length*2);
@@ -202,7 +220,7 @@ export class ChimuinoProvider {
 
   		// if we are busy, it's not yet time to send an additional query
   		if ( this._busy || !this._isConnected) {
-  			this.displayDebug("not sending now because "+(this._busy?"busy":"not connected"));
+  			//this.displayDebug("not sending now because "+(this._busy?"busy":"not connected"));
   			this.queueMessage(message);
   			return;
   		}
@@ -332,8 +350,13 @@ export class ChimuinoProvider {
 
 		var code:string = str.trim().toLowerCase();
 		this.events.publish("set-"+code, true);
-		this.displayDebug("acknowledged: set "+code);
+		//this.displayDebug("acknowledged: set "+code);
 
+	}
+
+	private onDoAcknowledged(str: string) {
+		var code:string = str.trim().toLowerCase();
+		this.events.publish("doing-"+code, true);
 	}
 
 	/**
@@ -403,7 +426,8 @@ export class ChimuinoProvider {
 		// VALUES WITH ONE INT
 		} else if (what == "SOUNDTHRESHOLD" 
 				   || what == "LIGHTTHRESHOLD"
-				   || what == "TEMPERATURE") {
+				   || what == "TEMPERATURE"
+				   || what == "UPTIME") {
 			var valueInt = parseInt(valueStr);
 			this.events.publish("get-"+what.toLowerCase(), valueInt);
 		} else if (what == "LIGHTENVELOPE" 
@@ -454,6 +478,9 @@ export class ChimuinoProvider {
 		if (str.endsWith(" SET")) {
 			// received a message in the form "<SOMETHING> SET"
 			this.onSetAcknowledged(str.substring(0,str.length-4));
+		} else if (str.startsWith("DOING ")) {
+			// received a message in the form "<SOMETHING> SET"
+			this.onDoAcknowledged(str.substring(6));
 		} else if (str.includes(" IS ")) {
 			var idx = str.indexOf(" IS "); 
 			var what:string = str.substring(0,idx);
@@ -476,7 +503,7 @@ export class ChimuinoProvider {
 		this._isConnected = false;
 		this.displayToastMessage("notification failure :-(");
 		this.events.publish("connected", false);
-		this.attemptReconnect();
+		//this.attemptReconnect();
 	}	
 
 
@@ -500,9 +527,13 @@ export class ChimuinoProvider {
 	
 	askTemperature()	{ this.sendMessage("GET TEMPERATURE");		}
 
+	askUptime()			{ this.sendMessage("GET UPTIME");			}
+
 	// TODO envelopes
 
-	doChime()			{ this.sendMessage("DO CHIME");				}
+	doChimeLight()		{ this.sendMessage("DO CHIME LIGHT");		}
+	doChimeMedium()		{ this.sendMessage("DO CHIME MEDIUM");		}
+	doChimeStrong()		{ this.sendMessage("DO CHIME STRONG");		}
 	doSnooze()			{ this.sendMessage("DO SNOOZE");			}
 
 	setSoundThreshold(t:number) { this.sendMessage("SET SOUNDTHRESHOLD "+t); }

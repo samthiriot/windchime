@@ -10,7 +10,6 @@
 <ion-content padding>
 
 <button ion-button block (click)="askVersion()">Ask for version</button>
-<button ion-button block (click)="doChime()">Chime now</button>
 <button ion-button block (click)="sendDate()">Synchronize clock</button>
 
 // TODO fold cards
@@ -43,6 +42,7 @@
     <li>Light level is: {{isDark}} ({{lightLevel}}% of [{{lightMinMax}}])</li>    
     <li>Sound level is: {{isQuiet}} ({{soundLevel}}% of [{{soundMinMax}}])</li>    
     <li>Temperature is: {{temperature}}°C</li>
+    <li>Uptime is:      {{uptime}}</li>
   </ul>
   <button ion-button block (click)="loadInfoFromChimuino()">update</button>
   </ion-card-content>
