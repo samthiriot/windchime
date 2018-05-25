@@ -26,11 +26,19 @@ export class AlarmPage {
   _alarm1saterday:boolean = false;
 
   alarm2loaded:boolean = false;
-  _alarm2hour:string = "09:30";
+  _alarm2hour:string = "07:25";
   _alarm2enabled:boolean = false;
   _alarm2soft:number = 10;
   _alarm2strong:number = 15;
-  _alarm2days:string = "sun,sat";
+  _alarm2sunday:boolean = false;
+  _alarm2monday:boolean = true;
+  _alarm2tuesday:boolean = true;
+  _alarm2wednesday:boolean = true;
+  _alarm2thursday:boolean = true;
+  _alarm2friday:boolean = true;
+  _alarm2saterday:boolean = false;
+
+
   
   constructor(public navCtrl: NavController,
     			    private storage: Storage,
@@ -60,7 +68,6 @@ export class AlarmPage {
           this._alarm1friday = friday;
           this._alarm1saterday = saterday;
           this.alarm1loaded = true;
-          // TODO save into storage?
       });
     this.events.subscribe(
       'get-alarm2',   
@@ -74,10 +81,14 @@ export class AlarmPage {
           this._alarm2enabled = enabled;
           this._alarm2soft = durationSoft;
           this._alarm2strong = durationStrong;
-          this._alarm2days = ""; 
-          this._alarm2days = this.encoreDaysFromBooleans(sunday,monday,tuesday,wednesday,thursday,friday,saterday);
+          this._alarm2sunday = sunday;
+          this._alarm2monday = monday;
+          this._alarm2tuesday = tuesday;
+          this._alarm2wednesday = wednesday;
+          this._alarm2thursday = thursday;
+          this._alarm2friday = friday;
+          this._alarm2saterday = saterday;
           this.alarm2loaded = true;
-          // TODO save into storage?
       });   
     
      // when bluetooth will be connected, then load info
@@ -85,10 +96,7 @@ export class AlarmPage {
       'connected',
       (isConnected) => {
         if (isConnected) {
-          // ask through bluetooth the current settings
-          if (!this.alarm1loaded && !this.alarm2loaded) { // avoid infinite looping
-            this.loadInfoFromChimuino();
-          }
+          this.loadInfoFromChimuino();
         } else {
           this.alarm1loaded = false;
           this.alarm2loaded = false;
@@ -118,31 +126,6 @@ export class AlarmPage {
     if (!this.alarm2loaded) { this.chimuino.askAlarm2(); }
   }
 
-  private encoreDaysFromBooleans(sunday:boolean,monday:boolean,tuesday:boolean,wednesday:boolean,thursday:boolean,friday:boolean,saterday:boolean) {
-    var daysBool = [sunday,monday,tuesday,wednesday,thursday,friday,saterday];
-    var daysNames = ["sun","mon","tue","wed","thu","fri","sat"];
-    var res:string = "";
-    for (let i=0; i<daysBool.length; i++) {
-      if (!daysBool[i])
-        continue;
-      if (res.length) { res += ","; };
-      res += daysNames[i];
-    }
-    return res;
-  }
-
-  private decodeDaysFromString(value:string) {
-    return {
-      "sun": value.includes("sun"),
-      "mon": value.includes("mon"),
-      "tue": value.includes("tue"),
-      "wed": value.includes("wed"),
-      "thu": value.includes("thu"),
-      "fri": value.includes("fri"),
-      "sat": value.includes("sat")
-    };
-  }
-  
   private updateChimuinoAlarm1() {
   	var tokens = this._alarm1hour.split(":");
     var hour:number = parseInt(tokens[0]);
@@ -161,22 +144,27 @@ export class AlarmPage {
   
   private updateChimuinoAlarm2() {
     var tokens = this._alarm2hour.split(":");
-    var days = this.decodeDaysFromString(this._alarm2days);
-    this.chimuino.setAlarm1(
-      parseInt(tokens[0]), parseInt(tokens[1]), 
-      10, 15,
+    var hour:number = parseInt(tokens[0]);
+    var minutes:number = parseInt(tokens[1]);
+    if (isNaN(hour) || isNaN(minutes)) {
+      // warn ?!
+      return;
+    }
+    this.chimuino.setAlarm2(
+      hour, minutes, 
+      this._alarm2soft, this._alarm2strong,
       this._alarm2enabled,
-      days.sun, days.mon, days.tue, days.wed, days.thu, days.fri, days.sat
+      this._alarm2sunday, this._alarm2monday, this._alarm2tuesday, this._alarm2wednesday, this._alarm2thursday, this._alarm2friday, this._alarm2saterday
       );
   }
-
+  
   demoAlarmPrereveil() {
     this.chimuino.doChimeMedium();
   }
   demoAlarmReveil() {
     this.chimuino.doChimeStrong();
   }
-  
+
   set alarm1enabled(value:boolean) {
   	this._alarm1enabled = value;
   	this.storage.set('alarm-1-enabled', value);
@@ -226,6 +214,14 @@ export class AlarmPage {
     this.storage.set('alarm-2-strong', value);
     this.updateChimuinoAlarm2();
   }
+  set alarm2sunday(value:boolean)     { this._alarm2sunday = value;     this.updateChimuinoAlarm2(); }
+  set alarm2monday(value:boolean)     { this._alarm2monday = value;     this.updateChimuinoAlarm2(); }
+  set alarm2tuesday(value:boolean)    { this._alarm2tuesday = value;    this.updateChimuinoAlarm2(); }
+  set alarm2wednesday(value:boolean)  { this._alarm2wednesday = value;  this.updateChimuinoAlarm2(); }
+  set alarm2thursday(value:boolean)   { this._alarm2thursday = value;   this.updateChimuinoAlarm2(); }
+  set alarm2friday(value:boolean)     { this._alarm2friday = value;     this.updateChimuinoAlarm2(); }
+  set alarm2saterday(value:boolean)   { this._alarm2saterday = value;   this.updateChimuinoAlarm2(); }
+
 
   get alarm1enabled():boolean {
   	return this._alarm1enabled;
@@ -260,6 +256,13 @@ export class AlarmPage {
   get alarm2strong():number {
     return this._alarm2strong;
   }
+  get alarm2sunday():boolean { return this._alarm2sunday; }
+  get alarm2monday():boolean { return this._alarm2monday; }
+  get alarm2tuesday():boolean { return this._alarm2tuesday; }
+  get alarm2wednesday():boolean { return this._alarm2wednesday; }
+  get alarm2thursday():boolean { return this._alarm2thursday; }
+  get alarm2friday():boolean { return this._alarm2friday; }
+  get alarm2saterday():boolean { return this._alarm2saterday; }
 
 
 

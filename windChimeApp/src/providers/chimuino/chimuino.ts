@@ -509,7 +509,7 @@ export class ChimuinoProvider {
 
 	// ask for characteristics
 	askAlarm1()			{ this.sendMessage("GET ALARM1"); 			}
-	askAlarm2()			{ this.sendMessage("GET ALARM1"); 			}
+	askAlarm2()			{ this.sendMessage("GET ALARM2"); 			}
 
 	askAmbiance()		{ this.sendMessage("GET AMBIANCE"); 		}
 	
