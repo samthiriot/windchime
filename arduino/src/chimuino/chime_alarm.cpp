@@ -37,7 +37,7 @@ void ChimeAlarm::debugSerial() {
 
 BluetoothListenerAnswer ChimeAlarm::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
 
-  if ( (strncmp_P(str, PSTR("ALARM"), 5) == 0) && (str[5] == (id==1?'1':'2') ) ) {
+  if ( (strncmp_P(str, PSTR("ALARM"), 5) == 0) and (str[5] == (id==1?'1':'2') ) ) {
     
     *BTSerial << F("ALARM") << id << F(" IS ")
               << start_hour << ':' << start_minutes << ' ' 
@@ -45,7 +45,9 @@ BluetoothListenerAnswer ChimeAlarm::processBluetoothGet(char* str, SoftwareSeria
               << bool2char(enabled) << ' ' 
               << bool2char(sunday) << bool2char(monday) << bool2char(tuesday) << bool2char(wednesday) << bool2char(thursday) << bool2char(friday) << bool2char(saterday)
               << endl;
-              
+
+    DEBUG_PRINT(F("SEND ")); debugSerial();
+    
     return SUCCESS;
   } 
     
@@ -55,7 +57,7 @@ BluetoothListenerAnswer ChimeAlarm::processBluetoothGet(char* str, SoftwareSeria
 
 BluetoothListenerAnswer ChimeAlarm::processBluetoothSet(char* str, SoftwareSerial* BTSerial) {
   
-  if ( (strncmp_P(str, PSTR("ALARM"), 5) == 0) && (str[6] == char(id))) {
+  if ( (strncmp_P(str, PSTR("ALARM"), 5) == 0) and (str[5] == (id==1?'1':'2') ) ) {
 
     DEBUG_PRINT(F("received alarm")); DEBUG_PRINTLN(str);
 
@@ -64,7 +66,7 @@ BluetoothListenerAnswer ChimeAlarm::processBluetoothSet(char* str, SoftwareSeria
     // TODO detect errors
     sscanf(
           // skip the name and a space
-          str + name_length + 1, 
+          str + 5 + 1, 
           // expected format 
           "%u:%u %u %u %c %c%c%c%c%c%c%c", 
           // store directly in our variables
