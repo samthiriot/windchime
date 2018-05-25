@@ -12,6 +12,10 @@ ChimeAlarm::ChimeAlarm(byte _id):
             BluetoothCommandListener(),
             IntentionProvider() {
   id = _id;
+  monday = tuesday = wednesday = thursday = friday = (id == 1);
+  saterday = sunday = (id == 2);
+  start_hour = id == 1?7:9;
+  start_minutes = 30;
 }
 
 void ChimeAlarm::setup() {

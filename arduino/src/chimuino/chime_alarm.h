@@ -16,15 +16,15 @@ class ChimeAlarm: public BluetoothCommandListener,
     unsigned short start_minutes = 15;                           // minutes
     unsigned short durationSoft = 15;    
     unsigned short durationStrong = 15;
-    bool done = false;                          // true if we did the job of waking up the user
+    // TODO bool done = false;                          // true if we did the job of waking up the user
 
     bool monday = true;
     bool tuesday = true;
     bool wednesday = true;
     bool thursday = true;
     bool friday = true;
-    bool saterday = true;
-    bool sunday = true;
+    bool saterday = false;
+    bool sunday = false;
     
     // other
     byte id;                                    // the id of the name of the alarm (like ALARM1, ALARM2...)    
