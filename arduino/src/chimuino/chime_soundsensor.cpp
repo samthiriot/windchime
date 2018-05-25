@@ -59,7 +59,7 @@ unsigned short ChimeSoundSensor::measureSoundLevel() {
 
 unsigned short ChimeSoundSensor::getSoundLevel() {
   unsigned short raw = measureSoundLevel();
-  
+  return getSoundLevel();
 }
 
 bool ChimeSoundSensor::isQuiet() {
