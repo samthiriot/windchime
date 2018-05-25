@@ -27,9 +27,7 @@ class ChimeAlarm: public BluetoothCommandListener,
     bool sunday = true;
     
     // other
-    byte id;                                    // the id of the name of the alarm (like ALARM1, ALARM2...)
-    unsigned short name_length;                 // the length of the name
-    
+    byte id;                                    // the id of the name of the alarm (like ALARM1, ALARM2...)    
     bool rightWeekdayForRing();                 // returns true if the weekday is compliant with our settings
     
   public:

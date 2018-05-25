@@ -104,56 +104,25 @@ BluetoothListenerAnswer ChimeClock::processBluetoothGet(char* str, SoftwareSeria
 
 BluetoothListenerAnswer ChimeClock::processBluetoothSet(char* str, SoftwareSerial* BTSerial) {
 
-  if (strncmp_P(str, PSTR("TIME "), 5) == 0) {
-    DEBUG_PRINT(F("received time: ")); DEBUG_PRINTLN(str);
+  if (strncmp_P(str, PSTR("DATETIME "), 9) == 0) {
+    DEBUG_PRINT(F("received datetime: ")); DEBUG_PRINTLN(str);
     time_t t;     // the time to forge
     tmElements_t tm;
 
-    int hour, minute, second;
-    sscanf(str + 5,                                                  // decode received datetime
-           "%u:%u:%u", 
-           &hour, &minute, &second);    
-
-    tm.Year = CalendarYrToTm(year());
-    tm.Month = month();
-    tm.Day = day();
+    int year, month, day, hour, minute, second;
+    sscanf(str + 9,                                                  // decode received datetime
+           "%u-%u-%u %u:%u:%u", 
+           &year, &month, &day, &hour, &minute, &second);    
+    tm.Year = CalendarYrToTm(year);
+    tm.Month = month;
+    tm.Day = day;
     tm.Hour = hour;
     tm.Minute = minute;
     tm.Second = second;
     t = makeTime(tm);
     RTC.set(t);
     setTime(t);
-    *BTSerial << F("TIME SET") << endl;
-    debugSerial();
-
-    return SUCCESS;
-  }
-  if (strncmp_P(str, PSTR("DATE "), 5) == 0) {
-
-    DEBUG_PRINT(F("received date: ")); DEBUG_PRINTLN(str);
-
-    time_t t;     // the time to forge
-    tmElements_t tm;
-
-    int year, month, day;
-    sscanf(str + 5,                                                  // decode received datetime
-           "%u-%u-%u", 
-           &year, &month, &day);    
-
-    tm.Year = CalendarYrToTm(year);
-    tm.Month = month;
-    tm.Day = day;
-    tm.Hour = hour();
-    tm.Minute = minute();
-    tm.Second = second();
-    t = makeTime(tm);
-
-    // TODO? reject invalid time 
-    
-    RTC.set(t);  // store the novel datetime into the RTC clock
-    setTime(t);
-    *BTSerial << F("DATE SET") << endl;                               // acknowledge
-      
+    *BTSerial << F("DATETIME SET") << endl;
     debugSerial();
 
     return SUCCESS;

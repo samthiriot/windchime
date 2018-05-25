@@ -2,7 +2,7 @@
 #include "utils.h"
 
 char bool2char(bool b) {
-  return (b);
+  return (b?'1':'0');
 }
 
 
