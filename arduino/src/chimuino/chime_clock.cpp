@@ -101,7 +101,7 @@ BluetoothListenerAnswer ChimeClock::processBluetoothGet(char* str, SoftwareSeria
               << (millis() - startTimestamp)/(60l*1000l)
               << endl;
 
-    DEBUG_PRINTLN(F("SENT VERSION"));
+    DEBUG_PRINTLN(F("SENT UPTIME"));
      
     return SUCCESS;
   }

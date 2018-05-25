@@ -142,8 +142,9 @@ void loop() {
     
     DEBUG_PRINT(F("mode: ")); DEBUG_PRINT(mode2str(current_mode));
     if (current_mode != NOTHING) {
-      DEBUG_PRINT(F(" in: ")); DEBUG_PRINT((next_planned_action - millis())/1000); DEBUG_PRINTLN('s');
+      DEBUG_PRINT(F(" in: ")); DEBUG_PRINT((next_planned_action - millis())/1000); DEBUG_PRINT('s');
     }
+    DEBUG_PRINTLN();
     //bluetooth.sendDebug();
   }
 
@@ -177,7 +178,7 @@ void loop() {
   if (debugNow) {
     DEBUG_PRINT(F("new mode: ")); DEBUG_PRINT(mode2str(current_mode));
     if (current_mode != NOTHING) {
-      DEBUG_PRINT(F(" in: ")); DEBUG_PRINT((next_planned_action - millis())/1000); DEBUG_PRINTLN('s');
+      DEBUG_PRINT(F(" in: ")); DEBUG_PRINT((next_planned_action - millis())/1000); DEBUG_PRINT('s');
     }
     DEBUG_PRINTLN();
   }
