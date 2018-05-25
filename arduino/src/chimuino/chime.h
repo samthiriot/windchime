@@ -21,6 +21,10 @@ enum mode {
   
   ALARM1,       // being ringing alam1
   ALARM2,       //               alarm2
+
+  DEMO_LIGHT,
+  DEMO_MEDIUM,
+  DEMO_STRONG,
   
   SILENCE,      // do not play sound
 
@@ -49,11 +53,13 @@ class IntentionProvider {
 char* mode2str(enum mode v);
 
 
-class Chime: public BluetoothCommandListener {
+class Chime: public BluetoothCommandListener,
+             public IntentionProvider {
   
   private:
     ChimeSoundSensor* soundSensor;
     ChimeStepper* stepper;
+    enum mode demoAsked = NOTHING;
     
   public:
     // constructor
@@ -66,6 +72,7 @@ class Chime: public BluetoothCommandListener {
     virtual BluetoothListenerAnswer processBluetoothGet(char* str, SoftwareSerial* BTSerial);
     virtual BluetoothListenerAnswer processBluetoothSet(char* str, SoftwareSerial* BTSerial);
     virtual BluetoothListenerAnswer processBluetoothDo(char* str, SoftwareSerial* BTSerial);
+    virtual Intention proposeNextMode(enum mode current_mode, unsigned long next_planned_action);
 
 
 };

@@ -158,6 +158,11 @@ void loop() {
   current_mode = proposedIntention.what; 
   next_planned_action = proposedIntention.when;
 
+  // maybe a demo was asked?
+  proposedIntention = chime.proposeNextMode(current_mode, next_planned_action);
+  current_mode = proposedIntention.what; 
+  next_planned_action = proposedIntention.when;
+
   // maybe the light sensor would like to propose welcoming the sun? 
   proposedIntention = lightSensor.proposeNextMode(current_mode, next_planned_action);
   current_mode = proposedIntention.what; 
@@ -189,6 +194,7 @@ void loop() {
       case SILENCE:
           current_mode = NOTHING; 
           break;
+      case DEMO_MEDIUM:
       case PREALARM1:
       case PREALARM2:
       case AMBIANCE_PREREVEIL:
@@ -199,10 +205,12 @@ void loop() {
       case ALARM2:
       case AMBIANCE_REVEIL:
       case WELCOME_SUN:
+      case DEMO_STRONG:
           stepper.doReveil();
           current_mode = NOTHING;
           break;
       case AMBIANCE_TINTEMENT:
+      case DEMO_LIGHT:
           stepper.doTintement();
           current_mode = NOTHING;
           break;
