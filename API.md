@@ -101,11 +101,8 @@ Enabled is 1 or 0
 Get and set the current datetime of the Chimuino, that is the clock time.
 The format of the date is TODO. 
 
-    > SET DATE 2018-01-24
-    < DATE SET
-
-    > SET TIME 22:31:01
-    < TIME SET
+    > SET DATETIME 2018-01-24 22:31:01
+    < DATETIME SET
 
     > GET DATETIME 
     < DATETIME IS 2018-01-24 22:31:01

@@ -7,49 +7,76 @@
 </ion-header>
 
 <ion-content>
-  <p>
-  Your Chimuino is only chiming when it's not too dark (so it's preserving your sleep quality).
-  You also can entirely disable the chime.
-  </p>
-  <ion-list>
-    <ion-list-header>Ambient chime</ion-list-header>
-     <ion-item>
-      <ion-label>Enabled</ion-label>
-      <ion-toggle [disabled]="!isAmbianceLoaded" [(ngModel)]="chimeEnabled"></ion-toggle>
-    </ion-item>
-    <ion-item>
-      <ion-range [disabled]="!chimeEnabled" [(ngModel)]="chimeLevel">
-        <ion-icon range-left name="volume-down"></ion-icon>
-        <ion-icon range-right name="volume-up"></ion-icon>
-      </ion-range>
-    </ion-item>
 
-    <ion-item>
-      <ion-range [disabled]="!isLightThresholdLoaded" [(ngModel)]="lightThreshold" debounce="100" min="0" max="100" >
-        <ion-icon range-left small name="sunny"></ion-icon>
-        <ion-icon range-right name="sunny"></ion-icon>
-      </ion-range>
-    </ion-item>
-    <ion-item>
-      <ion-range [disabled]="true" [(ngModel)]="lightLevel" min="0" max="100" >
-        <ion-icon range-left small name="sunny"></ion-icon>
-        <ion-icon range-right name="sunny"></ion-icon>
-      </ion-range>
-    </ion-item>
+  <ion-card>
+    <ion-card-header>
+      <ion-icon name="musical-notes"></ion-icon> Ambient chime
+    </ion-card-header>
+    <ion-card-content>
+      Your Chimuino animates your place by ringing from time to time. 
 
-    <ion-item>
-      <ion-range [disabled]="!isSoundThresholdLoaded" [(ngModel)]="soundThreshold" debounce="100" min="0" max="100" >
-        <ion-icon range-left name="volume-down"></ion-icon>
-        <ion-icon range-right name="volume-up"></ion-icon>
-      </ion-range>
-    </ion-item>
-    <ion-item>
-      <ion-range [disabled]="true" [(ngModel)]="soundLevel" min="0" max="100" >
-        <ion-icon range-left name="volume-down"></ion-icon>
-        <ion-icon range-right name="volume-up"></ion-icon>
-      </ion-range>
-    </ion-item>
+      <ion-list>
+        <ion-item>
+          <ion-label>Enabled</ion-label>
+          <ion-toggle [disabled]="!isAmbianceLoaded" [(ngModel)]="chimeEnabled"></ion-toggle>
+        </ion-item>
+        <ion-item>
+          <ion-range [disabled]="!chimeEnabled" [(ngModel)]="chimeLevel">
+            <ion-icon range-left name="volume-down"></ion-icon>
+            <ion-icon range-right name="volume-up"></ion-icon>
+          </ion-range>
+        </ion-item>
+      </ion-list>
 
+    </ion-card-content>
+  </ion-card>
 
-  </ion-list>
+  <ion-card>
+    <ion-card-header>
+      <ion-icon name="sunny"></ion-icon> Don't ring at night
+    </ion-card-header>
+    <ion-card-content>
+      The Chimuino will not ring when its dark, so it does not disturb your sleep.
+      You can adjust when the place is too lit for chiming.
+      <ion-list>
+        <ion-item>
+          <ion-range [disabled]="!isLightThresholdLoaded" [(ngModel)]="lightThreshold" debounce="100" min="0" max="100" >
+            <ion-icon range-left small name="sunny"></ion-icon>
+            <ion-icon range-right name="sunny"></ion-icon>
+          </ion-range>
+        </ion-item>
+        <ion-item>
+          <ion-range [disabled]="true" [(ngModel)]="lightLevel" min="0" max="100" >
+            <ion-icon range-left small name="sunny"></ion-icon>
+            <ion-icon range-right name="sunny"></ion-icon>
+          </ion-range>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-card>
+    <ion-card-header>
+      <ion-icon name="volume-up"></ion-icon> Adapt to noise
+    </ion-card-header>
+    <ion-card-content>
+      The Chimuino will not ring if there is too much noise in your place.
+      You can adapt when it is too noisy for ringing.
+      <ion-list>
+        <ion-item>
+          <ion-range [disabled]="!isSoundThresholdLoaded" [(ngModel)]="soundThreshold" debounce="100" min="0" max="100" >
+            <ion-icon range-left name="volume-down"></ion-icon>
+            <ion-icon range-right name="volume-up"></ion-icon>
+          </ion-range>
+        </ion-item>
+        <ion-item>
+          <ion-range [disabled]="true" [(ngModel)]="soundLevel" min="0" max="100" >
+            <ion-icon range-left name="volume-down"></ion-icon>
+            <ion-icon range-right name="volume-up"></ion-icon>
+          </ion-range>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+
 </ion-content>
