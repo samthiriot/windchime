@@ -9,10 +9,6 @@
 
 <ion-content padding>
 
-<button ion-button block (click)="askVersion()">Ask for version</button>
-<button ion-button block (click)="sendDate()">Synchronize clock</button>
-
-// TODO fold cards
 
 <ion-card>
   <ion-card-header>
@@ -174,5 +170,19 @@
 
   </ion-card-content>
 </ion-card>
+
+
+<ion-card>
+  <ion-card-header>
+  Debug
+  </ion-card-header>
+  <ion-card-content>
+  
+  <button ion-button block (click)="askVersion()">Ask for version</button>
+  <button ion-button block (click)="sendDate()">Synchronize clock</button>
+
+  </ion-card-content>
+</ion-card>
+
 
 </ion-content>
