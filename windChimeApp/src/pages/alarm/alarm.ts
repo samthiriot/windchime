@@ -100,19 +100,7 @@ export class AlarmPage {
       // in this case, let's load the info right now.
       this.loadInfoFromChimuino();
     }
-    /*
-  	this.storage.get('alarm-1-hour').then(     (val) => { this._alarm1hour = val;    } );
-  	this.storage.get('alarm-1-enabled').then(  (val) => { this._alarm1enabled = val; } );
-    this.storage.get('alarm-1-soft').then(     (val) => { this._alarm1soft = val;    } );
-    this.storage.get('alarm-1-strong').then(   (val) => { this._alarm1strong = val;  } );
-    this.storage.get('alarm-1-days').then(     (val) => { this._alarm1days = val;    } );
-
-  	this.storage.get('alarm-2-hour').then(     (val) => { this._alarm2hour = val;    } );
-  	this.storage.get('alarm-2-enabled').then(  (val) => { this._alarm2enabled = val; } );
-    this.storage.get('alarm-2-soft').then(     (val) => { this._alarm2soft = val;    } );
-    this.storage.get('alarm-2-strong').then(   (val) => { this._alarm2strong = val;  } );
-    this.storage.get('alarm-2-days').then(     (val) => { this._alarm2days = val;    } ); 
-    */   
+   
   }
 
   ionViewWillEnter() {
@@ -130,7 +118,7 @@ export class AlarmPage {
     if (!this.alarm2loaded) { this.chimuino.askAlarm2(); }
   }
 
-  encoreDaysFromBooleans(sunday:boolean,monday:boolean,tuesday:boolean,wednesday:boolean,thursday:boolean,friday:boolean,saterday:boolean) {
+  private encoreDaysFromBooleans(sunday:boolean,monday:boolean,tuesday:boolean,wednesday:boolean,thursday:boolean,friday:boolean,saterday:boolean) {
     var daysBool = [sunday,monday,tuesday,wednesday,thursday,friday,saterday];
     var daysNames = ["sun","mon","tue","wed","thu","fri","sat"];
     var res:string = "";
@@ -143,7 +131,7 @@ export class AlarmPage {
     return res;
   }
 
-  decodeDaysFromString(value:string) {
+  private decodeDaysFromString(value:string) {
     return {
       "sun": value.includes("sun"),
       "mon": value.includes("mon"),
@@ -155,7 +143,7 @@ export class AlarmPage {
     };
   }
   
-  updateChimuinoAlarm1() {
+  private updateChimuinoAlarm1() {
   	var tokens = this._alarm1hour.split(":");
     var hour:number = parseInt(tokens[0]);
     var minutes:number = parseInt(tokens[1]);
@@ -171,7 +159,7 @@ export class AlarmPage {
       );
   }
   
-  updateChimuinoAlarm2() {
+  private updateChimuinoAlarm2() {
     var tokens = this._alarm2hour.split(":");
     var days = this.decodeDaysFromString(this._alarm2days);
     this.chimuino.setAlarm1(
@@ -182,6 +170,13 @@ export class AlarmPage {
       );
   }
 
+  demoAlarmPrereveil() {
+    this.chimuino.doChimeMedium();
+  }
+  demoAlarmReveil() {
+    this.chimuino.doChimeStrong();
+  }
+  
   set alarm1enabled(value:boolean) {
   	this._alarm1enabled = value;
   	this.storage.set('alarm-1-enabled', value);

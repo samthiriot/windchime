@@ -39,10 +39,13 @@
             <ion-label range-left>0 min</ion-label>
             <ion-label range-right>30 min</ion-label>
       </ion-range>
+      <button ion-button block (click)="demoAlarmPrereveil()">demo prereveil</button>
+
       <ion-range [disabled]="!alarm1loaded" [(ngModel)]="alarm1strong" debounce="100" min="5" max="30">
             <ion-label range-left>5 min</ion-label>
             <ion-label range-right>30 min</ion-label>
       </ion-range>
+      <button ion-button block (click)="demoAlarmReveil()">demo reveil</button>
 
     </ion-card-content>
   </ion-card>
