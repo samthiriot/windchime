@@ -4,6 +4,7 @@
 
 #include "debug.h"
 
+#include "persist.h"
 #include "chime.h"
 #include "chime_bluetooth.h"
 #include "chime_stepper.h"
@@ -39,6 +40,8 @@ long lastDisplayDebug = millis();
 
 #define RANDOM_PIN A2                                                     // refers to a pin unconnected supposed to catch white noise 
 
+Persist persist;      // persistence object
+
 ChimeStepper stepper(MOTOR_TOTAL_STEPS, STEPPER_PIN_1, STEPPER_PIN_2, STEPPER_PIN_3, STEPPER_PIN_4);
 
 ChimeClock clock;
@@ -60,16 +63,14 @@ Ambiance ambiance;
 // |      RANDOM                                 |
 // |            alea jacta est                   |
 // +---------------------------------------------+
-    
-    
-    void setupRandom() {
-        pinMode(RANDOM_PIN, INPUT);                                           // this pin is used to init the random network generator
-        int seed = analogRead(RANDOM_PIN);
-      #ifdef DEBUG_SERIAL
-        Serial.print("init: random seed is "); Serial.print(seed); Serial.println();
-      #endif
-        randomSeed(seed);
-    }
+void setupRandom() {
+    pinMode(RANDOM_PIN, INPUT);                                           // this pin is used to init the random network generator
+    int seed = analogRead(RANDOM_PIN);
+  #ifdef DEBUG_SERIAL
+    Serial.print("init: random seed is "); Serial.print(seed); Serial.println();
+  #endif
+    randomSeed(seed);
+}
 
 
 unsigned long next_planned_action = millis();
@@ -86,15 +87,16 @@ void setup() {
 
   setupRandom();
 
-  soundSensor.setup();
-  lightSensor.setup();
+  persist.setup();
+  soundSensor.setup(&persist);
+  lightSensor.setup(&persist);
   stepper.setup();
   clock.setup();
-  alarm1.setup();
-  alarm2.setup();
+  alarm1.setup(&persist);
+  alarm2.setup(&persist);
   bluetooth.setup();
   chime.setup(&soundSensor, &stepper);
-  ambiance.setup(&soundSensor, &lightSensor);
+  ambiance.setup(&persist, &soundSensor, &lightSensor);
 
   // ... add the chain of listeners, which might react to bluetooth commands
   bluetooth.addCommandInterpreter(&alarm1);
@@ -148,6 +150,7 @@ void loop() {
     //bluetooth.sendDebug();
   }
 
+
   // DESIRE 
 
   // alarms have the power to override past settings (alarm 1 has priority)
@@ -184,7 +187,8 @@ void loop() {
   }
 
   // INTENTION
-  
+
+  persist.storeIfRequired();
 
   // maybe it's time to apply what we had planned?
   if (current_mode != NOTHING and next_planned_action <= millis()) {

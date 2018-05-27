@@ -16,6 +16,7 @@
 #include "sensors_filtering.h"
 
 #include "chime_bluetooth.h"
+#include "persist.h"
 
 #include <Arduino.h>
 
@@ -35,12 +36,15 @@ class ChimeLightSensor: public BluetoothCommandListener,
     
     byte factorThreshold = 50;                // the quiet / noisy threshold in % will be defined as min+(max-min)*factor; so a factor of 0 will always lead to noisy, a factor of 1 will alwats lead to quiet
     bool previousIsDark = false;
+    void storeState();
+
+    Persist* persist;
     
   public:
     
     ChimeLightSensor(const byte pin);
     
-    void setup();
+    void setup(Persist* persist);
     
     // reads light level from the environment
     void perceive();

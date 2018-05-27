@@ -11,6 +11,7 @@
 
 #include "sensors_filtering.h"
 #include "chime_bluetooth.h"
+#include "persist.h"
 
 #include <Arduino.h>
 
@@ -31,12 +32,16 @@ class ChimeSoundSensor: public BluetoothCommandListener {
     
     // measures the current level of sound
     unsigned short measureSoundLevel();
+
+    Persist* persist;
+
+    void storeState();
     
   public:
     
     ChimeSoundSensor(const byte pin);
     
-    void setup();
+    void setup(Persist* persist);
     
     // reads sound level from the environment
     void perceive();

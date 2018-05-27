@@ -13,9 +13,24 @@ Ambiance::Ambiance():
 
 }
 
-void Ambiance::setup(ChimeSoundSensor* _soundSensor, ChimeLightSensor* _lightSensor) {
+void Ambiance::setup(Persist* _persist, ChimeSoundSensor* _soundSensor, ChimeLightSensor* _lightSensor) {
+  persist = _persist;
   lightSensor = _lightSensor;
   soundSensor = _soundSensor;
+
+  if (persist->hasDataStored()) {
+    // there is data persisted ! Let's load it :-)
+    enabled = persist->getAmbianceEnabled();
+    DEBUG_PRINTLN(F("loaded ambiance data from saved state"));
+  } else {
+    DEBUG_PRINTLN(F("no saved state for ambiance, defining the default state..."));
+    storeState();
+  }
+
+}
+
+void Ambiance::storeState() {
+  persist->storeAmbiance(enabled);
 }
 
 void Ambiance::debugSerial() {
@@ -52,7 +67,7 @@ BluetoothListenerAnswer Ambiance::processBluetoothSet(char* str, SoftwareSerial*
            &cEnabled);    
 
     enabled = char2bool(cEnabled);
-
+    storeState();
     debugSerial();
 
     return SUCCESS;

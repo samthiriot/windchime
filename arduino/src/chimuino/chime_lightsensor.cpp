@@ -43,14 +43,29 @@ void ChimeLightSensor::debugSerial() {
   #endif
 }
 
-void ChimeLightSensor::setup() {
+void ChimeLightSensor::setup(Persist* _persist) {
 
   DEBUG_PRINTLN(F("init: light sensor..."));
 
   sensor.setup(0, -1); // we assume no light means 0, but have no idea of the max
   sensor.sense();
 
+  persist = _persist; 
+  if (persist->hasDataStored()) {
+    // there is data persisted ! Let's load it :-)
+    factorThreshold = persist->getLightThreshold();
+    DEBUG_PRINTLN(F("loaded data from saved state"));
+  } else {
+    DEBUG_PRINTLN(F("no saved state, defining the default state..."));
+    storeState();
+  }
+
+
   DEBUG_PRINTLN(F("init: light sensor ok"));
+}
+
+void ChimeLightSensor::storeState() {
+  persist->storeLightThreshold(factorThreshold);
 }
 
 unsigned short ChimeLightSensor::getLightLevel() {
@@ -115,6 +130,8 @@ BluetoothListenerAnswer ChimeLightSensor::processBluetoothSet(char* str, Softwar
     else if (factorThreshold > 100) { factorThreshold = 100; }
     
     *BTSerial << F("LIGHTTHRESHOLD SET") << endl;
+
+    storeState();
    
     debugSerial();
 

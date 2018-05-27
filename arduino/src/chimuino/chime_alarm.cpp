@@ -18,13 +18,41 @@ ChimeAlarm::ChimeAlarm(byte _id):
   start_minutes = 30;
 }
 
-void ChimeAlarm::setup() {
+void ChimeAlarm::setup(Persist* _persist) {
 
   DEBUG_PRINT(F("init: ALARM")); DEBUG_PRINT_DEC(id); DEBUG_PRINTLN(F("..."));
 
-  
+  persist = _persist; 
+  if (persist->hasDataStored()) {
+    // there is data persisted ! Let's load it :-)
+    ChimePersistedAlarmData read = (id==1)? persist->getAlarm1() : persist->getAlarm2();      
+    enabled = read.enabled;
+    start_hour = read.start_hour;
+    start_minutes = read.start_minutes;
+    durationSoft = read.durationSoft;
+    durationStrong = read.durationStrong;
+    sunday = read.sunday;
+    monday = read.monday;
+    tuesday = read.tuesday;
+    wednesday = read.wednesday;
+    thursday = read.thursday;
+    friday = read.friday;
+    saterday = read.saterday;
+    DEBUG_PRINTLN(F("loaded data from saved state"));
+  } else {
+    DEBUG_PRINTLN(F("no saved state, defining the default state..."));
+    storeState();
+  }
 
   DEBUG_PRINT(F("init: ALARM")); DEBUG_PRINT_DEC(id); DEBUG_PRINTLN(F(" ok"));
+}
+
+void ChimeAlarm::storeState() { 
+  if (id == 1) {
+    persist->storeAlarm1(enabled, start_hour, start_minutes, durationSoft, durationStrong, sunday, monday, tuesday, wednesday, thursday, friday, saterday);
+  } else {
+    persist->storeAlarm2(enabled, start_hour, start_minutes, durationSoft, durationStrong, sunday, monday, tuesday, wednesday, thursday, friday, saterday);
+  }
 }
 
 void ChimeAlarm::debugSerial() {
@@ -96,7 +124,8 @@ BluetoothListenerAnswer ChimeAlarm::processBluetoothSet(char* str, SoftwareSeria
 
     *BTSerial << F("ALARM") << id << F(" SET") << endl;
     
-    // TODO persist somewhere else?
+    storeState();
+    
     // TODO activate an alarm in the RTC chip?
     
     debugSerial();

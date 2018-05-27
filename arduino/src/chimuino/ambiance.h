@@ -5,6 +5,7 @@
 #include "chime_bluetooth.h"
 #include "chime_lightsensor.h"
 #include "chime_soundsensor.h"
+#include "persist.h"
 
 class Ambiance: public BluetoothCommandListener,
                 public IntentionProvider {
@@ -13,11 +14,14 @@ class Ambiance: public BluetoothCommandListener,
     bool enabled = true;             // play sound from time to time 
     ChimeSoundSensor* soundSensor;
     ChimeLightSensor* lightSensor;
+    Persist* persist;
+
+    void storeState();
     
   public:
     // constructor
     Ambiance();
-    void setup(ChimeSoundSensor* soundSensor, ChimeLightSensor* lightSensor);
+    void setup(Persist* _persist, ChimeSoundSensor* soundSensor, ChimeLightSensor* lightSensor);
     
     void debugSerial();
 

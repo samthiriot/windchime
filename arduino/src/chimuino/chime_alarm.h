@@ -3,7 +3,7 @@
 
 #include "chime.h"
 #include "chime_bluetooth.h"
-
+#include "persist.h"
 
 class ChimeAlarm: public BluetoothCommandListener,
                   public IntentionProvider {
@@ -29,11 +29,14 @@ class ChimeAlarm: public BluetoothCommandListener,
     // other
     byte id;                                    // the id of the name of the alarm (like ALARM1, ALARM2...)    
     bool rightWeekdayForRing();                 // returns true if the weekday is compliant with our settings
+    Persist* persist;
+
+    void storeState();
     
   public:
     // constructor
     ChimeAlarm(byte id);
-    void setup();
+    void setup(Persist* persist);
     
     // prints the state of the alarm in the serial 
     void debugSerial();

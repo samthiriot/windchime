@@ -43,14 +43,29 @@ void ChimeSoundSensor::debugSerial() {
  
 }
 
-void ChimeSoundSensor::setup() {
+void ChimeSoundSensor::setup(Persist* _persist) {
 
   DEBUG_PRINTLN(F("init: sound sensor..."));
 
   sensor.setup(-1, -1); // we have no f idea of what are the min and max for such a sensor !
   sensor.sense();
 
+  persist = _persist; 
+  if (persist->hasDataStored()) {
+    // there is data persisted ! Let's load it :-)
+    factorThreshold = persist->getSoundThreshold();
+    DEBUG_PRINTLN(F("loaded data from saved state"));
+  } else {
+    DEBUG_PRINTLN(F("no saved state, defining the default state..."));
+    storeState();
+  }
+  
   DEBUG_PRINTLN(F("init: sound sensor ok"));
+}
+
+
+void ChimeSoundSensor::storeState() {
+  persist->storeSoundThreshold(factorThreshold);
 }
 
 unsigned short ChimeSoundSensor::measureSoundLevel() {
@@ -117,6 +132,8 @@ BluetoothListenerAnswer ChimeSoundSensor::processBluetoothSet(char* str, Softwar
     else if (factorThreshold > 100) { factorThreshold = 100; }
     
     *BTSerial << F("SOUNDTHRESHOLD SET") << endl;
+
+    storeState();
    
     debugSerial();
 
