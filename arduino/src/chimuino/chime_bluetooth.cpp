@@ -227,9 +227,10 @@ void ChimeBluetooth::sendDebug() {
 }
 
 void ChimeBluetooth::reactToCommand() {
+
   DEBUG_PRINT(F("bluetooth: processing command "));
   DEBUG_PRINTLN(received);
-  char * received2 = received;
+  char* received2 = received;
   // the AT messages might interfer; remove the known ones
   while (true) {
     if (
@@ -245,18 +246,28 @@ void ChimeBluetooth::reactToCommand() {
   
   // received
   // receivedCount
-  if (strncmp_P(received2, PSTR("GET "), 4) == 0) {
-    // the command starts with GET
-    processGet(received2 + 4);
-  } else if (strncmp_P(received2, PSTR("SET "), 4) == 0) {
-    processSet(received2 + 4);
-  } else if (strncmp_P(received2, PSTR("DO "), 3) == 0) {
-    processDo(received2 + 3);
-  } else {
-    DEBUG_PRINT(F("ERROR: command ignored ")); DEBUG_PRINTLN(received2);
-    //bluetoothConsume();
-    receivedCount = 0;
-  }
+  char* received3 = received2;
+  while (received3 < received + receivedCount - 2 ) {
+    if (strncmp_P(received3, PSTR("GET "), 4) == 0) {
+      // the command starts with GET
+      processGet(received3 + 4);
+      receivedCount = 0;
+      return;
+    } else if (strncmp_P(received3, PSTR("SET "), 4) == 0) {
+      processSet(received3 + 4);
+      receivedCount = 0;
+      return;
+    } else if (strncmp_P(received3, PSTR("DO "), 3) == 0) {
+      processDo(received3 + 3);
+      receivedCount = 0;
+      return;
+    }
+    received3++;
+  } 
+  
+  DEBUG_PRINT(F("ERROR: command ignored ")); DEBUG_PRINTLN(received2);
+  receivedCount = 0;
+  
 }
 
 /**
