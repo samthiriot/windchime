@@ -91,7 +91,7 @@ BluetoothListenerAnswer ChimeAlarm::processBluetoothSet(char* str, SoftwareSeria
   
   if ( (strncmp_P(str, PSTR("ALARM"), 5) == 0) and (str[5] == (id==1?'1':'2') ) ) {
 
-    DEBUG_PRINT(F("received alarm")); DEBUG_PRINTLN(str);
+    DEBUG_PRINT(F("received alarm ")); DEBUG_PRINTLN(str);
 
     char cEnabled;
     char cSunday, cMonday, cTuesday, cWednesday, cThursday, cFriday, cSaterday;
