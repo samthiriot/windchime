@@ -62,6 +62,11 @@ export class ChimuinoProvider {
 
 	private _firstConnection:boolean = true;
 
+	// lists things asked for (like VERSION or UPTIME) and maps when it was asked
+	private pendingGet:{[key: string]: number} = {};
+	private timerCheckReception = null;
+	private DELAY_FOR_GET_RECEPTION_MS = 1000;
+
 	constructor(//public http: HttpClient,
   			  private ble: BLE,
 			  //private bluetooth: BluetoothSerial,
@@ -145,7 +150,11 @@ export class ChimuinoProvider {
 		// there is something to send !
 		var message:string = this._pendingCommands.shift();
 		//this.displayDebug("sending pending: "+message);
-		this.sendMessageRaw(message);
+		if (message.length > this.MAX_MTU_STRING) {
+			this.sendMessage(message);
+		} else {
+			this.sendMessageRaw(message);
+		}
 	}
 
 	/**
@@ -212,11 +221,42 @@ export class ChimuinoProvider {
 
 
 	/**
+	 * Checks that each of the GET messages which were sent some time ago
+	 * led to a reception; will ask again if its not the case.
+	 */
+	private ensureAllGetReceived() {
+		
+		var now = new Date().getTime(); 
+
+		for (let what in this.pendingGet) {
+		    let when = this.pendingGet[what];
+		    if (now - when >= this.DELAY_FOR_GET_RECEPTION_MS) {
+		    	// should ask for it again !
+		    	this.displayDebug("asking again for "+what);
+		    	this.sendMessage("GET "+what);
+		    }
+		}
+
+		if (this.pendingGet.length > 0) {
+			this.timerCheckReception = setTimeout(this.ensureAllGetReceived, this.DELAY_FOR_GET_RECEPTION_MS);
+		} else {
+			this.timerCheckReception = null;
+		}
+	}
+
+	/**
 	 * Sends a message to the Chimuino. 
 	 * Trims it and adds a cariage return to close the command.
 	 */
 	private sendMessage(messageRaw:string) {
 
+		if (messageRaw.startsWith("GET ")) {
+			var sentGet = messageRaw.substring(4).trim();
+			this.pendingGet[sentGet] = new Date().getTime(); 
+			if (this.timerCheckReception === null) {
+				this.timerCheckReception = setTimeout(this.ensureAllGetReceived, this.DELAY_FOR_GET_RECEPTION_MS);
+			}
+		}
   		let message = messageRaw.trim()+'\n';
 
   		// if we are busy, it's not yet time to send an additional query
@@ -349,8 +389,9 @@ export class ChimuinoProvider {
 	 */
 	private onSetAcknowledged(str:string) {
 
-		var code:string = str.trim().toLowerCase();
-		this.events.publish("set-"+code, true);
+		var code:string = str.trim();
+
+		this.events.publish("set-"+code.toLowerCase(), true);
 		//this.displayDebug("acknowledged: set "+code);
 
 	}
@@ -415,6 +456,10 @@ export class ChimuinoProvider {
 	 * Will propagate an event with the decoded value.
 	 */
 	private onGetReceived(what:string, valueStr:string) {
+
+		// don't ask for it again !
+		delete this.pendingGet[what];
+
 		if (what == "AMBIANCE") {
 			var enabled:boolean = valueStr[0]=='1';
 			this.events.publish("get-ambiance", enabled);
