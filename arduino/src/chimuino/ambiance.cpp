@@ -81,8 +81,10 @@ BluetoothListenerAnswer Ambiance::processBluetoothDo(char* str, SoftwareSerial* 
 }
 
 Intention Ambiance::proposeNextMode(enum mode current_mode, unsigned long next_planned_action) {
-  
-   if (current_mode == NOTHING and isEnabled() and !lightSensor->isDark() and soundSensor->isQuiet()) {
+
+    bool canPlay = isEnabled() and !lightSensor->isDark() and soundSensor->isQuiet();
+    
+   if (current_mode == NOTHING and canPlay) {
 
     unsigned long additionalDelay;
     
@@ -104,7 +106,9 @@ Intention Ambiance::proposeNextMode(enum mode current_mode, unsigned long next_p
       DEBUG_PRINT(F("mood light in ")); DEBUG_PRINT(additionalDelay/1000); DEBUG_PRINTLN('s');
       return Intention { AMBIANCE_TINTEMENT,  millis() + additionalDelay};
     }
-  } else if (current_mode == AMBIANCE_TINTEMENT or current_mode == AMBIANCE_PREREVEIL or current_mode == AMBIANCE_REVEIL) {
+  } else if (!canPlay and 
+          (current_mode == AMBIANCE_TINTEMENT or current_mode == AMBIANCE_PREREVEIL or current_mode == AMBIANCE_REVEIL)
+          ) {
       // disable planned ambiance if any!
       DEBUG_PRINTLN(F("no more sound for ambiance."));
       return Intention { NOTHING,  millis() };
