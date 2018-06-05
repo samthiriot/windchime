@@ -85,7 +85,7 @@ BluetoothListenerAnswer Chime::processBluetoothDo(char* str, SoftwareSerial* BTS
 
 Intention Chime::proposeNextMode(enum mode current_mode, unsigned long next_planned_action) {
 
-  if (current_mode == NOTHING and demoAsked != NOTHING) {
+  if ( (current_mode == NOTHING or current_mode == SILENCE) and demoAsked != NOTHING) {
     DEBUG_PRINT("Doing demo of "); DEBUG_PRINTLN(mode2str(demoAsked));
     enum mode demoAsked2 = demoAsked;
     demoAsked = NOTHING;
