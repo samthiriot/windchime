@@ -26,9 +26,9 @@ void ChimeStepper::setup() {
     pinMode(pin3, OUTPUT);
     pinMode(pin4, OUTPUT);
 
-    pull_light = steps/13;
-    pull_medium = steps/11;
-    pull_strong = steps/9;
+    pull_light = steps/14;
+    pull_medium = steps/12;
+    pull_strong = steps/10;
 
     DEBUG_PRINTLN(F("init: going to position free"));
  
