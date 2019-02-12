@@ -35,10 +35,10 @@
   </ion-card-header>
   <ion-card-content>
   <ul>
-    <li>Light level is: {{isDark}} ({{lightLevel}}% of [{{lightMinMax}}])</li>    
-    <li>Sound level is: {{isQuiet}} ({{soundLevel}}% of [{{soundMinMax}}])</li>    
-    <li>Temperature is: {{temperature}}°C</li>
-    <li>Uptime is:      {{uptime}}</li>
+    <li>Light level is: {{chimuino.isDark}} ({{chimuino.lightLevelStr}}% of [{{chimuino.lightMinMax}}])</li>    
+    <li>Sound level is: {{chimuino.isQuiet}} ({{chimuino.soundLevelStr}}% of [{{chimuino.soundMinMax}}])</li>    
+    <li>Temperature is: {{chimuino.temperature}}</li>
+    <li>Uptime is:      {{chimuino.uptime}}</li>
   </ul>
   <button ion-button block (click)="loadInfoFromChimuino()">update</button>
   </ion-card-content>
@@ -67,7 +67,7 @@
       <li>a basic microphone able to measure the level of sound</li>
       <li>a real time clock (RTC DS3231) so alarms ring when expected</li>
       <li>a bluetooth (HM-10 Bluetooth-4.0 V2 based on the TI CC2541 chip) to communicate with a smartphone or tablet</li>
-      <li>a software in version: {{firmwareVersion}}</li>
+      <li>a software in version: {{chimuino.firmwareVersion}}</li>
     </ul>
   </ion-card-content>
 </ion-card>

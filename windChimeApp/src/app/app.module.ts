@@ -8,13 +8,12 @@ import { InstallPage } from '../pages/install/install';
 import { AboutPage } from '../pages/about/about';
 import { ChimePage } from '../pages/chime/chime';
 import { AlarmPage } from '../pages/alarm/alarm';
-import { HomePage } from '../pages/home/home';
 import { TabsPage } from '../pages/tabs/tabs';
 
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
 import { BLE } from '@ionic-native/ble';
-import { BluetoothSerial } from '@ionic-native/bluetooth-serial';
+
 import { ChimuinoProvider } from '../providers/chimuino/chimuino';
 
 @NgModule({
@@ -24,12 +23,13 @@ import { ChimuinoProvider } from '../providers/chimuino/chimuino';
     AboutPage,
     AlarmPage,
     ChimePage,
-    HomePage,
     TabsPage
   ],
   imports: [
     BrowserModule,
-    IonicModule.forRoot(MyApp),
+    IonicModule.forRoot(MyApp, {
+      preloadModules: true
+    }),
     IonicStorageModule.forRoot()
   ],
   bootstrap: [IonicApp],
@@ -39,13 +39,11 @@ import { ChimuinoProvider } from '../providers/chimuino/chimuino';
     AboutPage,
     ChimePage,
     AlarmPage,
-    HomePage,
     TabsPage
   ],
   providers: [
     StatusBar,
     SplashScreen,
-    BluetoothSerial,
     BLE,
     {provide: ErrorHandler, useClass: IonicErrorHandler},
     ChimuinoProvider

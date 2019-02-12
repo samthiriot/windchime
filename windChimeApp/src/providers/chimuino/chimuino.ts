@@ -6,33 +6,24 @@
 
 import { Injectable } from '@angular/core';
 import { ToastController } from 'ionic-angular';
-import { Events } from 'ionic-angular';
 import { Storage } from '@ionic/storage';
-//import { BluetoothSerial } from '@ionic-native/bluetooth-serial';
 import { BLE } from '@ionic-native/ble';
+
+// https://ionicframework.com/docs/v3/native/bluetoothle/
+// https://github.com/randdusing/cordova-plugin-bluetoothle
+//import { BluetoothLE } from '@ionic-native/bluetooth-le';
+
 import {Platform} from 'ionic-angular';
+
 
 /**
  * Mediates all the interactions between the arduino on the chimuino through bluetooth.
- * Implements the APIs, and provides plain TypeScript interfaces to hide them. 
- * Internally manages a list of messages pending and sends them each after each other. 
- * Publishes events using the ionic Events service, so GUI controllers can detect 
- * connections and diconnections, and also receive data they are interested in.  
+ * Searches Bluetooth Low Energy for the Chimuino device; connects it and listens to 
+ * events of interest; read the info; keeps it as attributes and publishes getters and 
+ * setters which do save these parameters into the chime using BLE. 
  * 
- * The standard flow to get an information A from the Chimuino is:
- * - register the event "get-A" 
- * - call this provider's method askA()
- * - (internal) sendMessage("GET A")
- * - (internal) <bluetooth message sent>
- * - (internal) <arduino replying the message>
- * - (internal) onDataNotified -> onGetReceived
- * - (internal) onGetReceived -> [maybe a decoding function] -> sendEvent
- * - (internal) events.publish("get-A", data...)
- * - wait until you get your event coming with the decoded data 
- *
- * The standard flow to send an information A to the Chimuino is:
- * - cann this provider's method sendA(args...);
- *
+ * TODO
+
  * The connection steps for this provider are (in case of success):
  * - created -> connect
  * - connect -> reactDeviceFound
@@ -46,33 +37,352 @@ export class ChimuinoProvider {
 	// switch to true to have plenty of toast messages
 	// displaying what happens with bluetooth at every step.
 	public DEBUG:boolean = true;
-	private MAX_MTU_STRING:number = 20; 
-	private DELAY_BETWEEN_COMMANDS_MS = 200; // TODO how to define that?
 
-	private _busy:boolean = false;
-	private _isConnected:boolean = false;
+	public _isConnected:boolean = false;
 	public _device = null;
-	private SERVICE:string = "FFE1";
-	private CHARACTERISTIC:string = "FFE2";
 	private DURATION_SCAN:number = 5;
-	private _pendingCommands:string[] = [];
-
-	// strings received so far from bluetooth which don't yet end with carriage return
-	private currentBuffer = "";
 
 	private _firstConnection:boolean = true;
 
-	// lists things asked for (like VERSION or UPTIME) and maps when it was asked
-	private pendingGet:{[key: string]: number} = {};
-	private timerCheckReception = null;
-	private DELAY_FOR_GET_RECEPTION_MS = 1000;
+	private static readonly SERVICE_CHIMUINO:string = "5550";
+	private static readonly CHARACTERISTIC_TIME:string = "2A08";
+	private static readonly CHARACTERISTIC_ALARM1:string = "5551";
+	private static readonly CHARACTERISTIC_ALARM2:string = "5552"; // TODO 
+
+	private static readonly SERVICE_SENSING:string = "181A";
+	private static readonly CHARACTERISTIC_TEMPERATURE:string = "2A6E";
+
+
+	/**********************************************************************
+	 * Ambiance data storage and access
+	 **********************************************************************/
+
+	public isAmbianceLoaded = false;
+	private _isChimeEnabled:boolean = true;
+	private _chimeLevel:number = 50;
+
+	public isLightThresholdLoaded:boolean = false;
+	private _lightThreshold:number = 50;
+
+	public isSoundThresholdLoaded:boolean = false;
+	private _soundThreshold:number = 50;
+	public soundLevel:number = 50;
+	public isQuiet:boolean = false;
+	public soundMinMax:String = "?:?";
+
+	public isLightLevelLoaded:boolean = false;
+	public lightLevel:number = 50;
+	public isDark:boolean = false;
+	public lightMinMaxStr:String = "?:?";
+
+
+	set chimeEnabled(value:boolean) {
+		this._isChimeEnabled = value;
+		this.storage.set('chime-activated', value);
+		this.setAmbiance(this._isChimeEnabled);
+	}
+
+	get chimeEnabled():boolean {
+		return this._isChimeEnabled;
+	}
+
+	set chimeLevel(value:number) {
+		this._chimeLevel = value;
+		this.storage.set('chime-level', value);
+	}
+
+	get chimeLevel():number {
+		return this._chimeLevel;
+	}
+
+	get lightThreshold():number {
+		return this._lightThreshold;
+	}
+	set lightThreshold(value:number) {
+		this._lightThreshold = value;
+		this.setLightThreshold(this._lightThreshold);
+	}
+
+	get soundThreshold():number {
+		return this._soundThreshold;
+	}
+	set soundThreshold(value:number) {
+		this._soundThreshold = value;
+		this.setSoundThreshold(this._soundThreshold);
+	}
+
+	/**********************************************************************
+	 * Alarm 1 data storage and access
+	 **********************************************************************/
+
+	// is data related to alarm 1 loaded?
+	alarm1loaded:boolean = false;
+
+	// data for alarm 1
+	_alarm1hour:number = 7;
+	_alarm1minutes:number = 25;
+	_alarm1enabled:boolean = false;
+	_alarm1soft:number = 10;
+	_alarm1strong:number = 15;
+	_alarm1sunday:boolean = false;
+	_alarm1monday:boolean = true;
+	_alarm1tuesday:boolean = true;
+	_alarm1wednesday:boolean = true;
+	_alarm1thursday:boolean = true;
+	_alarm1friday:boolean = true;
+	_alarm1saturday:boolean = false;
+
+	// getters for alarm1 data
+	get alarm1enabled():boolean 	{ return this._alarm1enabled; 		}
+	get alarm1time():string 		{ return (this._alarm1hour<10?"0":"")+this._alarm1hour+":"+(this._alarm1minutes<10?"0":"")+this._alarm1minutes;  }
+	get alarm1soft():number 		{ return this._alarm1soft; 			}
+	get alarm1strong():number 		{ return this._alarm1strong;		}
+	get alarm1sunday():boolean 		{ return this._alarm1sunday; 		}
+	get alarm1monday():boolean 		{ return this._alarm1monday; 		}
+	get alarm1tuesday():boolean 	{ return this._alarm1tuesday; 		}
+	get alarm1wednesday():boolean 	{ return this._alarm1wednesday; 	}
+	get alarm1thursday():boolean 	{ return this._alarm1thursday; 		}
+	get alarm1friday():boolean 		{ return this._alarm1friday; 		}
+	get alarm1saturday():boolean 	{ return this._alarm1saturday; 		}
+
+	// setters for alarm1 data
+	set alarm1enabled(value:boolean) 	{	this._alarm1enabled = value;   	this.storage.set('alarm-1-enabled', value);  	this.updateChimuinoAlarm1();	}
+	set alarm1time(value:string) 		{ 	
+		let tokens = value.split(":");
+		this._alarm1hour = parseInt(tokens[0]);
+		this._alarm1minutes = parseInt(tokens[1]);
+		if (isNaN(this._alarm1hour) || isNaN(this._alarm1minutes)) {      return; 	}
+		this.updateChimuinoAlarm1(); 	}
+	set alarm1soft(value:number) 		{	this._alarm1soft = value;		this.storage.set('alarm-1-soft', value);		this.updateChimuinoAlarm1();	}
+	set alarm1strong(value:number) 		{	this._alarm1strong = value;		this.storage.set('alarm-1-strong', value);		this.updateChimuinoAlarm1();	}
+	set alarm1sunday(value:boolean)     { 	this._alarm1sunday = value;     this.updateChimuinoAlarm1(); }
+	set alarm1monday(value:boolean)     { 	this._alarm1monday = value;     this.updateChimuinoAlarm1(); }
+	set alarm1tuesday(value:boolean)    { 	this._alarm1tuesday = value;    this.updateChimuinoAlarm1(); }
+	set alarm1wednesday(value:boolean)  { 	this._alarm1wednesday = value;  this.updateChimuinoAlarm1(); }
+	set alarm1thursday(value:boolean)   { 	this._alarm1thursday = value;   this.updateChimuinoAlarm1(); }
+	set alarm1friday(value:boolean)     { 	this._alarm1friday = value;     this.updateChimuinoAlarm1(); }
+	set alarm1saturday(value:boolean)   { 	this._alarm1saturday = value;   this.updateChimuinoAlarm1(); }
+  
+  	// on set, update the alarm1 by bluetooth
+	private updateChimuinoAlarm1() {
+		this.setAlarm1(
+	      this._alarm1hour, this._alarm1minutes, 
+	      this._alarm1soft, this._alarm1strong,
+	      this._alarm1enabled,
+	      this._alarm1sunday, this._alarm1monday, this._alarm1tuesday, this._alarm1wednesday, this._alarm1thursday, this._alarm1friday, this._alarm1saturday
+	      );
+	}
+
+	// send the data to Arduino by bluetooth
+	private setAlarm1(hour:number, minutes:number, durationSoft:number, durationStrong:number, enabled:boolean, 
+			sunday:boolean, monday:boolean, tuesday:boolean, wednesday:boolean, thursday:boolean, friday:boolean, saturday:boolean) {
+		
+		let buffer = new ArrayBuffer(12);
+		let dv = new DataView(buffer);
+		dv.setUint8(0, enabled?1:0); 
+		dv.setUint8(1, hour); 
+		dv.setUint8(2, minutes);
+		dv.setUint8(3, sunday?1:0);
+		dv.setUint8(4, monday?1:0);
+		dv.setUint8(5, tuesday?1:0);
+		dv.setUint8(6, wednesday?1:0);
+		dv.setUint8(7, thursday?1:0);
+		dv.setUint8(8, friday?1:0);
+		dv.setUint8(9, saturday?1:0);
+		dv.setUint8(10, durationSoft);
+		dv.setUint8(11, durationStrong);
+		
+
+		this.write(ChimuinoProvider.SERVICE_CHIMUINO, ChimuinoProvider.CHARACTERISTIC_ALARM1, dv.buffer);
+		/*
+		this.getConnectedBle().then(
+				(connected) => { 
+					return this.ble.write(this._device.id, ChimuinoProvider.SERVICE_CHIMUINO, ChimuinoProvider.CHARACTERISTIC_ALARM1, dv.buffer);
+				})
+			.catch(
+				(error) => { this.displayToastMessage("unable to update alarm1: "+error); } );
+		*/
+
+	}
+
+	private onAlarm1Received(buffer:any) {
+
+		let dv = new DataView(buffer);
+		
+		let active:boolean = dv.getUint8(0) > 0;
+		let hour:number = dv.getUint8(1);
+		let minutes:number = dv.getUint8(2);
+		let sunday:boolean = dv.getUint8(3) > 0;
+		let monday:boolean = dv.getUint8(4) > 0;
+		let tuesday:boolean = dv.getUint8(5) > 0;
+		let wednesday:boolean = dv.getUint8(6) > 0;
+		let thursday:boolean = dv.getUint8(7) > 0;
+		let friday:boolean = dv.getUint8(8) > 0;
+		let saturday:boolean = dv.getUint8(9) > 0;
+		let durationSoft:number = dv.getUint8(10);
+		let durationStrong:number = dv.getUint8(11);
+          
+        this._alarm1hour = hour;
+        this._alarm1minutes = minutes;
+   		this._alarm1enabled = active;
+    	this._alarm1soft = durationSoft;
+    	this._alarm1strong = durationStrong;
+    	this._alarm1sunday = sunday;
+  		this._alarm1monday = monday;
+  		this._alarm1tuesday = tuesday;
+  		this._alarm1wednesday = wednesday;
+    	this._alarm1thursday = thursday;
+    	this._alarm1friday = friday;
+   		this._alarm1saturday = saturday;
+   		this.alarm1loaded = true;
+		//this.displayDebug("received alarm1: "+active+" "+hour+":"+minutes+" "+sunday+monday+tuesday+wednesday+thursday+friday+saturday+" "+durationSoft+" "+durationStrong);
+
+	}
+
+
+	/**********************************************************************
+	 * Alarm 2 data storage and access
+	 **********************************************************************/
+
+	// is data related to alarm 1 loaded?
+	alarm2loaded:boolean = false;
+
+	// data for alarm 1
+	_alarm2hour:number = 7;
+	_alarm2minutes:number = 25;
+	_alarm2enabled:boolean = false;
+	_alarm2soft:number = 10;
+	_alarm2strong:number = 15;
+	_alarm2sunday:boolean = false;
+	_alarm2monday:boolean = true;
+	_alarm2tuesday:boolean = true;
+	_alarm2wednesday:boolean = true;
+	_alarm2thursday:boolean = true;
+	_alarm2friday:boolean = true;
+	_alarm2saturday:boolean = false;
+
+	// getters for alarm2 data
+	get alarm2enabled():boolean 	{ return this._alarm2enabled; 		}
+	get alarm2time():string 		{ return (this._alarm2hour<10?"0":"")+this._alarm2hour+":"+(this._alarm2minutes<10?"0":"")+this._alarm2minutes;  }
+	get alarm2soft():number 		{ return this._alarm2soft; 			}
+	get alarm2strong():number 		{ return this._alarm2strong;		}
+	get alarm2sunday():boolean 		{ return this._alarm2sunday; 		}
+	get alarm2monday():boolean 		{ return this._alarm2monday; 		}
+	get alarm2tuesday():boolean 	{ return this._alarm2tuesday; 		}
+	get alarm2wednesday():boolean 	{ return this._alarm2wednesday; 	}
+	get alarm2thursday():boolean 	{ return this._alarm2thursday; 		}
+	get alarm2friday():boolean 		{ return this._alarm2friday; 		}
+	get alarm2saturday():boolean 	{ return this._alarm2saturday; 		}
+
+	// setters for alarm2 data
+	set alarm2enabled(value:boolean) 	{	this._alarm2enabled = value;   	this.updateChimuinoAlarm2();	}
+	set alarm2time(value:string) 		{ 	
+		let tokens = value.split(":");
+		this._alarm2hour = parseInt(tokens[0]);
+		this._alarm2minutes = parseInt(tokens[1]);
+	    if (isNaN(this._alarm2hour) || isNaN(this._alarm2minutes)) {      return; 	}
+		this.updateChimuinoAlarm2(); 	}
+	set alarm2soft(value:number) 		{	this._alarm2soft = value;		this.updateChimuinoAlarm2();	}
+	set alarm2strong(value:number) 		{	this._alarm2strong = value;		this.updateChimuinoAlarm2();	}
+	set alarm2sunday(value:boolean)     { 	this._alarm2sunday = value;     this.updateChimuinoAlarm2(); }
+	set alarm2monday(value:boolean)     { 	this._alarm2monday = value;     this.updateChimuinoAlarm2(); }
+	set alarm2tuesday(value:boolean)    { 	this._alarm2tuesday = value;    this.updateChimuinoAlarm2(); }
+	set alarm2wednesday(value:boolean)  { 	this._alarm2wednesday = value;  this.updateChimuinoAlarm2(); }
+	set alarm2thursday(value:boolean)   { 	this._alarm2thursday = value;   this.updateChimuinoAlarm2(); }
+	set alarm2friday(value:boolean)     { 	this._alarm2friday = value;     this.updateChimuinoAlarm2(); }
+	set alarm2saturday(value:boolean)   { 	this._alarm2saturday = value;   this.updateChimuinoAlarm2(); }
+  
+  	// on set, update the alarm2 by bluetooth
+	private updateChimuinoAlarm2() {
+		this.setAlarm2(
+	      this._alarm2hour, this._alarm2minutes, 
+	      this._alarm2soft, this._alarm2strong,
+	      this._alarm2enabled,
+	      this._alarm2sunday, this._alarm2monday, this._alarm2tuesday, this._alarm2wednesday, this._alarm2thursday, this._alarm2friday, this._alarm2saturday
+	      );
+	}
+
+	// send the data to Arduino by bluetooth
+	private setAlarm2(hour:number, minutes:number, durationSoft:number, durationStrong:number, enabled:boolean, 
+			sunday:boolean, monday:boolean, tuesday:boolean, wednesday:boolean, thursday:boolean, friday:boolean, saturday:boolean) {
+		
+		let buffer = new ArrayBuffer(12);
+		let dv = new DataView(buffer);
+		dv.setUint8(0, enabled?1:0); 
+		dv.setUint8(1, hour); 
+		dv.setUint8(2, minutes);
+		dv.setUint8(3, sunday?1:0);
+		dv.setUint8(4, monday?1:0);
+		dv.setUint8(5, tuesday?1:0);
+		dv.setUint8(6, wednesday?1:0);
+		dv.setUint8(7, thursday?1:0);
+		dv.setUint8(8, friday?1:0);
+		dv.setUint8(9, saturday?1:0);
+		dv.setUint8(10, durationSoft);
+		dv.setUint8(11, durationStrong);
+		
+		// ensure bluetooth is still enabled...
+		this.write(ChimuinoProvider.SERVICE_CHIMUINO, ChimuinoProvider.CHARACTERISTIC_ALARM2, dv.buffer);
+
+
+	}
+
+
+	private onAlarm2Received(buffer:any) {
+
+		let dv = new DataView(buffer);
+		
+		let active:boolean = dv.getUint8(0) > 0;
+		let hour:number = dv.getUint8(1);
+		let minutes:number = dv.getUint8(2);
+		let sunday:boolean = dv.getUint8(3) > 0;
+		let monday:boolean = dv.getUint8(4) > 0;
+		let tuesday:boolean = dv.getUint8(5) > 0;
+		let wednesday:boolean = dv.getUint8(6) > 0;
+		let thursday:boolean = dv.getUint8(7) > 0;
+		let friday:boolean = dv.getUint8(8) > 0;
+		let saturday:boolean = dv.getUint8(9) > 0;
+		let durationSoft:number = dv.getUint8(10);
+		let durationStrong:number = dv.getUint8(11);
+          
+        this._alarm2hour = hour;
+        this._alarm2minutes = minutes;
+   		this._alarm2enabled = active;
+    	this._alarm2soft = durationSoft;
+    	this._alarm2strong = durationStrong;
+    	this._alarm2sunday = sunday;
+  		this._alarm2monday = monday;
+  		this._alarm2tuesday = tuesday;
+  		this._alarm2wednesday = wednesday;
+    	this._alarm2thursday = thursday;
+    	this._alarm2friday = friday;
+   		this._alarm2saturday = saturday;
+   		this.alarm2loaded = true;
+		//this.displayDebug("received alarm1: "+active+" "+hour+":"+minutes+" "+sunday+monday+tuesday+wednesday+thursday+friday+saturday+" "+durationSoft+" "+durationStrong);
+
+	}
+
+
+	/**********************************************************************
+	 * About data storage and access
+	 **********************************************************************/
+
+	public versionLoaded:boolean = false;
+	public firmwareVersion:String = "???";
+
+	public temperatureLoaded:boolean = false;
+	_temperature:number = null;
+	_temperatureStr:string = "?";
+	get temperature():any{ return this._temperatureStr; }
+	
+
+	public uptimeLoaded = false;
+	public uptime:String = "???";
 
 	constructor(//public http: HttpClient,
   			  private ble: BLE,
-			  //private bluetooth: BluetoothSerial,
   			  private storage: Storage,
   			  private toastCtrl: ToastController,
-  			  private events: Events,
   			  private platform: Platform
   			  ) {
 
@@ -80,43 +390,153 @@ export class ChimuinoProvider {
 		  this.onApplicationLeft();
 		});
 
-		this.displayDebug("creating a ChimuinoProvider");
+		this.displayDebug("creating a ChimuinoProvider A");
 
-	    // publish the events related to connection
-	    // ... are we connected or not?
-	    this.events.publish("connected", false);
-	    // ... date and time
-	    this.events.publish("get-date", null);
-	    this.events.publish("get-time", null);
-	    this.events.publish("set-date", false);
-	    this.events.publish("set-time", false);
-		// ... ambiance
-		this.events.publish("get-ambiance", null);
-		this.events.publish("set-ambiance", false);
-		// .. temperature
-		this.events.publish("get-temperature", null);
-		this.events.publish("set-temperature", false);
-		// ... alarms
-		this.events.publish("get-alarm1", null);
-		this.events.publish("set-alarm1", false);
-		this.events.publish("get-alarm2", null);
-		this.events.publish("set-alarm2", false);
-		
-	    // try to get a bluetooth connection
-		this.connect();
+
+	    this.platform.ready().then(
+	    	(readySource) => {
+
+				// when everything is ready, try to connect bluetooth
+
+ 				this.displayDebug("try to enable");
+
+ 				return this.ble.enable();
+
+ 				/*
+	 			return new Promise((resolve) => {
+
+			        this.displayDebug("try to initialize !!!");
+
+			        this.bluetoothle.initialize(resolve, { 
+			        	request: true, 
+			        	//statusReceiver: false, 
+			        	restoreKey: "chimuino"
+			        });
+			    });*/
+
+		  	})
+	    	.then( (enabled) => { this.scanForChimuino(); })
+		  	.catch(
+ 					(error) => { this.displayDebug("error when enabling BLE: "+error); }
+ 					);
+
 
 	}
 
+	private scanForChimuino() {
+		
+		this.displayDebug("scanning for chimuino...");
+
+		this.ble
+			.scan(
+				[  ],  	// TODO add services  ChimuinoProvider.SERVICE_CHIMUINO
+				60		// max search time
+				)
+			.subscribe(
+				(data) => { this.reactScanResult(data) }
+				);
+
+		// TODO timeout and detect 
+
+	}
+
+	private reactScanResult(data) {
+
+		//this.displayDebug("found "+data.name+" "+data.id)
+
+		if (data.name == "Chimuino2") {
+
+			this._device = data;
+
+			this.displayDebug("found device "+data.name+" "+data.id);
+
+			this.storage.set('device-name', data.name)
+				.then(	(cool) => { return this.storage.set('device-id', data.address); } )
+				.catch(	(error) => { this.displayDebug("error when storing device info"); } )
+			
+			// scanning is costly. Stop now.
+			this.ble.stopScan(); // TODO catch?
+
+			this.connect();
+		}
+
+	}
+	// TODO do not always scan !!!
+	/*
+	private reactScanResult(result:any) {
+
+		if (result.status === "scanStarted") {
+			// ignore it. We did expected it to start anyway.
+	    } else if (result.status === "scanResult") {
+
+
+        	this.displayDebug("found "+result.name+" at: "+result.address);
+
+        	this._device = result.address;
+
+			this.storage.set('device-name', result.name)
+				.then((cool) => { return this.storage.set('device-id', result.address); } )
+				.catch((error) => { this.displayDebug("error when storing device info"); } )
+			
+			this.connect();
+            this.bluetoothle.stopScan(); // stop at the first chance.
+
+	    }
+	}
+
+	private reactScanError(error:any) {
+		this.displayDebug("bluetooth scan error: "+error);
+
+	}
+
+	private reactBLEactivation(result:any) {
+
+		this.displayDebug("bluetooth activation: "+status);
+
+		if (result.status == "enabled") {
+			// 
+			// TODO if in storage... this.storage.get()
+			this.scanForChimuino();
+			// 
+		} else if (result.status =="disabled") {
+			// TODO what???
+		}
+	}
+	*/
+
+	/**
+	 * when the applicaiton is left, just disconnect bluetooth
+	 */
 	onApplicationLeft() {
 		this.disconnect();
+	}
+
+	reactQuietlyByIgnoring() {
+
+	}
+
+	reactAnyError(error:any) {
+		this.displayDebug("error: "+error);
 	}
 
 	disconnect() {
 		if (this._device != null && this._isConnected) {
 			// disconnect the device
+
+			// TODO
+
+			/*
+			new Promise(function (resolve) {
+				this.bluetoothle.disconnect(resolve, {address:this._device});
+
+			}).then(this.reactQuietlyByIgnoring)
+				.catch(this.reactAnyError);
+
+			*/
 			this.ble.disconnect(this._device.id);
+
+			//this.ble.disconnect(this._device.id);
 			this._isConnected = false;
-			this.events.publish("connected", false);
 		}
 	}
 
@@ -128,7 +548,7 @@ export class ChimuinoProvider {
 
 		let toast = this.toastCtrl.create({
 	      message: message,
-	      duration: 3000,
+	      duration: 10000,
 	      position: 'top'
 	    });
 	    toast.present();
@@ -141,231 +561,66 @@ export class ChimuinoProvider {
 		}
 	}
 
-
-	private sendPendingMessages() {
-		if (this._pendingCommands.length == 0) {
-			// nothing to send yet
-			return;
-		}
-		// there is something to send !
-		var message:string = this._pendingCommands.shift();
-		//this.displayDebug("sending pending: "+message);
-		if (message.length > this.MAX_MTU_STRING) {
-			this.sendMessage(message);
-		} else {
-			this.sendMessageRaw(message);
-		}
-	}
-
-	/**
-	 * queues a message in the list of messages to send
-	 * when bluetooth will be ready (again?). 
-	 * Only queues messages not being queued already.
-	 */
-	private queueMessage(message:string) {
-		// queue this demand
-		if (this._pendingCommands.indexOf(message) > -1) {
-			// already queued.
-			return;
-		}
-		this._pendingCommands.push(message);
-		//this.displayDebug("queuing "+message);
-		if (!this._busy) {
-			this.attemptReconnect();
-		}
-	}
-
-	/**
-	 * Sends a message without any transformation.
-	 */ 
-	private sendMessageRaw(message:string) {
-
-		// this.displayDebug("sending raw "+message+"to"+this._device.id+"...");
-
-		// convert message to string
-		var buf = new ArrayBuffer(message.length*2);
-	    var bufView = new Uint8Array(buf);
-	    for (var i = 0, strLen = message.length; i < strLen; i++) {
-	      bufView[i] = message.charCodeAt(i);
-	    }
-
-	    // actually send it 
-	    // (here we use writeWithoutResponse to save time; 
-	    //  but in this case the automatic fragmentation compliant with MTU is not activated.
-	    //  so we rely on a fragmentation mechanism of our own)
-		this.ble.writeWithoutResponse(this._device.id, this.SERVICE, this.CHARACTERISTIC, buf).then(  
-				(success) => {
-					this._busy = false;
-					// nota: we will be notified by another method of the actual success
-					//this.displayToastMessage('sent info :-) '+success);
-					if (message.endsWith("\n")) {
-						// this is a complete command; let's give some time for the Chime to process it
-						setTimeout(
-							() => { this.sendPendingMessages() }, 
-					    	this.DELAY_BETWEEN_COMMANDS_MS);
-					} else { // we just sent a chunk, let's continue ASAP
-						this.sendPendingMessages();
-					}
-				},
-				(failure) => {
-					this._busy = false;
-					this.displayDebug("failure: "+failure+", will retry later...");
-					// add the message as the first message in the list of pending messages
-					this._pendingCommands.unshift(message);
-					// try to reconnect; in case of success the message will be sent !
-					this.attemptReconnect();
-				}
-			);
-	
-	}
-
-
-	/**
-	 * Checks that each of the GET messages which were sent some time ago
-	 * led to a reception; will ask again if its not the case.
-	 */
-	private ensureAllGetReceived() {
-		
-		var now = new Date().getTime(); 
-
-		for (let what in this.pendingGet) {
-		    let when = this.pendingGet[what];
-		    if (now - when >= this.DELAY_FOR_GET_RECEPTION_MS) {
-		    	// should ask for it again !
-		    	this.displayDebug("asking again for "+what);
-		    	this.sendMessage("GET "+what);
-		    }
-		}
-
-		if (this.pendingGet.length > 0) {
-			this.timerCheckReception = setTimeout(this.ensureAllGetReceived, this.DELAY_FOR_GET_RECEPTION_MS);
-		} else {
-			this.timerCheckReception = null;
-		}
-	}
-
-	/**
-	 * Sends a message to the Chimuino. 
-	 * Trims it and adds a cariage return to close the command.
-	 */
-	private sendMessage(messageRaw:string) {
-
-		if (messageRaw.startsWith("GET ")) {
-			var sentGet = messageRaw.substring(4).trim();
-			this.pendingGet[sentGet] = new Date().getTime(); 
-			if (this.timerCheckReception === null) {
-				this.timerCheckReception = setTimeout(this.ensureAllGetReceived, this.DELAY_FOR_GET_RECEPTION_MS);
-			}
-		}
-  		let message = messageRaw.trim()+'\n';
-
-  		// if we are busy, it's not yet time to send an additional query
-  		if ( this._busy || !this._isConnected) {
-  			//this.displayDebug("not sending now because "+(this._busy?"busy":"not connected"));
-  			this.queueMessage(message);
-  			return;
-  		}
-
-  		if (!this.ble.isEnabled() || !this.ble.isConnected(this._device.id)) {
-  			//this.displayDebug("not sending now because "+(!this.ble.isEnabled()?"no bluetooth":"not connected to device"));
-  			this.queueMessage(message);
-  			this.connect();
-  			return;
-  		}
-
-  		// Okay, we're ready to send a message.
-
-  		this._busy = true;
-
-		//this.ble.stopScan();
-		//this.displayDebug("sending "+message+"to"+this._device.name+"...");
-		
-		// split the messages longer than MTU into several messages
-		let messagesThen:string[] = []; // the fragments of messages to be sent
-		while (message.length > this.MAX_MTU_STRING) {
-			messagesThen.push(message.substring(0,this.MAX_MTU_STRING));
-			message = message.substring(this.MAX_MTU_STRING);
-		}
-		if (message.length > 0) {
-			messagesThen.push(message);
-		}
-		let messageFirst = messagesThen.shift();
-		this._pendingCommands =  [ ...messagesThen , ...this._pendingCommands ];
-
-		// send the first message; the next ones will follow because they are queued.
-
-		this.sendMessageRaw(messageFirst);
-
-  	}
-
-  	/**
-  	 * called when something when wrong in bluetooth communication.
-  	 * Attempts to restore a connection.
-  	 */
-	private attemptReconnect() {
-		this.reactDeviceFound();
-	}
-
 	private connect() {
 
-		/*if ((this._device != null) && (this.ble.isConnected(this._device.id))) {
-			this.ble.dis
-		}
-		*/
-		// enable bluetooth first
-		this.ble.enable().then( (enabled) => {
-			// then get the expected id of the device
-	  		return this.storage.get('bluetooth-id');	
-	  	}).then( (id) => {
-	  		// then search for our device 
-	  		this.displayDebug('scanning for '+id+'...');
-		    this.ble.scan([this.SERVICE], this.DURATION_SCAN).subscribe(
-		    	(device) => {
-  					if (device.name != "CHIMUINO") {
-  						// TODO reject from ID instead !
-				  		this.displayDebug('rejected device '+device.name);
-	  					return;
-	  				}
-	  				// found our device
-	  				this._device = device;
-				    // react to the first connection
-		    		this.displayDebug('connecting device '+this._device.name+'...');
-
-				    this.reactDeviceFound();
-  				}
-  				// TODO detection of failures ???
-		    );
-	  	});
+		this.ble
+			.connect(this._device.id)
+			.subscribe( 
+				(device) => { this.reactDeviceConnected(device); },
+				(disconnected) => { this.reactDisconnected(); } 
+				);
 
 	}
 
-	/**
-	 * React when the bluetooth device was found; 
-	 * this._device is thus set.
-	 */
-	private reactDeviceFound() {
+	private reactDisconnected() {
 
-		// display information to the user
-		this.displayToastMessage('connecting device '+this._device.name+'...');
+		this._isConnected = false;
 
-		this.ble.connect(this._device.id).subscribe(
-			(data) => {
-				this.displayToastMessage("connected to device "+this._device.name);
-				this.reactDeviceConnected(); 
-			});
+		this.displayDebug("we were disconnected from Chime...");
 
+	}
+
+	private read(service:string, characteristic:string, callback) {
+
+		this.ble.read(
+			this._device.id, 
+			service, 
+			characteristic)
+		.then(callback)
+		.catch(
+			(error) => { this.displayDebug("error when reading characteristic "+characteristic+": "+error); } 
+			);
+
+	}
+
+	private readAndListen(service:string, characteristic:string, callback) {
+		
+		this.read(service, characteristic, callback);
+
+		this.ble.startNotification(
+			this._device.id, 
+			service, 
+			characteristic)
+		.subscribe( (data) => { callback(data); } );
+		
 	}
 
 	private reactDeviceConnected() {
 
-		// register (=listen) to changes
-		// TODO patch for IOS https://github.com/don/cordova-plugin-ble-central#typed-arrays
-        this.ble.startNotification(this._device.id, this.SERVICE, this.CHARACTERISTIC).subscribe(
-			(data) => { this.onDataNotified(data); }, 
-			(error) => { this.onNotificationFailure(); }
-		);
-
 		this._isConnected = true;
+
+		// read data, and listen to it 
+
+		this.read(
+			ChimuinoProvider.SERVICE_CHIMUINO, 	ChimuinoProvider.CHARACTERISTIC_ALARM1, 
+			(data) => { this.onAlarm1Received(data); });
+		this.read(
+			ChimuinoProvider.SERVICE_CHIMUINO, 	ChimuinoProvider.CHARACTERISTIC_ALARM2, 
+			(data) => { this.onAlarm2Received(data); });
+
+		this.readAndListen(
+			ChimuinoProvider.SERVICE_SENSING, 	ChimuinoProvider.CHARACTERISTIC_TEMPERATURE, 
+			(data) => { this.onTemperatureReceived(data); });
 
 		// send information to the Chimuino
 		if (this._firstConnection) {
@@ -374,173 +629,155 @@ export class ChimuinoProvider {
 		}
 
 		// start pushing the messages which were pending 
-		this.sendPendingMessages();
-
-		// inform ours listeners that we are connected now
-		this.events.publish("connected", true);
-
+		//this.sendPendingMessages();
 
 	}
 
-	/**
-	 * When a ... SET result is received, it means the chimuino is acknowledging
-	 * an action. We update the corresponding SET event with true, which means
-	 * "this was updated" (true does not mean anything related to the actual value)
-	 */
-	private onSetAcknowledged(str:string) {
 
-		var code:string = str.trim();
 
-		this.events.publish("set-"+code.toLowerCase(), true);
-		//this.displayDebug("acknowledged: set "+code);
-
+	private reactWriteSuccess(data:any) {
+		// nothing
 	}
 
-	private onDoAcknowledged(str: string) {
-		var code:string = str.trim().toLowerCase();
-		this.events.publish("doing-"+code, true);
+	private reactWriteFailure(data:any) {
+		this.displayDebug("error writing: "+data);
 	}
 
-	/**
-	 * decodes an alarm from data received from bluetooth
-	 */
-	private decodeAlarm(name:string, str:string) {
-		// input format is: 
-		// 09:11 10 15 0 0111110
-		var tokens = str.split(' ');
-		var tokensTime = tokens[0].split(":");
-		var hours:number = parseInt(tokensTime[0]);
-		var minutes:number = parseInt(tokensTime[1]);
-		//this.displayDebug("decoded for "+name+" "+hours+":"+minutes);
-		var durationSoft:number = parseInt(tokens[1]);
-		var durationStrong:number = parseInt(tokens[2]);
-		var enabled:boolean = tokens[3]=='1';
-		var daysStr = tokens[4];
-		var sunday:boolean = daysStr[0]=='1';
-		var monday:boolean = daysStr[1]=='1';
-		var tuesday:boolean = daysStr[2]=='1';
-		var wednesday:boolean = daysStr[3]=='1';
-		var thursday:boolean = daysStr[4]=='1';
-		var friday:boolean = daysStr[5]=='1';
-		var saterday:boolean = daysStr[6]=='1';
-		this.events.publish("get-"+name, hours, minutes, 
-										 durationSoft, durationStrong, 
-										 enabled, 
-										 sunday, monday, tuesday, 
-										 wednesday, thursday, friday, 
-										 saterday);
-	}
 
-	private decodeLightLevel(valueStr:string) {
-		// input format is:
-		// <72> [LIT|DARK]
-		var tokens = valueStr.split(' ');
-		var level:number = parseInt(tokens[0]);
-		var dark:boolean = tokens[1] == "DARK";
-		this.events.publish("get-lightlevel", 
-							level, dark);
-	}
+	private write(service:string, characteristic:string, buffer:any) {
 
-	private decodeSoundLevel(valueStr:string) {
-		// input format is:
-		// <42> [NOISY|QUIET]
-		var tokens = valueStr.split(' ');
-		var level:number = parseInt(tokens[0]);
-		var quiet:boolean = tokens[1] == "QUIET";
-		this.events.publish("get-soundlevel", 
-							level, quiet);
-	}
+		// TODO enable if disabled?
+		if (!this._isConnected) {
 
-	/**
-	 * Receive the answer with the value of something.
-	 * Will propagate an event with the decoded value.
-	 */
-	private onGetReceived(what:string, valueStr:string) {
-
-		// don't ask for it again !
-		delete this.pendingGet[what];
-
-		if (what == "AMBIANCE") {
-			var enabled:boolean = valueStr[0]=='1';
-			this.events.publish("get-ambiance", enabled);
-		
-		// ALARMS
-		} else if (what == "ALARM1") {
-			this.decodeAlarm("alarm1", valueStr);
-		} else if (what == "ALARM2") {
-			this.decodeAlarm("alarm2", valueStr);
-
-		// VALUES WITH ONE INT
-		} else if (what == "SOUNDTHRESHOLD" 
-				   || what == "LIGHTTHRESHOLD"
-				   || what == "TEMPERATURE"
-				   || what == "UPTIME") {
-			var valueInt = parseInt(valueStr);
-			this.events.publish("get-"+what.toLowerCase(), valueInt);
-		} else if (what == "LIGHTENVELOPE" 
-					|| what == "SOUNDENVELOPE") {
-			var tokens = valueStr.split(" ");
-			var min:number = parseInt(tokens[0]);
-			var max:number = parseInt(tokens[1]);
-			this.events.publish("get-"+what.toLowerCase(), min, max);
-		} else if (what == "LIGHTLEVEL") {
-			this.decodeLightLevel(valueStr);
-		} else if (what == "SOUNDLEVEL") {
-			this.decodeSoundLevel(valueStr);
-		} else if (what == "VERSION") {
-			// values decoded as pure strings
-			this.events.publish("get-"+what.toLowerCase(), valueStr);
+			this.ble
+				.enable()
+				// connect first
+				.connect(this._device.id)
+				// 
+				.subscribe( 
+					(device) => {
+								this.ble.write(
+										this._device.id, service, characteristic, 
+										buffer);
+								this.reactDeviceConnected(device); 
+								},
+					(disconnected) => { this.reactDisconnected(); } 
+					);
 		} else {
-			this.displayDebug("unknown value received: "+what+" IS "+valueStr);
+			this.ble.write(
+				this._device.id, service, characteristic, 
+				buffer);	
 		}
+
+		
+		//	.catch( (error) => { this.displayDebug("error when updating time: "+error); });
+
 	}
 
-	/**
-	 * called when a bluetooth notification is received 
-	 */
-	private onDataNotified(buffer) {
 
+	/**
+	 * returns a Promise of BLE which should be connected 
+	 */
+	 /*
+	private getConnectedBle() {
+
+			// check bluetooth is enabled
+		return this.ble.isEnabled()
+			// ... if bluetooth is not enabled, enable it
+			.then(
+				(enabled) => {
+					//this.displayDebug("enabled? "+enabled);
+
+					if (!enabled) return this.ble.enable();
+					else return true;
+				})
+			// check the device is connected
+			.then(this.ble.isConnected)
+			// ... if not, connect it!
+			.then(
+				(connected) => {
+					this.displayDebug("connected? "+connected);
+					if (!connected) return this.ble.connect(this._device.id);
+					else return true;
+				});
+	}*/
+
+	/**
+	 * React when the bluetooth device was found; 
+	 * this._device is thus set.
+	 */
+	 /*
+	private reactDeviceFound() {
+
+		// display information to the user
+		this.displayToastMessage('connecting '+this._device.name+'...');
+
+		this.ble.connect(this._device.id).subscribe(
+			(peripherical) => {
+				this.displayToastMessage("connected to "+this._device.name);
+				this.reactDeviceConnected(); 
+			},
+			(peripherical) => {
+				this.displayToastMessage("disconnected from "+this._device.name+" :-(");
+				this._isConnected = false;
+			});
+
+	}
+	*/
+
+	/**
+	 * Called when the temperature changed.
+	 * Decodes it from the bytes array and notifies of data
+	 */
+	private onTemperatureReceived(buffer:any) {
+
+		let dv = new DataView(buffer);
 		//this.displayToastMessage("notified by bluetooth: "+ buffer);
 
-		var str:string = String.fromCharCode.apply(null, new Uint8Array(buffer));
+		let intval:number = dv.getUint16(0, true)
+		let temp:number = intval/100.0;
 
-		if (str.endsWith("\n")) {
-			// end of a complete bluetooth string; process it
-			str = this.currentBuffer+str;
-			this.currentBuffer = "";
-		} else {
-			// this input is not complete; let's concatenate it
-			this.currentBuffer = this.currentBuffer+str;
-			if (this.currentBuffer.length > 255) {
-				this.displayDebug("ignoring too long message: "+this.currentBuffer);
-				this.currentBuffer = "";
-			}
-			return;
-		}
+		this._temperature = temp;
+		this._temperatureStr = ""+temp+"°C"; 
+		//this.displayDebug("received temperature: "+temp);
 
-		// remove the trailing carriage return
-		str = str.trim();
 
-		// process
-		if (str.endsWith(" SET")) {
-			// received a message in the form "<SOMETHING> SET"
-			this.onSetAcknowledged(str.substring(0,str.length-4));
-		} else if (str.startsWith("DOING ")) {
-			// received a message in the form "<SOMETHING> SET"
-			this.onDoAcknowledged(str.substring(6));
-		} else if (str.includes(" IS ")) {
-			var idx = str.indexOf(" IS "); 
-			var what:string = str.substring(0,idx);
-			var value:string = str.substring(idx+4);
-			this.onGetReceived(what, value);
-		} /*else if (str.startsWith("GET ") || str.startsWith("SET ") || str.startsWith("DO ") || str.startsWith("DEBUG")) {
-			// ignore the commands sent by someone
-			// should not happen
-			this.displayToastMessage("ignored notified from bluetooth: "+str);
-		} */else {
-			this.displayDebug("ignored from bluetooth: "+str);	
-		}
 	}
+
+
+	/**
+	 * Called when the time changed.
+	 * Decodes it from the bytes array and notifies of data.
+	 * TODO notice this is useless: we don't care about the time on the chime side, we adapt it anywya
+	 */
+	private onTimeReceived(buffer:any) {
+
+		let dv = new DataView(buffer);
+		
+		let year:number = dv.getUint16(0, true);
+		let month:number = dv.getUint8(2);
+		let day:number = dv.getUint8(3);
+		let hour:number = dv.getUint8(4);
+		let minutes:number = dv.getUint8(5);
+		let seconds:number = dv.getUint8(6);
+		
+		//this.displayDebug("received date: "+year+"/"+month+"/"+day+" "+hour+":"+minutes+":"+seconds);
+
+	}
+
+
+/*
+	private readAndListen(service:string, characteristic:string, callback_data:(data:any) => void, what:string) {
+		this.ble.read(this._device.id, service, characteristic).then(
+			(data) => { callback_data(data) }, 
+			(error) => { this.displayToastMessage("unable to read "+what);  }
+			);
+		this.ble.startNotification(this._device.id, service, characteristic).subscribe(
+			(data) => { callback_data(data) }, 
+			(error) => { this.displayToastMessage("unable to listen "+what); }
+		);
+	}
+*/
 
 	/**
 	 * Called when the notification demand fails. 
@@ -549,10 +786,14 @@ export class ChimuinoProvider {
 	private onNotificationFailure() {
 		this._isConnected = false;
 		this.displayToastMessage("notification failure :-(");
-		this.events.publish("connected", false);
 		//this.attemptReconnect();
 	}	
 
+	private sendMessage(wathever) {
+		// TODO just to deactivate the old protocol
+	}
+
+	// TODO to replace. 
 
 	// ask for characteristics
 	askAlarm1()			{ this.sendMessage("GET ALARM1"); 			}
@@ -589,45 +830,31 @@ export class ChimuinoProvider {
 	// setters for one Boolean
 	setAmbiance(enabled:boolean) { this.sendMessage("SET AMBIANCE "+(enabled?"1":"0")); }
 
-	// setters for alarms
-	setAlarm1(hour:number, minutes:number, durationSoft:number, durationStrong:number, enabled:boolean, 
-			sunday:boolean, monday:boolean, tuesday:boolean, wednesday:boolean, thursday:boolean, friday:boolean, saterday:boolean) {
-		
-		this.sendMessage(
-			"SET ALARM1 "+hour+":"+minutes+" "+
-			durationSoft + " " + durationStrong + " "+
-			(enabled?"1":"0")+" "+
-			(sunday?"1":"0")+(monday?"1":"0")+(tuesday?"1":"0")+(wednesday?"1":"0")+(thursday?"1":"0")+(friday?"1":"0")+(saterday?"1":"0")
-			);
-	}
-
-  	setAlarm2(hour:number, minutes:number, durationSoft:number, durationStrong:number, enabled:boolean, 
-  			sunday:boolean, monday:boolean, tuesday:boolean, wednesday:boolean, thursday:boolean, friday:boolean, saterday:boolean) {
-	  	
-	  	this.sendMessage(
-	  		"SET ALARM2 "+hour+":"+minutes+" "+
-	  		durationSoft + " " + durationStrong + " "+
-	  		(enabled?"1":"0")+" "+
-	  		(sunday?"1":"0")+(monday?"1":"0")+(tuesday?"1":"0")+(wednesday?"1":"0")+(thursday?"1":"0")+(friday?"1":"0")+(saterday?"1":"0")
-	  		);
-	}
 
 	/*
 	* Sets the time of the chimuino to 
 	* the current time of the system.
 	*/
 	sendDatetime() {
-		// .. adapt datetime
-		var now = new Date;
-		this.sendMessage(
-			"SET DATETIME "
-			+String(now.getFullYear())+"-"+String(now.getMonth()+1)+"-"+String(now.getDate())
-			+" "+now.getHours()+":"+now.getMinutes()+":"+now.getSeconds());
-		/*this.sendMessage(
-			"SET DATE "+now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate());
-		this.sendMessage(
-			"SET TIME "+now.getHours()+":"+now.getMinutes()+":"+now.getSeconds());
-		*/
+
+		let now = new Date;
+		let buffer = new ArrayBuffer(7);
+		let dv = new DataView(buffer);
+		dv.setUint16(0, now.getFullYear(), true); 
+		dv.setUint8(2, now.getMonth()+1);
+		dv.setUint8(3, now.getDate());
+		dv.setUint8(4, now.getHours());
+		dv.setUint8(5, now.getMinutes());
+		dv.setUint8(6, now.getSeconds());
+
+		// TODO reconnect if disconnected (unlikely as this happens just after connection)
+		this.ble.write(
+			this._device.id, ChimuinoProvider.SERVICE_CHIMUINO, ChimuinoProvider.CHARACTERISTIC_TIME, 
+			dv.buffer)
+			.then( (wathever) => { this.displayDebug("updated Chimuino date & time"); } )
+			.catch( (error) => { this.displayDebug("error when updating time: "+error); });
+
+		
 	}
  	
 }

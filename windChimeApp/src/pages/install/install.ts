@@ -3,11 +3,8 @@ import { NavController } from 'ionic-angular';
 import { Storage } from '@ionic/storage';
 import { ToastController } from 'ionic-angular';
 
-// https://github.com/don/BluetoothSerial
-import { BluetoothSerial } from '@ionic-native/bluetooth-serial';
-
 // https://ionicframework.com/docs/native/ble/
-import { BLE } from '@ionic-native/ble';
+//import { BLE } from '@ionic-native/ble';
 
 @Component({
   selector: 'page-install',
@@ -45,8 +42,7 @@ export class InstallPage {
   }
 
   constructor(public navCtrl: NavController, 
-  			  private bluetooth: BluetoothSerial,
-  			  private ble: BLE,
+  			  //private ble: BLE,
   			  private storage: Storage,
   			  private toastCtrl: ToastController) {
 	
@@ -57,10 +53,10 @@ export class InstallPage {
 	this.storage.get('bluetooth-name').then((val) => { this.devicename = val; } );
 	
 	// enable bluetootk
-	this.bluetooth.enable();
+	//this.bluetooth.enable();
 
 	// append the paired devices
-	this.bluetooth.isEnabled().then((data) => {
+	/*this.bluetooth.isEnabled().then((data) => {
 		// add paired devices
 		this.bluetooth.list().then( (allDevices) => {
 			this.pairedDevices = allDevices;
@@ -68,12 +64,13 @@ export class InstallPage {
 			//this.addDevices(allDevices);
 		});
 	});
-	
+	*/
+
 	//this.ble.enable();
-	this.ble.isEnabled().then((data) => {
+	/*this.ble.isEnabled().then((data) => {
 		this.buttonScanEnabled = true;
 	});
-
+	*/
    
   }
 
@@ -96,6 +93,7 @@ export class InstallPage {
 
   listDevices(){
 
+  	/*
 	this.ble.enable();
 	this.ble.isEnabled().then((data) => {
 		//this.buttonScanEnabled = true;
@@ -109,7 +107,7 @@ export class InstallPage {
         setTimeout(function() {self.isScanning = false}, 5000);
 
 	});
-	
+	*/
 	/*
 	this.bluetooth.isEnabled().then((data) => {
 	       

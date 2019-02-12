@@ -18,10 +18,10 @@
       <ion-list>
         <ion-item>
           <ion-label>Enabled</ion-label>
-          <ion-toggle [disabled]="!isAmbianceLoaded" [(ngModel)]="chimeEnabled"></ion-toggle>
+          <ion-toggle [disabled]="!chimuino.isAmbianceLoaded" [(ngModel)]="chimuino.chimeEnabled"></ion-toggle>
         </ion-item>
         <ion-item>
-          <ion-range [disabled]="!chimeEnabled" [(ngModel)]="chimeLevel">
+          <ion-range [disabled]="!chimuino.isAmbianceLoaded" [(ngModel)]="chimuino.chimeLevel">
             <ion-icon range-left name="volume-down"></ion-icon>
             <ion-icon range-right name="volume-up"></ion-icon>
           </ion-range>
@@ -40,13 +40,13 @@
       You can adjust when the place is too lit for chiming.
       <ion-list>
         <ion-item>
-          <ion-range [disabled]="!isLightThresholdLoaded" [(ngModel)]="lightThreshold" debounce="100" min="0" max="100" >
+          <ion-range [disabled]="!chimuino.isLightThresholdLoaded" [(ngModel)]="chimuino.lightThreshold" debounce="100" min="0" max="100" >
             <ion-icon range-left small name="sunny"></ion-icon>
             <ion-icon range-right name="sunny"></ion-icon>
           </ion-range>
         </ion-item>
         <ion-item>
-          <ion-range [disabled]="true" [(ngModel)]="lightLevel" min="0" max="100" >
+          <ion-range [disabled]="!chimuino.isLightThresholdLoaded" [(ngModel)]="chimuino.lightLevel" min="0" max="100" >
             <ion-icon range-left small name="sunny"></ion-icon>
             <ion-icon range-right name="sunny"></ion-icon>
           </ion-range>
@@ -64,13 +64,13 @@
       You can adapt when it is too noisy for ringing.
       <ion-list>
         <ion-item>
-          <ion-range [disabled]="!isSoundThresholdLoaded" [(ngModel)]="soundThreshold" debounce="100" min="0" max="100" >
+          <ion-range [disabled]="!chimuino.isSoundThresholdLoaded" [(ngModel)]="chimuino.soundThreshold" debounce="100" min="0" max="100" >
             <ion-icon range-left name="volume-down"></ion-icon>
             <ion-icon range-right name="volume-up"></ion-icon>
           </ion-range>
         </ion-item>
         <ion-item>
-          <ion-range [disabled]="true" [(ngModel)]="soundLevel" min="0" max="100" >
+          <ion-range [disabled]="!chimuino.isLightThresholdLoaded" [(ngModel)]="chimuino.soundLevel" min="0" max="100" >
             <ion-icon range-left name="volume-down"></ion-icon>
             <ion-icon range-right name="volume-up"></ion-icon>
           </ion-range>

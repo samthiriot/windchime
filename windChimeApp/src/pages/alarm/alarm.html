@@ -11,32 +11,32 @@
     
   <ion-card>
     <ion-card-header>
-      Alarm 1 <ion-toggle [disabled]="!alarm1loaded" [(ngModel)]="alarm1enabled"></ion-toggle>
+      Alarm 1 <ion-toggle [disabled]="!chimuino.alarm1loaded" [(ngModel)]="chimuino.alarm1enabled"></ion-toggle>
     </ion-card-header>
     <ion-card-content>
 
       <ion-item>
         <ion-label>Alarm</ion-label>
-        <ion-datetime [disabled]="!alarm1loaded" displayFormat="HH:mm" [(ngModel)]="alarm1hour"></ion-datetime>
+        <ion-datetime [disabled]="!chimuino.alarm1loaded" displayFormat="HH:mm" [(ngModel)]="chimuino.alarm1time"></ion-datetime>
       </ion-item>
 
       <ion-list>
-        <ion-item><ion-label>Sunday</ion-label>   <ion-toggle [disabled]="!alarm1loaded" [(ngModel)]="alarm1sunday"></ion-toggle></ion-item>
-        <ion-item><ion-label>Monday</ion-label>   <ion-toggle [disabled]="!alarm1loaded" [(ngModel)]="alarm1monday"></ion-toggle></ion-item>
-        <ion-item><ion-label>Tuesday</ion-label>  <ion-toggle [disabled]="!alarm1loaded" [(ngModel)]="alarm1tuesday"></ion-toggle></ion-item>
-        <ion-item><ion-label>Wednesday</ion-label><ion-toggle [disabled]="!alarm1loaded" [(ngModel)]="alarm1wednesday"></ion-toggle></ion-item>
-        <ion-item><ion-label>Thursday</ion-label> <ion-toggle [disabled]="!alarm1loaded" [(ngModel)]="alarm1thursday"></ion-toggle></ion-item>
-        <ion-item><ion-label>Friday</ion-label>   <ion-toggle [disabled]="!alarm1loaded" [(ngModel)]="alarm1friday"></ion-toggle></ion-item>
-        <ion-item><ion-label>Saterday</ion-label> <ion-toggle [disabled]="!alarm1loaded" [(ngModel)]="alarm1saterday"></ion-toggle></ion-item>
+        <ion-item><ion-label>Sunday</ion-label>   <ion-toggle [disabled]="!chimuino.alarm1loaded" [(ngModel)]="chimuino.alarm1sunday"></ion-toggle></ion-item>
+        <ion-item><ion-label>Monday</ion-label>   <ion-toggle [disabled]="!chimuino.alarm1loaded" [(ngModel)]="chimuino.alarm1monday"></ion-toggle></ion-item>
+        <ion-item><ion-label>Tuesday</ion-label>  <ion-toggle [disabled]="!chimuino.alarm1loaded" [(ngModel)]="chimuino.alarm1tuesday"></ion-toggle></ion-item>
+        <ion-item><ion-label>Wednesday</ion-label><ion-toggle [disabled]="!chimuino.alarm1loaded" [(ngModel)]="chimuino.alarm1wednesday"></ion-toggle></ion-item>
+        <ion-item><ion-label>Thursday</ion-label> <ion-toggle [disabled]="!chimuino.alarm1loaded" [(ngModel)]="chimuino.alarm1thursday"></ion-toggle></ion-item>
+        <ion-item><ion-label>Friday</ion-label>   <ion-toggle [disabled]="!chimuino.alarm1loaded" [(ngModel)]="chimuino.alarm1friday"></ion-toggle></ion-item>
+        <ion-item><ion-label>Saterday</ion-label> <ion-toggle [disabled]="!chimuino.alarm1loaded" [(ngModel)]="chimuino.alarm1saturday"></ion-toggle></ion-item>
       </ion-list>
 
-      <ion-range [disabled]="!alarm1loaded" [(ngModel)]="alarm1soft" debounce="100" min="0" max="30" >
+      <ion-range [disabled]="!chimuino.alarm1loaded" [(ngModel)]="chimuino.alarm1soft" debounce="100" min="0" max="30" >
             <ion-label range-left>0 min</ion-label>
             <ion-label range-right>30 min</ion-label>
       </ion-range>
       <button ion-button block (click)="demoAlarmPrereveil()">demo prereveil</button>
 
-      <ion-range [disabled]="!alarm1loaded" [(ngModel)]="alarm1strong" debounce="100" min="5" max="30">
+      <ion-range [disabled]="!chimuino.alarm1loaded" [(ngModel)]="chimuino.alarm1strong" debounce="100" min="5" max="30">
             <ion-label range-left>5 min</ion-label>
             <ion-label range-right>30 min</ion-label>
       </ion-range>
@@ -48,32 +48,32 @@
   
   <ion-card>
     <ion-card-header>
-      Alarm 2 <ion-toggle [disabled]="!alarm2loaded" [(ngModel)]="alarm2enabled"></ion-toggle>
+      Alarm 2 <ion-toggle [disabled]="!chimuino.alarm2loaded" [(ngModel)]="chimuino.alarm2enabled"></ion-toggle>
     </ion-card-header>
     <ion-card-content>
 
       <ion-item>
         <ion-label>Alarm</ion-label>
-        <ion-datetime [disabled]="!alarm2loaded" displayFormat="HH:mm" [(ngModel)]="alarm2hour"></ion-datetime>
+        <ion-datetime [disabled]="!chimuino.alarm2loaded" displayFormat="HH:mm" [(ngModel)]="chimuino.alarm2hour"></ion-datetime>
       </ion-item>
 
       <ion-list>
-        <ion-item><ion-label>Sunday</ion-label>   <ion-toggle [disabled]="!alarm2loaded" [(ngModel)]="alarm2sunday"></ion-toggle></ion-item>
-        <ion-item><ion-label>Monday</ion-label>   <ion-toggle [disabled]="!alarm2loaded" [(ngModel)]="alarm2monday"></ion-toggle></ion-item>
-        <ion-item><ion-label>Tuesday</ion-label>  <ion-toggle [disabled]="!alarm2loaded" [(ngModel)]="alarm2tuesday"></ion-toggle></ion-item>
-        <ion-item><ion-label>Wednesday</ion-label><ion-toggle [disabled]="!alarm2loaded" [(ngModel)]="alarm2wednesday"></ion-toggle></ion-item>
-        <ion-item><ion-label>Thursday</ion-label> <ion-toggle [disabled]="!alarm2loaded" [(ngModel)]="alarm2thursday"></ion-toggle></ion-item>
-        <ion-item><ion-label>Friday</ion-label>   <ion-toggle [disabled]="!alarm2loaded" [(ngModel)]="alarm2friday"></ion-toggle></ion-item>
-        <ion-item><ion-label>Saterday</ion-label> <ion-toggle [disabled]="!alarm2loaded" [(ngModel)]="alarm2saterday"></ion-toggle></ion-item>
+        <ion-item><ion-label>Sunday</ion-label>   <ion-toggle [disabled]="!chimuino.alarm2loaded" [(ngModel)]="chimuino.alarm2sunday"></ion-toggle></ion-item>
+        <ion-item><ion-label>Monday</ion-label>   <ion-toggle [disabled]="!chimuino.alarm2loaded" [(ngModel)]="chimuino.alarm2monday"></ion-toggle></ion-item>
+        <ion-item><ion-label>Tuesday</ion-label>  <ion-toggle [disabled]="!chimuino.alarm2loaded" [(ngModel)]="chimuino.alarm2tuesday"></ion-toggle></ion-item>
+        <ion-item><ion-label>Wednesday</ion-label><ion-toggle [disabled]="!chimuino.alarm2loaded" [(ngModel)]="chimuino.alarm2wednesday"></ion-toggle></ion-item>
+        <ion-item><ion-label>Thursday</ion-label> <ion-toggle [disabled]="!chimuino.alarm2loaded" [(ngModel)]="chimuino.alarm2thursday"></ion-toggle></ion-item>
+        <ion-item><ion-label>Friday</ion-label>   <ion-toggle [disabled]="!chimuino.alarm2loaded" [(ngModel)]="chimuino.alarm2friday"></ion-toggle></ion-item>
+        <ion-item><ion-label>Saterday</ion-label> <ion-toggle [disabled]="!chimuino.alarm2loaded" [(ngModel)]="chimuino.alarm2saterday"></ion-toggle></ion-item>
       </ion-list>
 
-      <ion-range [disabled]="!alarm2loaded" [(ngModel)]="alarm2soft" debounce="100" min="0" max="30" >
+      <ion-range [disabled]="!chimuino.alarm2loaded" [(ngModel)]="chimuino.alarm2soft" debounce="100" min="0" max="30" >
             <ion-label range-left>0 min</ion-label>
             <ion-label range-right>30 min</ion-label>
       </ion-range>
       <button ion-button block (click)="demoAlarmPrereveil()">demo prereveil</button>
 
-      <ion-range [disabled]="!alarm2loaded" [(ngModel)]="alarm2strong" debounce="100" min="5" max="30">
+      <ion-range [disabled]="!chimuino.alarm2loaded" [(ngModel)]="chimuino.alarm2strong" debounce="100" min="5" max="30">
             <ion-label range-left>5 min</ion-label>
             <ion-label range-right>30 min</ion-label>
       </ion-range>
