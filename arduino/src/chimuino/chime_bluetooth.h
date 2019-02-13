@@ -3,82 +3,280 @@
 // |      BLUETOOTH                              |
 // |          for smartphone interaction         |
 // +---------------------------------------------+
- 
+
+// TODO manage the connectable status !
+// TODO use the AT+DFUIRQ to use IRQ so we wake up only when data is available
+// TODO detect when the temperature is too high and alert (?)
+
+// see https://github.com/adafruit/Adafruit_BluefruitLE_nRF51/blob/master/changelog_firmware.md
+
 #ifndef CHIME_BLUETOOTH_H
 #define CHIME_BLUETOOTH_H
 
 #include <SoftwareSerial.h>
 
+// includes for Bluetooth Low Energy
+#include "Adafruit_BLE.h"
+#include "Adafruit_BluefruitLE_UART.h"
+#include "Adafruit_BLEGatt.h"
+//#include "IEEE11073float.h"
+// #include "Adafruit_BluefruitLE_SPI.h"
+
 
 #define BLUETOOTH_LONGEST_COMMAND 200                             // the longest command we have to read (buffer size)
 #define BLUETOOTH_MAX_LISTENERS 10
 
+// the services and characteristics we will publish
+#define BLE_GATT_SERVICE_SENSING      0x181A // https://www.bluetooth.com/specifications/assigned-numbers/environmental-sensing-service-characteristics
+#define BLE_GATT_CHAR_TEMPERATURE     0x2A6E // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.temperature.xml
+#define BLE_GATT_CHAR_LIGHT_SENSOR    0x5556
+#define BLE_GATT_CHAR_LIGHT_SETTINGS  0x5557
+#define BLE_GATT_CHAR_SOUND_SENSOR    0x5558
+#define BLE_GATT_CHAR_SOUND_SETTINGS  0x5559
+
+#define BLE_GATT_SERVICE_CHIMUINO     0x5550
+#define BLE_GATT_CHAR_TIME            0x2A08 // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.date_time.xml
+#define BLE_GATT_CHAR_ALARM1          0x5551
+#define BLE_GATT_CHAR_ALARM2          0x5552
+#define BLE_GATT_CHAR_AMBIANCE        0x5553 // settings such as "enable chiming"
+#define BLE_GATT_CHAR_TEMPERATURE1    0x5554 // temperature from RTC clock
+#define BLE_GATT_CHAR_TEMPERATURE2    0x5554 // temperature from BLE dongle
+#define BLE_GATT_CHAR_UPTIME          0x5555 // in minutes
+
+
+// if true, the initialization of the dongle is verbose
+#define BLE_VERBOSE_MODE            true
+
+// if defined, we will do a factory reset
+#define BLE_FACTORYRESET_ENABLE
+
+// stores a date-time content, in order to update the current date time from a phone
+struct ble_datetime {
+  uint16_t year;
+  uint8_t month;
+  uint8_t day;
+  uint8_t hour;
+  uint8_t minutes;
+  uint8_t seconds;
+};
+// stores an alarm content, in order to send it and retrieve it from a phone
+struct ble_alarm {
+  bool active;
+  uint8_t hour;
+  uint8_t minutes;
+  bool sunday;
+  bool monday;
+  bool tuesday;
+  bool wednesday;
+  bool thursday;
+  bool friday;
+  bool saterday;
+  uint8_t duration_soft;
+  uint8_t duration_strong;
+};
+
+// stores the ambiance content
+struct ble_ambiance {
+  bool enabled;
+};
+
+struct ble_ring_action {
+  uint8_t strength;
+};
+
+struct ble_light_sensor {
+  uint8_t level;
+  uint8_t min;
+  uint8_t max;
+  bool isDark;
+};
+
+struct ble_light_settings {
+  uint8_t threshold;
+};
+
+
+struct ble_sound_sensor {
+  uint8_t level;
+  uint8_t min;
+  uint8_t max;
+  bool isQuiet;
+};
+
+struct ble_sound_settings {
+  uint8_t threshold;
+};
+  
 enum BluetoothListenerAnswer {
-  NOT_CONCERNED,
-  SUCCESS,
-  FAILURE
+  NOT_CONCERNED,  // returned by a listener who does not care about the info
+  PROCESSED       // returned by a listener who consumed the information. Often it means we can stop calling listeners.
 };
 
-class BluetoothCommandListener {
-    public:
- 
-      // called when a GET <SOMETHING> was received
-      // will receive as arguments the <SOMETHING> char*, 
-      // and a pointer to serial port to use to answer
-      virtual BluetoothListenerAnswer processBluetoothGet(char* str, SoftwareSerial* BTSerial);
-
-      // called when a SET <SOMETHING> <OTHER THINGS> was received
-      // will receive as arguments the <SOMETHING> <OTHER THINGS> char*
-      // and a pointer to serial port to use to answer
-      virtual BluetoothListenerAnswer processBluetoothSet(char* str, SoftwareSerial* BTSerial);
-
-      // called when a DO <SOMETHING> was received
-      // will receive as arguments the <SOMETHING> char*
-      // and a pointer to serial port to use to answer
-      virtual BluetoothListenerAnswer processBluetoothDo(char* str, SoftwareSerial* BTSerial);
-};
+class BluetoothUser;
 
 class ChimeBluetooth {
-  
-   private:
 
-    BluetoothCommandListener *listeners[BLUETOOTH_MAX_LISTENERS] ;
+  private:
+
+    // the singleton instance
+    static ChimeBluetooth* singleton;
+
+    // the internal identifiers for the services and characteristics
+    int32_t bleServiceChimuinoId;
+    int32_t bleCharCurrentTime;
+    int32_t bleCharAlarm1;
+    int32_t bleCharAlarm2;
+    int32_t bleCharAmbiance;
+    int32_t bleCharTemperature1;
+    int32_t bleCharTemperature2;
+    int32_t bleCharUptime;
+
+    int32_t bleServiceSensingId;
+    int32_t bleCharTemperature;
+    int32_t bleCharLightSensor;
+    int32_t bleCharLightSettings;
+    int32_t bleCharSoundSensor;
+    int32_t bleCharSoundSettings;
+
+    BluetoothUser *listeners[BLUETOOTH_MAX_LISTENERS] ;
     unsigned short listeners_count = 0;
-    
-    SoftwareSerial BTSerial;
-   
-    // hardware config
-    unsigned short pinRX, pinTX;
 
-    // state 
-    uint8_t receivedCount = 0;
-    char received[BLUETOOTH_LONGEST_COMMAND];      // the current accumulation of the string read from bluetooth
+    // the serial access to the bluetooth dongle
+    SoftwareSerial bluefruitSS;
+    // the UART wrapper to the bluetooth dongle
+    Adafruit_BluefruitLE_UART ble;
+    // the Gatt accessor to bluetooth services
+    Adafruit_BLEGatt gatt;
 
-    // consumes (and looses) any available info from the chip
-    void bluetoothConsume();
-    // react to a command accumulated in the received variable
-    void reactToCommand();
-    void processGet(char* str);
-    void processSet(char* str);
-    void processDo(char* str);
+    // called when a central device connected to BLE
+    void reactCentralConnected();
+    void reactCentralDisconnected();
+    void reactCharacteristicReceived(int32_t chars_id, uint8_t data[], uint16_t len);
+    // callbacks have to be static; they redirect the query to the singleton instance
+    static void reactCentralConnectedStatic();
+    static void reactCentralDisconnectedStatic();
+    static void reactCharacteristicReceivedStatic(int32_t chars_id, uint8_t data[], uint16_t len);
+
+    // declarations of services and of the corresponding characteristics
+    void setup_service_chimuino();
+    void setup_char_temperature();
+    void setup_char_light_sensor();
+    void setup_char_light_settings();
+    void setup_char_sound_sensor();
+    void setup_char_sound_settings();
     
+    void setup_service_sensing();
+    void setup_attribute_current_time();
+    void setup_attribute_alarm1();
+    void setup_attribute_alarm2();
+    void setup_attribute_ambiance();
+    void setup_attribute_temperature1();
+    void setup_attribute_temperature2();
+    void setup_attribute_uptime();
+
+    // for each data characteristic we might receive, we implement here 
+    // the conversion from a bytes array to the relevant content
+    void decodeCurrentDateTime(uint8_t data[], uint16_t len);
+    void decodeAlarm1(uint8_t data[], uint16_t len);
+    void decodeAlarm2(uint8_t data[], uint16_t len);
+    void decodeAmbiance(uint8_t data[], uint16_t len);
+    void decodeLightSettings(uint8_t data[], uint16_t len);
+    void decodeSoundSettings(uint8_t data[], uint16_t len);
+
   public:
-    ChimeBluetooth(unsigned short pinRX, unsigned short pinTX);
+    ChimeBluetooth(unsigned short _pinTXD, unsigned short _pinRXD,
+                   unsigned short _pinMode, unsigned short _pinCTS, unsigned short _pinRTS);
     void setup();
 
     void sendDebug();
-    
+
     // reads commands from bluetooth, and reacts if relevant
     void readAndReact();
     // sends an AT command to the chip
     void execAT(String cmd);
-    // TODO change to char* ?
-    String readATResult(String cmd);
     // add something able to deal with commands
-    void addCommandInterpreter(BluetoothCommandListener* listener);
+    void addBluetoothListener(BluetoothUser* listener);
+
+    // for each data characteristic we publish, we offer here
+    // to change the data which is broadcasted
+    void publishAmbiance(ble_ambiance content);
+    void publishAlarm1(ble_alarm content);
+    void publishAlarm2(ble_alarm content);
+    void publishTemperature1(float temp);
+    void publishTemperature2(float temp);
+    void publishUptime(uint32_t uptime_mins);
+    void publishLightSensor(ble_light_sensor content);
+    void publishLightSettings(ble_light_settings content);
+    void publishSoundSensor(ble_sound_sensor content);
+    void publishSoundSettings(ble_sound_settings content);
+
 
 };
 
+
+/**
+   Components interested in bluetooth (to receive information and/or to share it)
+   should implement this interface.
+   Override the only function of interest for each specific listener.
+*/
+class BluetoothUser {
+  protected:
+    ChimeBluetooth* bluetooth;
+
+    /**
+       Publish our state (if any) to blutooth so
+       bluetooth shares the right information.
+    */
+    virtual void publishBluetoothData() {};
+
+  public:
+
+    /**
+       Called to inform a bluetooth user that
+       the corresponding component is available and ready.
+       It's a good time to publish data in bluetooth
+       and register to listen bluetooth.
+    */
+    void setBluetooth(ChimeBluetooth* _bluetooth) {
+      // store the object
+      bluetooth = _bluetooth;
+      // listen to changes
+      bluetooth->addBluetoothListener(this);
+      // also broadcast information
+      this->publishBluetoothData();
+    };
+
+    // called when an update of the current datetime was received
+    virtual BluetoothListenerAnswer receivedCurrentDateTime(ble_datetime content)   {
+      return NOT_CONCERNED;
+    };
+
+    // called when an alarm was redefined
+    virtual BluetoothListenerAnswer receivedAlarm1(ble_alarm content)               {
+      return NOT_CONCERNED;
+    };
+    virtual BluetoothListenerAnswer receivedAlarm2(ble_alarm content)               {
+      return NOT_CONCERNED;
+    };
+
+    // called when settings about the ambiance was redefined
+    virtual BluetoothListenerAnswer receivedAmbiance(ble_ambiance content)          {
+      return NOT_CONCERNED;
+    };
+
+    // called when a user asks for an action
+    virtual BluetoothListenerAnswer receivedActionRing(ble_ring_action action)      {
+      return NOT_CONCERNED;
+    };
+
+    // called when sensing settings change    
+    virtual BluetoothListenerAnswer receivedLightSettings(ble_light_settings content)      {
+      return NOT_CONCERNED;
+    };
+    virtual BluetoothListenerAnswer receivedSoundSettings(ble_sound_settings content)      {
+      return NOT_CONCERNED;
+    };
+};
 
 #endif // CHIME_BLUETOOTH_H
 

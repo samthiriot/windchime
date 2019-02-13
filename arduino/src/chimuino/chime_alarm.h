@@ -5,7 +5,9 @@
 #include "chime_bluetooth.h"
 #include "persist.h"
 
-class ChimeAlarm: public BluetoothCommandListener,
+// TODO alarm with interrupts?
+
+class ChimeAlarm: public BluetoothUser,
                   public IntentionProvider {
   
   private:
@@ -32,6 +34,10 @@ class ChimeAlarm: public BluetoothCommandListener,
     Persist* persist;
 
     void storeState();
+    virtual void publishBluetoothData();
+    
+    // adapts the current alarm with data coming from bluetooth
+    void updateAlarmWithData(ble_alarm content);
     
   public:
     // constructor
@@ -45,9 +51,9 @@ class ChimeAlarm: public BluetoothCommandListener,
     bool shouldRing();
     
     // inherited
-    virtual BluetoothListenerAnswer processBluetoothGet(char* str, SoftwareSerial* BTSerial);
-    virtual BluetoothListenerAnswer processBluetoothSet(char* str, SoftwareSerial* BTSerial);
-    virtual BluetoothListenerAnswer processBluetoothDo(char* str, SoftwareSerial* BTSerial);
+    virtual BluetoothListenerAnswer receivedAlarm1(ble_alarm content);
+    virtual BluetoothListenerAnswer receivedAlarm2(ble_alarm content);
+
     virtual Intention proposeNextMode(enum mode current_mode, unsigned long next_planned_action);
 
 

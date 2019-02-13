@@ -53,14 +53,16 @@ class IntentionProvider {
 char* mode2str(enum mode v);
 
 
-class Chime: public BluetoothCommandListener,
+class Chime: public BluetoothUser,
              public IntentionProvider {
   
   private:
     ChimeSoundSensor* soundSensor;
     ChimeStepper* stepper;
     enum mode demoAsked = NOTHING;
-    
+
+    virtual void publishBluetoothData();
+
   public:
     // constructor
     Chime();
@@ -69,9 +71,9 @@ class Chime: public BluetoothCommandListener,
     void debugSerial();
     
     // inherited
-    virtual BluetoothListenerAnswer processBluetoothGet(char* str, SoftwareSerial* BTSerial);
-    virtual BluetoothListenerAnswer processBluetoothSet(char* str, SoftwareSerial* BTSerial);
-    virtual BluetoothListenerAnswer processBluetoothDo(char* str, SoftwareSerial* BTSerial);
+
+    virtual BluetoothListenerAnswer receivedActionRing(ble_ring_action action);
+    
     virtual Intention proposeNextMode(enum mode current_mode, unsigned long next_planned_action);
 
 

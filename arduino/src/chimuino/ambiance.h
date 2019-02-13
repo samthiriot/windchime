@@ -7,7 +7,7 @@
 #include "chime_soundsensor.h"
 #include "persist.h"
 
-class Ambiance: public BluetoothCommandListener,
+class Ambiance: public BluetoothUser,
                 public IntentionProvider {
   
   private:
@@ -17,7 +17,9 @@ class Ambiance: public BluetoothCommandListener,
     Persist* persist;
 
     void storeState();
-    
+
+    virtual void publishBluetoothData();
+
   public:
     // constructor
     Ambiance();
@@ -28,9 +30,7 @@ class Ambiance: public BluetoothCommandListener,
     bool isEnabled() { return enabled; }
     
     // inherited
-    virtual BluetoothListenerAnswer processBluetoothGet(char* str, SoftwareSerial* BTSerial);
-    virtual BluetoothListenerAnswer processBluetoothSet(char* str, SoftwareSerial* BTSerial);
-    virtual BluetoothListenerAnswer processBluetoothDo(char* str, SoftwareSerial* BTSerial);
+    virtual BluetoothListenerAnswer receivedAmbiance(ble_ambiance content);
     virtual Intention proposeNextMode(enum mode current_mode, unsigned long next_planned_action);
 
 

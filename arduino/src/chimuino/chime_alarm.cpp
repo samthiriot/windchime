@@ -9,7 +9,7 @@
 #include <TimeLib.h>
 
 ChimeAlarm::ChimeAlarm(byte _id):
-            BluetoothCommandListener(),
+            BluetoothUser(),
             IntentionProvider() {
   id = _id;
   monday = tuesday = wednesday = thursday = friday = (id == 1);
@@ -66,80 +66,75 @@ void ChimeAlarm::debugSerial() {
   #endif 
 }
 
+void ChimeAlarm::updateAlarmWithData(ble_alarm content) {
 
-BluetoothListenerAnswer ChimeAlarm::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
+  // store the content as our state
+  enabled = content.active;
+  start_hour = content.hour;
+  start_minutes = content.minutes;
+  durationSoft = content.duration_soft;
+  durationStrong = content.duration_strong;
+  monday = content.monday;
+  tuesday = content.tuesday;
+  wednesday = content.wednesday;
+  thursday = content.thursday;
+  friday = content.friday;
+  saterday = content.saterday;
+  sunday = content.sunday;
 
-  if ( (strncmp_P(str, PSTR("ALARM"), 5) == 0) and (str[5] == (id==1?'1':'2') ) ) {
+  // store this update!
+  storeState();
     
-    *BTSerial << F("ALARM") << id << F(" IS ")
-              << start_hour << ':' << start_minutes << ' ' 
-              << durationSoft << ' ' << durationStrong << ' '
-              << bool2char(enabled) << ' ' 
-              << bool2char(sunday) << bool2char(monday) << bool2char(tuesday) << bool2char(wednesday) << bool2char(thursday) << bool2char(friday) << bool2char(saterday)
-              << endl;
+  // TODO activate an alarm in the RTC chip?
+  debugSerial();
 
-    DEBUG_PRINT(F("SEND ")); debugSerial();
-    
-    return SUCCESS;
-  } 
-    
-  return NOT_CONCERNED;
 }
 
 
-BluetoothListenerAnswer ChimeAlarm::processBluetoothSet(char* str, SoftwareSerial* BTSerial) {
-  
-  if ( (strncmp_P(str, PSTR("ALARM"), 5) == 0) and (str[5] == (id==1?'1':'2') ) ) {
+void ChimeAlarm::publishBluetoothData() {
 
-    DEBUG_PRINT(F("received alarm ")); DEBUG_PRINTLN(str);
+  // forge the content
+  ble_alarm content;
+  enabled = content.active;
+  start_hour = content.hour;
+  start_minutes = content.minutes;
+  durationSoft = content.duration_soft;
+  durationStrong = content.duration_strong;
+  monday = content.monday;
+  tuesday = content.tuesday;
+  wednesday = content.wednesday;
+  thursday = content.thursday;
+  friday = content.friday;
+  saterday = content.saterday;
+  sunday = content.sunday;
 
-    char cEnabled;
-    char cSunday, cMonday, cTuesday, cWednesday, cThursday, cFriday, cSaterday;
-    // TODO detect errors
-    sscanf(
-          // skip the name and a space
-          str + 5 + 1, 
-          // expected format 
-          "%u:%u %u %u %c %c%c%c%c%c%c%c", 
-          // store directly in our variables
-          &start_hour, &start_minutes, 
-          &durationSoft, &durationStrong,
-          &cEnabled,
-          &cSunday, &cMonday, &cTuesday, &cWednesday, &cThursday, &cFriday, &cSaterday
-          );                
-
-    // decode chars
-    enabled =   char2bool(cEnabled);
-    
-    sunday =    char2bool(cSunday);
-    monday =    char2bool(cMonday);
-    tuesday =   char2bool(cTuesday);
-    wednesday = char2bool(cWednesday);
-    thursday =  char2bool(cThursday);
-    friday =    char2bool(cFriday);
-    saterday =  char2bool(cSaterday);
-
-    if (start_hour > 23) { start_hour = 23; }
-    if (start_minutes > 59) { start_minutes = 59; }
-
-    *BTSerial << F("ALARM") << id << F(" SET") << endl;
-    
-    storeState();
-    
-    // TODO activate an alarm in the RTC chip?
-    
-    debugSerial();
-
-    return SUCCESS;
+  // send it
+  if (id == 1) {
+    this->bluetooth->publishAlarm1(content);
+  } else if (id == 2) {
+    this->bluetooth->publishAlarm2(content);
+  } else {
+    DEBUG_PRINTLN(F("ERROR: wrong alarm id"));
   }
-
-  return NOT_CONCERNED;
-
 }
 
-BluetoothListenerAnswer ChimeAlarm::processBluetoothDo(char* str, SoftwareSerial* BTSerial) {
-  // TODO test alarm?
-  return NOT_CONCERNED;
+
+BluetoothListenerAnswer ChimeAlarm::receivedAlarm1(ble_alarm content) {
+   if (id == 1) {
+      updateAlarmWithData(content);
+      return PROCESSED;
+   } else {
+      return NOT_CONCERNED;
+   }
+}
+
+BluetoothListenerAnswer ChimeAlarm::receivedAlarm2(ble_alarm content) {
+   if (id == 2) {
+      updateAlarmWithData(content);
+      return PROCESSED;
+   } else {
+      return NOT_CONCERNED;
+   }
 }
 
 bool ChimeAlarm::rightWeekdayForRing() {

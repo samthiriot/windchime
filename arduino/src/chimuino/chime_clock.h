@@ -13,9 +13,16 @@
 #include <TimeLib.h>
 #include <DS3232RTC.h>
 
-class ChimeClock: public BluetoothCommandListener {
+// TODO share uptime
+
+// TODO set our clocks as RTC clocks
+// TODO use IRQs to wake up the Arduino
+
+class ChimeClock: public BluetoothUser {
   
   private:
+
+    virtual void publishBluetoothData();
 
   public:
     ChimeClock();
@@ -38,9 +45,7 @@ class ChimeClock: public BluetoothCommandListener {
     float getTemperature();
     
     // inherited
-    virtual BluetoothListenerAnswer processBluetoothGet(char* str, SoftwareSerial* BTSerial);
-    virtual BluetoothListenerAnswer processBluetoothSet(char* str, SoftwareSerial* BTSerial);
-    virtual BluetoothListenerAnswer processBluetoothDo(char* str,  SoftwareSerial* BTSerial);
+    virtual BluetoothListenerAnswer receivedCurrentDateTime(ble_datetime content);
 
 };
 

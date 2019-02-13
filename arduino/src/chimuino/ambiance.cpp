@@ -7,7 +7,7 @@
 #include "utils.h"
 
 Ambiance::Ambiance(): 
-          BluetoothCommandListener(),
+          BluetoothUser(),
           IntentionProvider()
           {
 
@@ -33,6 +33,12 @@ void Ambiance::storeState() {
   persist->storeAmbiance(enabled);
 }
 
+void Ambiance::publishBluetoothData() {
+  ble_ambiance content;
+  content.enabled = enabled;
+  this->bluetooth->publishAmbiance(content);
+}
+
 void Ambiance::debugSerial() {
   #ifdef DEBUG
   Serial << F("Ambiance: ") 
@@ -41,43 +47,18 @@ void Ambiance::debugSerial() {
   #endif 
 }
 
-BluetoothListenerAnswer Ambiance::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
+BluetoothListenerAnswer Ambiance::receivedAmbiance(ble_ambiance content) {
 
-  if (strncmp_P(str, PSTR("AMBIANCE"), 8) == 0) {
-    *BTSerial << F("AMBIANCE IS ") 
-              << (enabled?'1':'0')
-              << endl;
-    DEBUG_PRINTLN(F("SENT AMBIANCE"));
-    return SUCCESS;
-  }
-  
-  return NOT_CONCERNED;
-}
+  // update our state with the content
+  enabled = content.enabled;
 
-BluetoothListenerAnswer Ambiance::processBluetoothSet(char* str, SoftwareSerial* BTSerial) {
-  
-  if (strncmp_P(str, PSTR("AMBIANCE "), 9) == 0) {
+  // store this state 
+  storeState();
 
-    DEBUG_PRINTLN(F("Ambiance changed by bluetooth"));
+  // debug
+  debugSerial();
 
-    char cEnabled;
-
-    sscanf(str + 9,                                                  // decode received datetime
-           "%c", 
-           &cEnabled);    
-
-    enabled = char2bool(cEnabled);
-    storeState();
-    debugSerial();
-
-    return SUCCESS;
-  }
-  
-  return NOT_CONCERNED;
-}
-
-BluetoothListenerAnswer Ambiance::processBluetoothDo(char* str, SoftwareSerial* BTSerial) {
-  return NOT_CONCERNED;
+  return PROCESSED;
 }
 
 Intention Ambiance::proposeNextMode(enum mode current_mode, unsigned long next_planned_action) {

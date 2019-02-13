@@ -6,7 +6,7 @@
 #include "debug.h"
 
 ChimeLightSensor::ChimeLightSensor(const byte _pin):
-              BluetoothCommandListener(),
+              BluetoothUser(),
               IntentionProvider(),
               sensor( CHIME_LIGHTSENSOR_MEASURES_ETA, _pin, 
                       CHIME_LIGHTSENSOR_MEASURES_FREQUENCY,// read every 100ms
@@ -16,6 +16,8 @@ ChimeLightSensor::ChimeLightSensor(const byte _pin):
 
   // save params
   pin = _pin;
+
+  // TODO reload settings from storage!!!
 
 }
 
@@ -76,75 +78,38 @@ bool ChimeLightSensor::isDark() {
   return getLightLevel() <= darkThreshold;
 }
 
+void ChimeLightSensor::publishBluetoothData() {
 
-
-
-BluetoothListenerAnswer ChimeLightSensor::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
-
-  if (strncmp_P(str, PSTR("LIGHTLEVEL"), 10) == 0) {
-    
-    *BTSerial << F("LIGHTLEVEL IS ") 
-              << _DEC( int(float(getLightLevel() - sensor.envelopeMin())/float(sensor.envelopeMax()-sensor.envelopeMin())*100.) ) << ' ' 
-              << (isDark() ? F("DARK"): F("LIT"))
-              << endl;
-              
-    return SUCCESS;
-  } 
-
-  if (strncmp_P(str, PSTR("LIGHTTHRESHOLD"), 14) == 0) {
-    
-    *BTSerial << F("LIGHTTHRESHOLD IS ")
-              << _DEC(factorThreshold)
-              << endl;
-              
-    return SUCCESS;
-  } 
-
-  if (strncmp_P(str, PSTR("LIGHTENVELOPE"), 13) == 0) {
-    
-    *BTSerial << F("LIGHTENVELOPE IS ")
-              << _DEC(sensor.envelopeMin()) << ' ' << _DEC(sensor.envelopeMax())
-              << endl;
-              
-    return SUCCESS;
-  } 
-    
-  return NOT_CONCERNED;
-}
-
-
-
-BluetoothListenerAnswer ChimeLightSensor::processBluetoothSet(char* str, SoftwareSerial* BTSerial) {
-  
-  if (strncmp_P(str, PSTR("LIGHTTHRESHOLD "), 15) == 0) {
-
-    DEBUG_PRINT(F("received light threshold: ")); DEBUG_PRINTLN(str);
-
-    sscanf(
-          str + 15,           // skip the command
-          "%u",               // expected format 
-          &factorThreshold    // store directly in our variables
-          );                
-
-    if (factorThreshold < 0) { factorThreshold = 0; }
-    else if (factorThreshold > 100) { factorThreshold = 100; }
-    
-    *BTSerial << F("LIGHTTHRESHOLD SET") << endl;
-
-    storeState();
-   
-    debugSerial();
-
-    return SUCCESS;
+  {
+    ble_light_sensor content;
+    content.level = getLightLevel();
+    content.isDark = isDark();
+    content.min = sensor.envelopeMin();
+    content.max = sensor.envelopeMax();  
+    this->bluetooth->publishLightSensor(content);
   }
+
+  {
+    ble_light_settings content;
+    content.threshold = factorThreshold;
+    this->bluetooth->publishLightSettings(content);
+  }
+}
+
+BluetoothListenerAnswer ChimeLightSensor::receivedLightSettings(ble_light_settings content) {
+
+  factorThreshold = content.threshold;
   
-  return NOT_CONCERNED;
-}
+  if (factorThreshold < 0) { factorThreshold = 0; }
+  else if (factorThreshold > 100) { factorThreshold = 100; }
 
-BluetoothListenerAnswer ChimeLightSensor::processBluetoothDo(char* str, SoftwareSerial* BTSerial) {
-  return NOT_CONCERNED;
-}
+  storeState();
+   
+  debugSerial();
 
+  return PROCESSED;
+
+}
 
 Intention ChimeLightSensor::proposeNextMode(enum mode current_mode, unsigned long next_planned_action) {
   

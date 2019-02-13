@@ -15,7 +15,7 @@
 
 #include <Arduino.h>
 
-class ChimeSoundSensor: public BluetoothCommandListener {
+class ChimeSoundSensor: public BluetoothUser {
   
   private:
   
@@ -36,7 +36,8 @@ class ChimeSoundSensor: public BluetoothCommandListener {
     Persist* persist;
 
     void storeState();
-    
+    virtual void publishBluetoothData();
+
   public:
     
     ChimeSoundSensor(const byte pin);
@@ -56,9 +57,7 @@ class ChimeSoundSensor: public BluetoothCommandListener {
     bool isQuiet();
     
     // inherited
-    virtual BluetoothListenerAnswer processBluetoothGet(char* str, SoftwareSerial* BTSerial);
-    virtual BluetoothListenerAnswer processBluetoothSet(char* str, SoftwareSerial* BTSerial);
-    virtual BluetoothListenerAnswer processBluetoothDo(char* str, SoftwareSerial* BTSerial);
+    virtual BluetoothListenerAnswer receivedSoundSettings(ble_sound_settings content);
 
 };
 

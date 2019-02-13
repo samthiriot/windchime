@@ -82,73 +82,44 @@ float ChimeClock::getTemperature() {
   return c;
 }
 
-BluetoothListenerAnswer ChimeClock::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
-  
-  if (strncmp_P(str, PSTR("DATETIME"), 8) == 0) {
+void ChimeClock::publishBluetoothData() {
 
-    time_t now = RTC.get();
-    *BTSerial << F("DATETIME IS ") 
-              << _DEC(year(now))  << '-' << _DEC(month(now)) << '-' << _DEC(year(now)) << ' '
-              << _DEC(hour(now)) << ':' << _DEC(minute(now)) << ':' << _DEC(second(now)) 
-              << endl;
- 
-    return SUCCESS;
-  }
+    // publish our temperature
+    float c = RTC.temperature() / 4.;
+    bluetooth->publishTemperature1(c);
 
-  if (strncmp_P(str, PSTR("UPTIME"), 6) == 0) {
+    // publish the uptime
+    // TODO this uptime overflows quickly. use RTC instead?
+    uint32_t uptime = (millis() - startTimestamp)/(60l*1000l);
+    bluetooth->publishUptime(uptime);
 
-    *BTSerial << F("UPTIME IS ") 
-              << (millis() - startTimestamp)/(60l*1000l)
-              << endl;
-
-    DEBUG_PRINTLN(F("SENT UPTIME"));
-     
-    return SUCCESS;
-  }
-
-
-  if (strncmp_P(str, PSTR("TEMPERATURE"), 11) == 0) {
-    float temp = getTemperature();
-     *BTSerial << F("TEMPERATURE IS ") << temp << endl;
-     return SUCCESS;
-  }
-
-  return NOT_CONCERNED;
+    
 }
 
-BluetoothListenerAnswer ChimeClock::processBluetoothSet(char* str, SoftwareSerial* BTSerial) {
+BluetoothListenerAnswer ChimeClock::receivedCurrentDateTime(ble_datetime content) {
 
-  if (strncmp_P(str, PSTR("DATETIME "), 9) == 0) {
-    DEBUG_PRINT(F("received datetime: ")); DEBUG_PRINTLN(str);
-    time_t t;     // the time to forge
-    tmElements_t tm;
+  // forge data to send it into the chip
+  time_t t;         // the time to forge
+  tmElements_t tm;
+  tm.Year =   CalendarYrToTm(content.year);
+  tm.Month =  content.month;
+  tm.Day =    content.day;
+  tm.Hour =   content.hour;
+  tm.Minute = content.minutes;
+  tm.Second = content.seconds;
+  t = makeTime(tm);
 
-    int year, month, day, hour, minute, second;
-    sscanf(str + 9,                                                  // decode received datetime
-           "%u-%u-%u %u:%u:%u", 
-           &year, &month, &day, &hour, &minute, &second);    
-    tm.Year = CalendarYrToTm(year);
-    tm.Month = month;
-    tm.Day = day;
-    tm.Hour = hour;
-    tm.Minute = minute;
-    tm.Second = second;
-    t = makeTime(tm);
-    RTC.set(t);
-    setTime(t);
-    *BTSerial << F("DATETIME SET") << endl;
-    debugSerial();
+  // storage inside the chip
+  RTC.set(t);
+  setTime(t); // ... and also as arduino time ^^
 
-    return SUCCESS;
-  }
+  // inform
+  debugSerial();
 
-  return NOT_CONCERNED;
+  return PROCESSED;
 }
 
-BluetoothListenerAnswer ChimeClock::processBluetoothDo(char* str,  SoftwareSerial* BTSerial) {
-  // TODO ???
-  return NOT_CONCERNED;
-}
+
 
 /* TODO 
 void ChimeClock::setAlarm1(unsigned short hour, unsigned short minutes) {

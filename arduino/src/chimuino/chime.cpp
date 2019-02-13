@@ -35,53 +35,30 @@ void Chime::setup(ChimeSoundSensor* _soundSensor, ChimeStepper* _stepper) {
   // save the references of sensor and effector
   soundSensor = _soundSensor;
   stepper = _stepper;
+ 
+}
 
+void Chime::publishBluetoothData() {
+
+  // TODO 
+  // publish FIRMWARE_VERSION
+  // publish current action?
   
+  // this->bluetooth->publishAmbiance(content);
 }
 
-BluetoothListenerAnswer Chime::processBluetoothGet(char* str, SoftwareSerial* BTSerial) {
-  
-  if (strncmp_P(str, PSTR("VERSION"), 7) == 0) {
+BluetoothListenerAnswer Chime::receivedActionRing(ble_ring_action action) {
 
-    *BTSerial << F("VERSION IS ") 
-              << FIRMWARE_VERSION
-              << endl;
+  // TODO react action !
 
-    DEBUG_PRINTLN(F("SENT VERSION"));
-     
-    return SUCCESS;
-  }
+  /*
+  demoAsked = DEMO_LIGHT;
+  demoAsked = DEMO_MEDIUM;
+  demoAsked = DEMO_STRONG;
+  */
 
-  return NOT_CONCERNED;
-}
-
-BluetoothListenerAnswer Chime::processBluetoothSet(char* str, SoftwareSerial* BTSerial) {
-  return NOT_CONCERNED;
-}
-    
-BluetoothListenerAnswer Chime::processBluetoothDo(char* str, SoftwareSerial* BTSerial) {
-
-  if (strncmp_P(str, PSTR("CHIME "), 6) == 0) {
-
-    if (strncmp_P(str+6, PSTR("LIGHT"), 5) == 0) {
-      DEBUG_PRINTLN("Asked for demo light");
-      demoAsked = DEMO_LIGHT;
-    } else if (strncmp_P(str+6, PSTR("MEDIUM"), 6) == 0) {
-      DEBUG_PRINTLN("Asked for demo medium");
-      demoAsked = DEMO_MEDIUM;
-    }  else if (strncmp_P(str+6, PSTR("STRONG"), 6) == 0) {
-      DEBUG_PRINTLN("Asked for demo strong");
-      demoAsked = DEMO_STRONG;
-    }
-    *BTSerial << F("DOING DEMO") 
-              << endl;
-              
-    return SUCCESS;
-  } 
-  
-  return NOT_CONCERNED;
-
-}
+  return PROCESSED;  
+};
 
 Intention Chime::proposeNextMode(enum mode current_mode, unsigned long next_planned_action) {
 

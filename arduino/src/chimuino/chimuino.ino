@@ -2,6 +2,17 @@
 // docs
 // - https://medium.com/@yostane/using-the-at-09-ble-module-with-the-arduino-3bc7d5cb0ac2
 
+/*
+ * TODO
+ * 
+ * connectable
+ * when a button is pressed, then:
+ * - delete former bonds AT+GAPDELBONDS
+ * - make BLE connectable AT+GAPCONNECTABLE   see https://learn.adafruit.com/introducing-the-adafruit-bluefruit-le-uart-friend/ble-gap
+ * blink a led or something so the user knows it is ok???
+ * 
+ */
+
 #include "debug.h"
 
 #include "persist.h"
@@ -26,14 +37,20 @@ long lastDisplayDebug = millis();
 
 // hardware settings
 
-#define BLUETOOTH_RX 13
-#define BLUETOOTH_TX 12
+// pins for bluetooth
 
+#define BLUEFRUIT_UART_CTS_PIN    9
+#define BLUEFRUIT_UART_MODE_PIN   8   // optional, set to -1 if unused
+#define BLUEFRUIT_SWUART_TXD_PIN  11
+#define BLUEFRUIT_SWUART_RXD_PIN  10
+#define BLUEFRUIT_UART_RTS_PIN    12  // optional, set to -1 if unused
+
+// pins for the stepper engine
 #define MOTOR_TOTAL_STEPS 2048                                    // in 4 steps mode
-#define STEPPER_PIN_1 8
-#define STEPPER_PIN_2 9
-#define STEPPER_PIN_3 10
-#define STEPPER_PIN_4 11
+#define STEPPER_PIN_1 4
+#define STEPPER_PIN_2 5
+#define STEPPER_PIN_3 6
+#define STEPPER_PIN_4 7
 
 #define SOUND_PIN A1
 #define PHOTOCELL_PIN A0                                                  // port for the photovoltaic cell
@@ -49,7 +66,7 @@ ChimeClock clock;
 ChimeAlarm alarm1(1);
 ChimeAlarm alarm2(2);
 
-ChimeBluetooth bluetooth(BLUETOOTH_RX, BLUETOOTH_TX);
+ChimeBluetooth bluetooth(BLUEFRUIT_UART_CTS_PIN, BLUEFRUIT_UART_MODE_PIN, BLUEFRUIT_SWUART_TXD_PIN, BLUEFRUIT_SWUART_RXD_PIN, BLUEFRUIT_UART_RTS_PIN);
 
 ChimeSoundSensor soundSensor(SOUND_PIN);
 ChimeLightSensor lightSensor(PHOTOCELL_PIN);
@@ -99,13 +116,13 @@ void setup() {
   ambiance.setup(&persist, &soundSensor, &lightSensor);
 
   // ... add the chain of listeners, which might react to bluetooth commands
-  bluetooth.addCommandInterpreter(&alarm1);
-  bluetooth.addCommandInterpreter(&alarm2);
-  bluetooth.addCommandInterpreter(&clock);
-  bluetooth.addCommandInterpreter(&lightSensor);
-  bluetooth.addCommandInterpreter(&soundSensor);
-  bluetooth.addCommandInterpreter(&chime);
-  bluetooth.addCommandInterpreter(&ambiance);
+  clock.setBluetooth(&bluetooth);
+  alarm1.setBluetooth(&bluetooth);
+  alarm2.setBluetooth(&bluetooth);
+  lightSensor.setBluetooth(&bluetooth);
+  soundSensor.setBluetooth(&bluetooth);
+  chime.setBluetooth(&bluetooth);
+  ambiance.setBluetooth(&bluetooth);
 
   DEBUG_PRINTLN("init: end.");
 

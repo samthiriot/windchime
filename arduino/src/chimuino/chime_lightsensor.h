@@ -21,7 +21,7 @@
 #include <Arduino.h>
 
 
-class ChimeLightSensor: public BluetoothCommandListener,
+class ChimeLightSensor: public BluetoothUser,
                         public IntentionProvider {
   
   private:
@@ -39,7 +39,9 @@ class ChimeLightSensor: public BluetoothCommandListener,
     void storeState();
 
     Persist* persist;
-    
+
+    virtual void publishBluetoothData();
+
   public:
     
     ChimeLightSensor(const byte pin);
@@ -59,9 +61,8 @@ class ChimeLightSensor: public BluetoothCommandListener,
     bool isDark();
 
     // inherited
-    virtual BluetoothListenerAnswer processBluetoothGet(char* str, SoftwareSerial* BTSerial);
-    virtual BluetoothListenerAnswer processBluetoothSet(char* str, SoftwareSerial* BTSerial);
-    virtual BluetoothListenerAnswer processBluetoothDo(char* str, SoftwareSerial* BTSerial);
+    // TODO receive level and/or adjustement of level demand
+    virtual BluetoothListenerAnswer receivedLightSettings(ble_light_settings content);
     virtual Intention proposeNextMode(enum mode current_mode, unsigned long next_planned_action);
 
 };
