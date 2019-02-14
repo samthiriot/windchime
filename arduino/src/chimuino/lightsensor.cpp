@@ -1,4 +1,4 @@
-#include "chime_lightsensor.h"
+#include "lightsensor.h"
 
 #include <Arduino.h>
 #include <Streaming.h>

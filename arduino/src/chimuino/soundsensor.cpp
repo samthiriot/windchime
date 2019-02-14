@@ -1,4 +1,4 @@
-#include "chime_soundsensor.h"
+#include "soundsensor.h"
 
 #include <Arduino.h>
 #include <Streaming.h>

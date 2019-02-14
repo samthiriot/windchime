@@ -1,5 +1,5 @@
 
-#include "chime_clock.h"
+#include "clock.h"
 
 #include "debug.h"
 #include <Streaming.h>

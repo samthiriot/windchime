@@ -17,12 +17,12 @@
 
 #include "persist.h"
 #include "chime.h"
-#include "chime_bluetooth.h"
-#include "chime_stepper.h"
-#include "chime_clock.h"
-#include "chime_alarm.h"
-#include "chime_soundsensor.h"
-#include "chime_lightsensor.h"
+#include "bluetooth.h"
+#include "stepper.h"
+#include "clock.h"
+#include "alarm.h"
+#include "soundsensor.h"
+#include "lightsensor.h"
 #include "ambiance.h"
 
 

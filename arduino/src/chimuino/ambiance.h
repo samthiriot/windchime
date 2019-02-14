@@ -2,9 +2,9 @@
 #define AMBIANCE_H
 
 #include "chime.h"
-#include "chime_bluetooth.h"
-#include "chime_lightsensor.h"
-#include "chime_soundsensor.h"
+#include "bluetooth.h"
+#include "lightsensor.h"
+#include "soundsensor.h"
 #include "persist.h"
 
 class Ambiance: public BluetoothInformationProducer,

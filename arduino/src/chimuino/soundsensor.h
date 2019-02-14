@@ -9,8 +9,8 @@
 #define CHIME_SOUNDSENSOR_ENVELOPE_ETA_SLOW 0.0000001
 #define CHIME_SOUNDSENSOR_ENVELOPE_ETA_QUICK 0.3
 
-#include "sensors_filtering.h"
-#include "chime_bluetooth.h"
+#include "filtering.h"
+#include "bluetooth.h"
 #include "persist.h"
 
 #include <Arduino.h>

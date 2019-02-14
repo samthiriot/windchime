@@ -1,9 +1,9 @@
 #ifndef CHIME_H
 #define CHIME_H
 
-#include "chime_bluetooth.h"
-#include "chime_soundsensor.h"
-#include "chime_stepper.h"
+#include "bluetooth.h"
+#include "soundsensor.h"
+#include "stepper.h"
 
 // ... current version of the firmware.
 //     should be upgraded at update time

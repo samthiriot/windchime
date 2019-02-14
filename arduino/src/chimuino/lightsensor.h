@@ -13,9 +13,9 @@
 #define PHOTOCELL_NIGHT_THRESHOLD 30                                     // TODO detect threshold
 
 #include "chime.h"
-#include "sensors_filtering.h"
+#include "filtering.h"
 
-#include "chime_bluetooth.h"
+#include "bluetooth.h"
 #include "persist.h"
 
 #include <Arduino.h>

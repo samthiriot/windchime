@@ -7,7 +7,7 @@
 #ifndef CHIME_CLOCK_H
 #define CHIME_CLOCK_H
 
-#include "chime_bluetooth.h"
+#include "bluetooth.h"
 
 // instanciates an RTC object
 #include <TimeLib.h>

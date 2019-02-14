@@ -2,7 +2,7 @@
 #define CHIME_ALARM_H
 
 #include "chime.h"
-#include "chime_bluetooth.h"
+#include "bluetooth.h"
 #include "persist.h"
 
 // TODO alarm with interrupts?

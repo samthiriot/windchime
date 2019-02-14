@@ -1,5 +1,5 @@
 
-#include "chime_alarm.h"
+#include "alarm.h"
 
 #include "debug.h"
 #include "utils.h"

@@ -3,17 +3,17 @@
 // * see http://www.martyncurrey.com/hm-10-bluetooth-4ble-modules/ 
 // * http://blog.blecentral.com/2015/05/05/hm-10-peripheral/
 
-#include "chime_bluetooth.h"
+#include "bluetooth.h"
 
 #include <Streaming.h>
 
 #include "debug.h"
 
 #include "chime.h"
-#include "chime_clock.h"
-#include "chime_alarm.h"
-#include "chime_soundsensor.h"
-#include "chime_lightsensor.h"
+#include "clock.h"
+#include "alarm.h"
+#include "soundsensor.h"
+#include "lightsensor.h"
 #include "ambiance.h"
 
 // messages for debug

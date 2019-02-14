@@ -1,4 +1,4 @@
-#include "chime_stepper.h"
+#include "stepper.h"
 
 #include <Arduino.h>
 
