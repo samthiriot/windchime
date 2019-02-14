@@ -18,22 +18,28 @@
 
 // messages for debug
 // factorized to save memory space
-#ifdef DEBUG
 
-  #include <avr/pgmspace.h>
+ const char message_ble_light_sensor [] PROGMEM = "light sensor";
+  const char message_ble_light_settings [] PROGMEM = "light settings";
+  const char message_ble_sound_sensor [] PROGMEM = "sound sensor";
+  const char message_ble_sound_settings [] PROGMEM = "sound settings";
+  const char message_ble_ambiance [] PROGMEM = "ambiance";
+
+  const char message_ble_sensing [] PROGMEM = "sensing";
+  const char message_ble_temperature [] PROGMEM = "temperature";  
+  const char message_ble_current_time [] PROGMEM = "current time";
+  const char message_ble_alarm [] PROGMEM = "alarm";
+  const char message_ble_uptime [] PROGMEM = "uptime";
+
   const char message_ble_init_bluetooth [] PROGMEM = "init/bluetooth: ";
-  const char message_ble_ok [] PROGMEM = "ok.";
-  const char message_ble_error [] PROGMEM = "error :-(";
-  const char message_wrong_size [] PROGMEM = "bluetooth ERROR: wrong length ";
   const char message_ble_bluetooth [] PROGMEM = "bluetooth: ";
   const char message_ble_bluetooth_publishing [] PROGMEM = "bluetooth: publishing ";
   const char message_ble_adding_char [] PROGMEM = "init/bluetooth: adding characteristic ";
 
-#endif 
-
-// special characters
-#define CR 13
-#define LR 10
+  const char message_ble_error [] PROGMEM = "error :-(";
+  const char message_ble_error_creating_char [] PROGMEM = "bluetooth: error when creating characteristic ";
+  const char message_ble_error_creating_service [] PROGMEM = "bluetooth: error when creating service ";
+  const char message_wrong_size [] PROGMEM = "bluetooth ERROR: wrong length ";
 
 #include <Arduino.h>
 
@@ -115,50 +121,54 @@ ChimeBluetooth::ChimeBluetooth(unsigned short _pinTXD, unsigned short _pinRXD,
 void ChimeBluetooth::setup() {
   
   // initialize the BLE access (and detect HW problems)
-  DEBUG_PRINT(message_ble_init_bluetooth);
+  DEBUG_PRINT(PGMSTR(message_ble_init_bluetooth));
   DEBUG_PRINT(F("connecting hardware... "));
   if ( !ble.begin(BLE_VERBOSE_MODE) ) {
-      DEBUG_PRINTLN(F("ERROR Couldn't find Bluefruit, make sure it's in command mode & check wiring?"));
+      ERROR_PRINTLN(F("ERROR BLE dongle not found")); // , make sure it's in command mode & check wiring?
   } else {
-    DEBUG_PRINTLN( message_ble_ok );
+    DEBUG_PRINTLN(PGMSTR(msg_ok_dot));
   }
+
+  DEBUG_PRINTLN("toto1");
   
   #ifdef BLE_FACTORYRESET_ENABLE 
   /* Perform a factory reset to make sure everything is in a known state */
-  DEBUG_PRINT(message_ble_init_bluetooth);
-  DEBUG_PRINT(F("factory reset... "));
+  DEBUG_PRINT(PGMSTR(message_ble_init_bluetooth));
+  DEBUG_PRINTLN(F("factory reset... "));
   if ( !ble.factoryReset() ){
-    DEBUG_PRINTLN(message_ble_error);
+    ERROR_PRINTLN(PGMSTR(message_ble_error));
   } else {
-    DEBUG_PRINTLN( message_ble_ok );
+    DEBUG_PRINTLN(PGMSTR(msg_ok_dot));
   }
   #endif
 
   /* Disable command echo from Bluefruit */
   ble.echo(false);
 
-  DEBUG_PRINT(message_ble_init_bluetooth);
-  DEBUG_PRINT(F("setting name... "));
+DEBUG_PRINTLN("toto2");
+  
+  TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
+  TRACE_PRINT(F("setting name... "));
   if (! ble.sendCommandCheckOK(F( "AT+GAPDEVNAME=Chimuino2" ))) {
-    DEBUG_PRINTLN(message_ble_error);
+    TRACE_PRINTLN(PGMSTR(message_ble_error));
   } else {
-    DEBUG_PRINTLN( message_ble_ok );
+    TRACE_PRINTLN(PGMSTR(msg_ok_dot));
   }
 
-  DEBUG_PRINT(message_ble_init_bluetooth);
+  DEBUG_PRINT(PGMSTR(message_ble_init_bluetooth));
   DEBUG_PRINTLN(F("creating services... "));
   // SET the services and characteristics
   setup_service_chimuino();
   setup_service_sensing();
    
   /* Reset the device for the new service setting changes to take effect */
-  DEBUG_PRINT(message_ble_init_bluetooth);
+  DEBUG_PRINT(PGMSTR(message_ble_init_bluetooth));
   DEBUG_PRINTLN(F("reset to apply changes... "));
   ble.reset();
-  delay(100);
+  delay(200);
   
-  DEBUG_PRINT(message_ble_init_bluetooth);
-  DEBUG_PRINTLN(F("installing callbacks... "));
+  TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
+  TRACE_PRINTLN(F("installing callbacks... "));
   // set callbacks to be called when...
   // ... some central device connects,
   ble.setConnectCallback(ChimeBluetooth::reactCentralConnectedStatic);
@@ -171,18 +181,21 @@ void ChimeBluetooth::setup() {
   ble.setBleGattRxCallback(bleCharAmbiance,       ChimeBluetooth::reactCharacteristicReceivedStatic);
   ble.setBleGattRxCallback(bleCharLightSettings,  ChimeBluetooth::reactCharacteristicReceivedStatic);
 
-  DEBUG_PRINT(message_ble_init_bluetooth);
-  DEBUG_PRINTLN( message_ble_ok );
+  DEBUG_PRINT(PGMSTR(message_ble_init_bluetooth));
+  DEBUG_PRINTLN(PGMSTR(msg_ok_dot));
 }
 
 
 void ChimeBluetooth::setup_service_sensing() {
    
   // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.service.environmental_sensing.xml
-  DEBUG_PRINTLN(F("Adding the Sensing Service definition: "));
+  TRACE_PRINT(PGMSTR(message_ble_error_creating_service));
+  TRACE_PRINTLN(PGMSTR(message_ble_sensing));
+  
   bleServiceSensingId = gatt.addService(BLE_GATT_SERVICE_SENSING);
   if (bleServiceSensingId == 0) {
-      DEBUG_PRINTLN(message_ble_error);
+    ERROR_PRINT(PGMSTR(message_ble_error_creating_service));
+    ERROR_PRINTLN(PGMSTR(message_ble_sensing));
   } else {
     setup_char_temperature();
     setup_attribute_temperature1();
@@ -201,8 +214,8 @@ void ChimeBluetooth::setup_service_sensing() {
 void ChimeBluetooth::setup_char_temperature() {
   // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.temperature.xml
     
-    DEBUG_PRINT( message_ble_adding_char );
-    DEBUG_PRINTLN( F("temperature") );
+    TRACE_PRINT(PGMSTR(message_ble_adding_char));
+    TRACE_PRINTLN(PGMSTR(message_ble_temperature));
 
     /*
     GattPresentationFormat bleTemperatureFormat = { 
@@ -233,14 +246,16 @@ void ChimeBluetooth::setup_char_temperature() {
         );
     
     if (bleCharTemperature == 0) {
-      DEBUG_PRINTLN(message_ble_error);
+      ERROR_PRINT(PGMSTR(message_ble_error_creating_char));
+      ERROR_PRINTLN(PGMSTR(message_ble_temperature));
     } 
 }
 
 void ChimeBluetooth::setup_attribute_temperature1() {
 
-    DEBUG_PRINT( message_ble_adding_char );
-    DEBUG_PRINTLN(F("temperature1"));
+    TRACE_PRINT(PGMSTR(message_ble_adding_char));
+    TRACE_PRINT(PGMSTR(message_ble_temperature));
+    TRACE_PRINTLN('1');
  
     // GATT_CHARS_PROPERTIES_WRITE
     bleCharTemperature1 = gatt.addCharacteristic(
@@ -254,14 +269,17 @@ void ChimeBluetooth::setup_attribute_temperature1() {
       BLE_DATATYPE_BYTEARRAY
       );
     if (bleCharTemperature1 == 0) {
-      DEBUG_PRINTLN(message_ble_error);
+      ERROR_PRINT(PGMSTR(message_ble_error_creating_char));
+      ERROR_PRINT(PGMSTR(message_ble_temperature));
+      ERROR_PRINTLN('1');
     } 
 }
 
 void ChimeBluetooth::setup_attribute_temperature2() {
 
-    DEBUG_PRINT( message_ble_adding_char );
-    DEBUG_PRINTLN(F("temperature2"));
+   TRACE_PRINT(PGMSTR(message_ble_adding_char));
+    TRACE_PRINT(PGMSTR(message_ble_temperature));
+    TRACE_PRINTLN('1');
  
     // GATT_CHARS_PROPERTIES_WRITE
     bleCharTemperature2 = gatt.addCharacteristic(
@@ -275,13 +293,15 @@ void ChimeBluetooth::setup_attribute_temperature2() {
       BLE_DATATYPE_BYTEARRAY
       );
     if (bleCharTemperature2 == 0) {
-      DEBUG_PRINTLN(message_ble_error);
+      ERROR_PRINT(PGMSTR(message_ble_error_creating_char));
+      ERROR_PRINT(PGMSTR(message_ble_temperature));
+      ERROR_PRINTLN('2');
     } 
 }
 void ChimeBluetooth::setup_char_light_sensor() {
 
-    DEBUG_PRINT( message_ble_adding_char );
-    DEBUG_PRINTLN(F("light sensor"));
+    TRACE_PRINT(PGMSTR(message_ble_adding_char));
+    TRACE_PRINTLN(PGMSTR(message_ble_light_sensor));
  
     // GATT_CHARS_PROPERTIES_WRITE
     bleCharLightSensor = gatt.addCharacteristic(
@@ -294,15 +314,16 @@ void ChimeBluetooth::setup_char_light_sensor() {
       // present format
       BLE_DATATYPE_BYTEARRAY
       );
-    if (bleCharAmbiance == 0) {
-      DEBUG_PRINTLN(message_ble_error);
+    if (bleCharLightSensor == 0) {
+      ERROR_PRINT(PGMSTR(message_ble_error_creating_char));
+      ERROR_PRINTLN(PGMSTR(message_ble_light_sensor));
     } 
 }
 
 void ChimeBluetooth::setup_char_light_settings() {
 
-    DEBUG_PRINT( message_ble_adding_char );
-    DEBUG_PRINTLN(F("light settings"));
+    TRACE_PRINT(PGMSTR(message_ble_adding_char));
+    TRACE_PRINTLN(PGMSTR(message_ble_light_settings));
  
     // GATT_CHARS_PROPERTIES_WRITE
     bleCharLightSettings = gatt.addCharacteristic(
@@ -316,14 +337,15 @@ void ChimeBluetooth::setup_char_light_settings() {
       BLE_DATATYPE_BYTEARRAY
       );
     if (bleCharLightSettings == 0) {
-      DEBUG_PRINTLN(message_ble_error);
+      ERROR_PRINT(PGMSTR(message_ble_error_creating_char));
+      ERROR_PRINTLN(PGMSTR(message_ble_light_settings));
     } 
 }
 
 void ChimeBluetooth::setup_char_sound_sensor() {
 
-  DEBUG_PRINT( message_ble_adding_char );
-    DEBUG_PRINTLN(F("sound sensor"));
+  TRACE_PRINT(PGMSTR(message_ble_adding_char));
+    TRACE_PRINTLN(PGMSTR(message_ble_sound_sensor));
  
     // GATT_CHARS_PROPERTIES_WRITE
     bleCharSoundSensor = gatt.addCharacteristic(
@@ -337,14 +359,15 @@ void ChimeBluetooth::setup_char_sound_sensor() {
       BLE_DATATYPE_BYTEARRAY
       );
     if (bleCharSoundSensor == 0) {
-      DEBUG_PRINTLN(message_ble_error);
+      ERROR_PRINT(PGMSTR(message_ble_error_creating_char));
+      ERROR_PRINTLN(PGMSTR(message_ble_sound_sensor));
     } 
 }
 
 void ChimeBluetooth::setup_char_sound_settings() {
 
-    DEBUG_PRINT( message_ble_adding_char );
-    DEBUG_PRINTLN(F("sound settings"));
+    TRACE_PRINT(PGMSTR(message_ble_adding_char));
+    TRACE_PRINTLN(PGMSTR(message_ble_sound_settings));
  
     // GATT_CHARS_PROPERTIES_WRITE
     bleCharSoundSettings = gatt.addCharacteristic(
@@ -358,19 +381,19 @@ void ChimeBluetooth::setup_char_sound_settings() {
       BLE_DATATYPE_BYTEARRAY
       );
     if (bleCharSoundSettings == 0) {
-      DEBUG_PRINTLN(message_ble_error);
+      ERROR_PRINT(PGMSTR(message_ble_error_creating_char));
+      ERROR_PRINTLN(PGMSTR(message_ble_sound_settings));
     } 
 }
 
 void ChimeBluetooth::setup_service_chimuino() {
 
-
-  /* Add the Heart Rate Service definition */
-  /* Service ID should be 1 */
-  DEBUG_PRINTLN(F("Adding the Chuimuino Service definition: "));
+  TRACE_PRINT(PGMSTR(message_ble_bluetooth_publishing));
+  TRACE_PRINTLN(F("service chime"));
   bleServiceChimuinoId = gatt.addService(BLE_GATT_SERVICE_CHIMUINO);
   if (bleServiceChimuinoId == 0) {
-      DEBUG_PRINTLN(message_ble_error);
+      ERROR_PRINT(PGMSTR(message_ble_error_creating_service));
+      ERROR_PRINTLN(F("chime"));
   } else {
 
     setup_attribute_current_time();
@@ -390,8 +413,8 @@ void ChimeBluetooth::setup_attribute_current_time() {
     /* Add the Temperature Measurement characteristic which is composed of
      * 1 byte flags + 4 float */
     /* Chars ID for Measurement should be 1 */
-    DEBUG_PRINT( message_ble_adding_char );
-    DEBUG_PRINTLN(F("current time"));
+    TRACE_PRINT(PGMSTR(message_ble_adding_char));
+    TRACE_PRINTLN(PGMSTR(message_ble_current_time));
     
     // GATT_CHARS_PROPERTIES_WRITE
     bleCharCurrentTime = gatt.addCharacteristic(
@@ -405,15 +428,17 @@ void ChimeBluetooth::setup_attribute_current_time() {
       BLE_DATATYPE_BYTEARRAY
       );
     if (bleCharCurrentTime == 0) {
-      DEBUG_PRINTLN(message_ble_error);
+      ERROR_PRINT(PGMSTR(message_ble_error_creating_char));
+      ERROR_PRINTLN(PGMSTR(message_ble_current_time));
     } 
   
 }
 
 void ChimeBluetooth::setup_attribute_alarm1() {
 
-    DEBUG_PRINT( message_ble_adding_char );
-    DEBUG_PRINTLN(F("alarm1"));
+    TRACE_PRINT(PGMSTR(message_ble_adding_char));
+    TRACE_PRINT(PGMSTR(message_ble_alarm));
+    TRACE_PRINTLN('1');
  
     // GATT_CHARS_PROPERTIES_WRITE
     bleCharAlarm1 = gatt.addCharacteristic(
@@ -427,15 +452,18 @@ void ChimeBluetooth::setup_attribute_alarm1() {
       BLE_DATATYPE_BYTEARRAY
       );
     if (bleCharAlarm1 == 0) {
-      DEBUG_PRINTLN(message_ble_error);
+      ERROR_PRINT(PGMSTR(message_ble_error_creating_char));
+      ERROR_PRINT(PGMSTR(message_ble_alarm));
+      ERROR_PRINTLN('1');
     } 
 }
 
 
 void ChimeBluetooth::setup_attribute_alarm2() {
 
-    DEBUG_PRINT( message_ble_adding_char );
-    DEBUG_PRINTLN(F("alarm2"));
+    TRACE_PRINT(PGMSTR(message_ble_adding_char));
+    TRACE_PRINT(PGMSTR(message_ble_alarm));
+    TRACE_PRINTLN('2');
  
     // GATT_CHARS_PROPERTIES_WRITE
     bleCharAlarm2 = gatt.addCharacteristic(
@@ -449,14 +477,16 @@ void ChimeBluetooth::setup_attribute_alarm2() {
       BLE_DATATYPE_BYTEARRAY
       );
     if (bleCharAlarm2 == 0) {
-      DEBUG_PRINTLN(message_ble_error);
+      ERROR_PRINT(PGMSTR(message_ble_error_creating_char));
+      ERROR_PRINT(PGMSTR(message_ble_alarm));
+      ERROR_PRINTLN('2');
     } 
 }
 
 void ChimeBluetooth::setup_attribute_ambiance() {
 
-    DEBUG_PRINT( message_ble_adding_char );
-    DEBUG_PRINTLN(F("ambiance"));
+    TRACE_PRINT(PGMSTR(message_ble_adding_char));
+    TRACE_PRINTLN(PGMSTR(message_ble_ambiance));
  
     // GATT_CHARS_PROPERTIES_WRITE
     bleCharAmbiance = gatt.addCharacteristic(
@@ -470,15 +500,16 @@ void ChimeBluetooth::setup_attribute_ambiance() {
       BLE_DATATYPE_BYTEARRAY
       );
     if (bleCharAmbiance == 0) {
-      DEBUG_PRINTLN(message_ble_error);
+      ERROR_PRINT(PGMSTR(message_ble_error_creating_char));
+      ERROR_PRINTLN(PGMSTR(message_ble_ambiance));
     } 
 }
 
 
 void ChimeBluetooth::setup_attribute_uptime() {
 
-    DEBUG_PRINT( message_ble_adding_char );
-    DEBUG_PRINTLN(F("uptime"));
+    TRACE_PRINT(PGMSTR(message_ble_adding_char));
+    TRACE_PRINTLN(PGMSTR(message_ble_uptime));
  
     // GATT_CHARS_PROPERTIES_WRITE
     bleCharUptime = gatt.addCharacteristic(
@@ -492,7 +523,8 @@ void ChimeBluetooth::setup_attribute_uptime() {
       BLE_DATATYPE_BYTEARRAY
       );
     if (bleCharUptime == 0) {
-      DEBUG_PRINTLN(message_ble_error);
+      ERROR_PRINT(PGMSTR(message_ble_error_creating_char));
+      ERROR_PRINTLN(PGMSTR(message_ble_uptime));
     } 
 }
 
@@ -500,8 +532,8 @@ void ChimeBluetooth::decodeCurrentDateTime(uint8_t data[], uint16_t len) {
 
    // ensure the length is ok
    if (len != sizeof(ble_datetime_bytes)) {
-      DEBUG_PRINT( message_wrong_size );
-      DEBUG_PRINTLN(len);
+      TRACE_PRINT(PGMSTR(message_wrong_size));
+      TRACE_PRINTLN(len);
       return;
    } 
    
@@ -517,8 +549,8 @@ void ChimeBluetooth::decodeAlarm1(uint8_t data[], uint16_t len) {
 
   // ensure the length is ok
   if (len != sizeof(ble_alarm_bytes)) {
-    DEBUG_PRINT( message_wrong_size );
-    DEBUG_PRINTLN(len);
+    TRACE_PRINT(PGMSTR(message_wrong_size));
+    TRACE_PRINTLN(len);
     return;
   } 
 
@@ -533,8 +565,8 @@ void ChimeBluetooth::decodeAlarm2(uint8_t data[], uint16_t len) {
 
   // ensure the length is ok
   if (len != sizeof(ble_alarm_bytes)) {
-    DEBUG_PRINT( message_wrong_size );
-    DEBUG_PRINTLN(len);
+    TRACE_PRINT(PGMSTR(message_wrong_size));
+    TRACE_PRINTLN(len);
     return;
   } 
 
@@ -550,8 +582,8 @@ void ChimeBluetooth::decodeAmbiance(uint8_t data[], uint16_t len) {
   
   // ensure the length is ok
   if (len != sizeof(ble_ambiance_bytes)) {
-    DEBUG_PRINT( message_wrong_size );
-    DEBUG_PRINTLN(len);
+    TRACE_PRINT(PGMSTR(message_wrong_size));
+    TRACE_PRINTLN(len);
     return;
   } 
 
@@ -567,8 +599,8 @@ void ChimeBluetooth::decodeLightSettings(uint8_t data[], uint16_t len) {
   
   // ensure the length is ok
   if (len != sizeof(ble_light_settings_bytes)) {
-    DEBUG_PRINT( message_wrong_size );
-    DEBUG_PRINTLN(len);
+    TRACE_PRINT(PGMSTR(message_wrong_size));
+    TRACE_PRINTLN(len);
     return;
   } 
 
@@ -584,8 +616,8 @@ void ChimeBluetooth::decodeSoundSettings(uint8_t data[], uint16_t len) {
   
   // ensure the length is ok
   if (len != sizeof(ble_sound_settings_bytes)) {
-    DEBUG_PRINT( message_wrong_size );
-    DEBUG_PRINTLN(len);
+    TRACE_PRINT(PGMSTR(message_wrong_size));
+    TRACE_PRINTLN(len);
     return;
   } 
 
@@ -612,8 +644,8 @@ void ChimeBluetooth::reactCharacteristicReceived(int32_t chars_id, uint8_t data[
   } else if (chars_id == bleCharSoundSettings) {
     decodeSoundSettings(data, len); 
   } else {
-    DEBUG_PRINT(F("ERROR: unknown bluetooth characteristic "));
-    DEBUG_PRINTLN(chars_id);
+    ERROR_PRINT(F("ERROR: unknown bluetooth characteristic "));
+    ERROR_PRINTLN(chars_id);
   }
 }
 
@@ -622,13 +654,13 @@ void ChimeBluetooth::reactCharacteristicReceivedStatic(int32_t chars_id, uint8_t
 };
 
 void ChimeBluetooth::reactCentralConnected() {
-  DEBUG_PRINT(message_ble_bluetooth);
-  DEBUG_PRINT(F("central connected "));
+  TRACE_PRINT(PGMSTR(message_ble_bluetooth));
+  TRACE_PRINT(F("central connected "));
  
   if (ble.sendCommandCheckOK(F("AT+BLEGETPEERADDR"))) {
-    DEBUG_PRINTLN(ble.buffer);
+    TRACE_PRINTLN(ble.buffer);
   } else {
-    DEBUG_PRINTLN('?');
+    TRACE_PRINTLN('?');
   }
 };
 
@@ -637,8 +669,8 @@ void ChimeBluetooth::reactCentralConnectedStatic() {
 };
 
 void ChimeBluetooth::reactCentralDisconnected()  {
-  DEBUG_PRINT(message_ble_bluetooth);
-  DEBUG_PRINTLN(F("central disconnected"));
+  TRACE_PRINT(PGMSTR(message_ble_bluetooth));
+  TRACE_PRINTLN(F("central disconnected"));
 };
 
 void ChimeBluetooth::reactCentralDisconnectedStatic()  {
@@ -652,8 +684,8 @@ void ChimeBluetooth::publishAmbiance(ble_ambiance ambiance) {
   ble_ambiance_bytes content;
   content.data = ambiance;
 
-  DEBUG_PRINT(message_ble_bluetooth_publishing);
-  DEBUG_PRINTLN(F("ambiance"));
+  TRACE_PRINT(PGMSTR(message_ble_bluetooth_publishing));
+  TRACE_PRINTLN(F("ambiance"));
   
   // update the corresponding attribute value
   gatt.setChar(bleCharAmbiance, content.bytes, sizeof(content.bytes));
@@ -666,8 +698,8 @@ void ChimeBluetooth::publishAlarm1(ble_alarm alarm) {
   ble_alarm_bytes content;
   content.data = alarm;
   
-  DEBUG_PRINT(message_ble_bluetooth_publishing);
-  DEBUG_PRINTLN(F("alarm1"));
+  TRACE_PRINT(PGMSTR(message_ble_bluetooth_publishing));
+  TRACE_PRINTLN(F("alarm1"));
   
   // update the corresponding attribute value
   gatt.setChar(bleCharAlarm1, content.bytes, sizeof(content.bytes));
@@ -680,8 +712,8 @@ void ChimeBluetooth::publishAlarm2(ble_alarm alarm) {
   ble_alarm_bytes content;
   content.data = alarm;
   
-  DEBUG_PRINT(message_ble_bluetooth_publishing);
-  DEBUG_PRINTLN(F("alarm2"));
+  TRACE_PRINT(PGMSTR(message_ble_bluetooth_publishing));
+  TRACE_PRINTLN(F("alarm2"));
   
   // update the corresponding attribute value
   gatt.setChar(bleCharAlarm2, content.bytes, sizeof(content.bytes));
@@ -694,8 +726,8 @@ void ChimeBluetooth::publishTemperature1(float temp) {
   ble_float_bytes content;
   content.value = temp;
   
-  DEBUG_PRINT(message_ble_bluetooth_publishing);
-  DEBUG_PRINTLN(F("temperature1"));
+  TRACE_PRINT(PGMSTR(message_ble_bluetooth_publishing));
+  TRACE_PRINTLN(F("temperature1"));
   
   // update the corresponding attribute value
   gatt.setChar(bleCharTemperature1, content.bytes, sizeof(content.bytes));
@@ -708,8 +740,8 @@ void ChimeBluetooth::publishTemperature2(float temp) {
   ble_float_bytes content;
   content.value = temp;
 
-  DEBUG_PRINT(message_ble_bluetooth_publishing);
-  DEBUG_PRINTLN(F("temperature2"));
+  TRACE_PRINT(PGMSTR(message_ble_bluetooth_publishing));
+  TRACE_PRINTLN(F("temperature2"));
   
   // update the corresponding attribute value
   gatt.setChar(bleCharTemperature2, content.bytes, sizeof(content.bytes));
@@ -723,8 +755,8 @@ void ChimeBluetooth::publishUptime(uint32_t uptime_min) {
   ble_uint32_bytes content;
   content.value = uptime_min;
 
-  DEBUG_PRINT(message_ble_bluetooth_publishing);
-  DEBUG_PRINTLN(F("uptime"));
+  TRACE_PRINT(PGMSTR(message_ble_bluetooth_publishing));
+  TRACE_PRINTLN(F("uptime"));
   
   // update the corresponding attribute value
   gatt.setChar(bleCharUptime, content.bytes, sizeof(content.bytes));
@@ -738,8 +770,8 @@ void ChimeBluetooth::publishLightSensor(ble_light_sensor light_sensor) {
   ble_light_sensor_bytes content;
   content.data = light_sensor;
 
-  DEBUG_PRINT(message_ble_bluetooth_publishing);
-  DEBUG_PRINTLN(F("light sensor"));
+  TRACE_PRINT(PGMSTR(message_ble_bluetooth_publishing));
+  TRACE_PRINTLN(F("light sensor"));
   
   // update the corresponding attribute value
   gatt.setChar(bleCharLightSensor, content.bytes, sizeof(content.bytes));
@@ -753,8 +785,8 @@ void ChimeBluetooth::publishLightSettings(ble_light_settings settings) {
   ble_light_settings_bytes content;
   content.data = settings;
 
-  DEBUG_PRINT(message_ble_bluetooth_publishing);
-  DEBUG_PRINTLN(F("light settings"));
+  TRACE_PRINT(PGMSTR(message_ble_bluetooth_publishing));
+  TRACE_PRINTLN(F("light settings"));
   
   // update the corresponding attribute value
   gatt.setChar(bleCharLightSettings, content.bytes, sizeof(content.bytes));
@@ -767,8 +799,8 @@ void ChimeBluetooth::publishSoundSensor(ble_sound_sensor sound_sensor) {
   ble_sound_sensor_bytes content;
   content.data = sound_sensor;
   
-  DEBUG_PRINT(message_ble_bluetooth_publishing);
-  DEBUG_PRINTLN(F("sound sensor"));
+  TRACE_PRINT(PGMSTR(message_ble_bluetooth_publishing));
+  TRACE_PRINTLN(F("sound sensor"));
   
   // update the corresponding attribute value
   gatt.setChar(bleCharSoundSensor, content.bytes, sizeof(content.bytes));
@@ -781,8 +813,8 @@ void ChimeBluetooth::publishSoundSettings(ble_sound_settings settings) {
   ble_sound_settings_bytes content;
   content.data = settings;
 
-  DEBUG_PRINT(message_ble_bluetooth_publishing);
-  DEBUG_PRINTLN(F("sound settings"));
+  TRACE_PRINT(PGMSTR(message_ble_bluetooth_publishing));
+  TRACE_PRINTLN(F("sound settings"));
   
   // update the corresponding attribute value
   gatt.setChar(bleCharSoundSettings, content.bytes, sizeof(content.bytes));

@@ -435,6 +435,29 @@ export class ChimuinoProvider {
 	public versionLoaded:boolean = false;
 	public firmwareVersion:String = "???";
 
+	public uptimeLoaded = false;
+	private _uptime:number = 0; // unknown; uptime in minutes
+
+	get uptime() {
+		let minutes = this._uptime;
+		let hours = Math.floor(minutes/60);
+		minutes = minutes % 60;
+		let days = Math.floor(hours/24);
+		hours = hours % 24;
+		let months = Math.floor(days/30);
+		let years = Math.floor(days/365);
+		days = days % 30;
+		months = months % 12;
+
+		let res = "";
+		if (years > 0) res = res + years + "y ";
+		if (months > 0) res = res + months + "m ";
+		if (days > 0) res = res + days + "d ";
+		if (hours > 0) res = res + hours + "h ";
+		if (minutes > 0) res = res + minutes + "m ";
+		return res;
+	}
+
 	public temperatureLoaded:boolean = false;
 	private _temperature:number = null;
 	private _temperature1:number = null;
@@ -470,9 +493,13 @@ export class ChimuinoProvider {
 		this._temperature2 = dv.getFloat32(0);
 	}
 
+	private onUptimeReceived(buffer:any) {
+		let dv = new DataView(buffer);
+		
+		this._uptime = dv.getUint32(0);	
+		this.uptimeLoaded = true;
+	}
 
-	public uptimeLoaded = false;
-	public uptime:String = "???";
 
 	constructor(//public http: HttpClient,
   			  private ble: BLE,
@@ -725,7 +752,7 @@ export class ChimuinoProvider {
 		// ... and also pure characteristics
 		this.read(
 			ChimuinoProvider.SERVICE_CHIMUINO, 	ChimuinoProvider.CHARACTERISTIC_UPTIME, 
-			(data) => { this.onAmbianceReceived(data); });
+			(data) => { this.onUptimeReceived(data); });
 
 		// read and listen to data which evolves 
 		this.readAndListen(

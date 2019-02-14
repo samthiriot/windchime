@@ -46,8 +46,8 @@ void ChimeSoundSensor::debugSerial() {
 
 void ChimeSoundSensor::setup(Persist* _persist) {
 
-  DEBUG_PRINT(message_init); 
-  DEBUG_PRINTLN(F("sound sensor..."));
+  TRACE_PRINT(message_init); 
+  TRACE_PRINTLN(F("sound sensor..."));
 
   sensor.setup(-1, -1); // we have no f idea of what are the min and max for such a sensor !
   sensor.sense();
@@ -56,14 +56,14 @@ void ChimeSoundSensor::setup(Persist* _persist) {
   if (persist->hasDataStored()) {
     // there is data persisted ! Let's load it :-)
     factorThreshold = persist->getSoundThreshold();
-    DEBUG_PRINTLN(F("loaded data from saved state"));
+    TRACE_PRINTLN(F("loaded data from saved state"));
   } else {
-    DEBUG_PRINTLN(F("no saved state, defining the default state..."));
+    ERROR_PRINTLN(F("no saved state, defining the default state..."));
     storeState();
   }
   
-  DEBUG_PRINT(message_init); 
-  DEBUG_PRINTLN(F("sound sensor ok"));
+  TRACE_PRINT(message_init); 
+  TRACE_PRINTLN(F("sound sensor ok"));
 }
 
 

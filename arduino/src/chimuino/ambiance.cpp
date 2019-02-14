@@ -21,9 +21,9 @@ void Ambiance::setup(Persist* _persist, ChimeSoundSensor* _soundSensor, ChimeLig
   if (persist->hasDataStored()) {
     // there is data persisted ! Let's load it :-)
     enabled = persist->getAmbianceEnabled();
-    DEBUG_PRINTLN(F("loaded ambiance data from saved state"));
+    TRACE_PRINTLN(F("loaded ambiance data from saved state"));
   } else {
-    DEBUG_PRINTLN(F("no saved state for ambiance, defining the default state..."));
+    ERROR_PRINTLN(F("no saved state for ambiance, defining the default state..."));
     storeState();
   }
 
@@ -40,7 +40,7 @@ void Ambiance::publishBluetoothData() {
 }
 
 void Ambiance::debugSerial() {
-  #ifdef DEBUG
+  #ifdef TRACE
   Serial << F("Ambiance: ") 
          << (enabled ? F("enabled") : F("disabled"))
          << endl;
@@ -72,26 +72,26 @@ Intention Ambiance::proposeNextMode(enum mode current_mode, unsigned long next_p
     int r = random(0,100);
     if (r <= 60) { 
       additionalDelay = millis() + random(10,60)*1000l;
-      DEBUG_PRINT(F("a bit of silence for ")); DEBUG_PRINT(additionalDelay/1000); DEBUG_PRINTLN('s');
+      TRACE_PRINT(F("a bit of silence for ")); TRACE_PRINT(additionalDelay/1000); TRACE_PRINTLN('s');
       return Intention { SILENCE,  millis() + additionalDelay};
     } else if (r <= 65) {
       additionalDelay = millis() + random(4*60,15*60)*1000l;
-      DEBUG_PRINT(F("mood strong in ")); DEBUG_PRINT(additionalDelay/1000); DEBUG_PRINTLN('s');
+      TRACE_PRINT(F("mood strong in ")); TRACE_PRINT(additionalDelay/1000); TRACE_PRINTLN('s');
       return Intention { AMBIANCE_REVEIL,  millis() + additionalDelay};
     } else if (r <= 75) {
       additionalDelay = millis() + random(4*60,10*60)*1000l;  
-      DEBUG_PRINT(F("mood medium in ")); DEBUG_PRINT(additionalDelay/1000); DEBUG_PRINTLN('s');
+      TRACE_PRINT(F("mood medium in ")); TRACE_PRINT(additionalDelay/1000); TRACE_PRINTLN('s');
       return Intention { AMBIANCE_PREREVEIL,  millis() + additionalDelay};
     } else {
       additionalDelay = millis() + random(4*60,10*60)*1000l;  
-      DEBUG_PRINT(F("mood light in ")); DEBUG_PRINT(additionalDelay/1000); DEBUG_PRINTLN('s');
+      TRACE_PRINT(F("mood light in ")); TRACE_PRINT(additionalDelay/1000); TRACE_PRINTLN('s');
       return Intention { AMBIANCE_TINTEMENT,  millis() + additionalDelay};
     }
   } else if (!canPlay and 
           (current_mode == AMBIANCE_TINTEMENT or current_mode == AMBIANCE_PREREVEIL or current_mode == AMBIANCE_REVEIL)
           ) {
       // disable planned ambiance if any!
-      DEBUG_PRINTLN(F("no more sound for ambiance."));
+      TRACE_PRINTLN(F("no more sound for ambiance."));
       return Intention { NOTHING,  millis() };
   }
   

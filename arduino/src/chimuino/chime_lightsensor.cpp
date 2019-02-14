@@ -47,8 +47,8 @@ void ChimeLightSensor::debugSerial() {
 
 void ChimeLightSensor::setup(Persist* _persist) {
 
-  DEBUG_PRINT(message_init); 
-  DEBUG_PRINTLN(F("light sensor..."));
+  TRACE_PRINT(message_init); 
+  TRACE_PRINTLN(F("light sensor..."));
 
   sensor.setup(0, -1); // we assume no light means 0, but have no idea of the max
   sensor.sense();
@@ -57,14 +57,14 @@ void ChimeLightSensor::setup(Persist* _persist) {
   if (persist->hasDataStored()) {
     // there is data persisted ! Let's load it :-)
     factorThreshold = persist->getLightThreshold();
-    DEBUG_PRINTLN(F("loaded data from saved state"));
+    TRACE_PRINTLN(F("loaded data from saved state"));
   } else {
-    DEBUG_PRINTLN(F("no saved state, defining the default state..."));
+    ERROR_PRINTLN(F("no saved state, defining the default state..."));
     storeState();
   }
 
-  DEBUG_PRINT(message_init); 
-  DEBUG_PRINTLN(F("light sensor ok"));
+  TRACE_PRINT(message_init); 
+  TRACE_PRINTLN(F("light sensor ok"));
 }
 
 void ChimeLightSensor::storeState() {
@@ -119,7 +119,7 @@ Intention ChimeLightSensor::proposeNextMode(enum mode current_mode, unsigned lon
   previousIsDark = isDarkNow;
   if ( (current_mode == NOTHING) && (!isDarkNow) && (wasDark) ) {
       // light just came back; welcome it!
-      DEBUG_PRINTLN(F("welcoming the sun ;-)"));
+      TRACE_PRINTLN(F("welcoming the sun ;-)"));
       return Intention { WELCOME_SUN,  millis() };
   }
   return Intention { current_mode, next_planned_action };

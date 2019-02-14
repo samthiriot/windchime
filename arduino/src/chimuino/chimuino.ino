@@ -28,8 +28,6 @@
 
 // sketch settings
 
-#define DEBUG_SERIAL true                                         // config debug
-
 // frequency for displaying debug messages on the state
 #define FREQUENCY_DEBUG 5000
 long lastDisplayDebug = millis();
@@ -52,6 +50,10 @@ long lastDisplayDebug = millis();
 #define STEPPER_PIN_3 6
 #define STEPPER_PIN_4 7
 
+// pins for the RTC 3132 bug which plugs in I2C.
+#define SDA A4
+#define SCL A5
+
 #define SOUND_PIN A1
 #define PHOTOCELL_PIN A0                                                  // port for the photovoltaic cell
 
@@ -66,7 +68,7 @@ ChimeClock clock;
 ChimeAlarm alarm1(1);
 ChimeAlarm alarm2(2);
 
-ChimeBluetooth bluetooth(BLUEFRUIT_UART_CTS_PIN, BLUEFRUIT_UART_MODE_PIN, BLUEFRUIT_SWUART_TXD_PIN, BLUEFRUIT_SWUART_RXD_PIN, BLUEFRUIT_UART_RTS_PIN);
+ChimeBluetooth bluetooth(BLUEFRUIT_SWUART_TXD_PIN, BLUEFRUIT_SWUART_RXD_PIN, BLUEFRUIT_UART_MODE_PIN, BLUEFRUIT_UART_CTS_PIN, BLUEFRUIT_UART_CTS_PIN);
 
 ChimeSoundSensor soundSensor(SOUND_PIN);
 ChimeLightSensor lightSensor(PHOTOCELL_PIN);
@@ -82,10 +84,9 @@ Ambiance ambiance;
 // +---------------------------------------------+
 void setupRandom() {
     pinMode(RANDOM_PIN, INPUT);                                           // this pin is used to init the random network generator
+    // TODO use BLE dongle instead?
     int seed = analogRead(RANDOM_PIN);
-  #ifdef DEBUG_SERIAL
-    Serial.print("init: random seed is "); Serial.print(seed); Serial.println();
-  #endif
+    TRACE_PRINT(F("init: random seed is ")); TRACE_PRINTLN(seed); 
     randomSeed(seed);
 }
 

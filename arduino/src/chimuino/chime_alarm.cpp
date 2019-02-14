@@ -8,6 +8,11 @@
 #include <Streaming.h>
 #include <TimeLib.h>
 
+
+  #include <avr/pgmspace.h>
+
+ const char message_alarm [] PROGMEM = "ALARM";
+ 
 ChimeAlarm::ChimeAlarm(byte _id):
             BluetoothInformationProducer(),
             IntentionProvider() {
@@ -20,7 +25,7 @@ ChimeAlarm::ChimeAlarm(byte _id):
 
 void ChimeAlarm::setup(Persist* _persist) {
 
-  DEBUG_PRINT(message_init); DEBUG_PRINT(F("ALARM")); DEBUG_PRINT_DEC(id); DEBUG_PRINTLN(F("..."));
+  TRACE_PRINT(message_init); TRACE_PRINT(message_alarm); TRACE_PRINT_DEC(id); TRACE_PRINTLN(F("..."));
 
   persist = _persist; 
   if (persist->hasDataStored()) {
@@ -38,13 +43,13 @@ void ChimeAlarm::setup(Persist* _persist) {
     thursday = read.thursday;
     friday = read.friday;
     saterday = read.saterday;
-    DEBUG_PRINTLN(F("loaded data from saved state"));
+    TRACE_PRINTLN(F("loaded data from saved state"));
   } else {
-    DEBUG_PRINTLN(F("no saved state, defining the default state..."));
+    ERROR_PRINTLN(F("no saved state, defining the default state..."));
     storeState();
   }
 
-  DEBUG_PRINT(message_init); DEBUG_PRINT(F("ALARM")); DEBUG_PRINT_DEC(id); DEBUG_PRINTLN(F(" ok"));
+  DEBUG_PRINT(PGMSTR(message_init)); DEBUG_PRINT(PGMSTR(message_alarm)); DEBUG_PRINT_DEC(id); DEBUG_PRINT(' '); DEBUG_PRINTLN(PGMSTR(msg_ok_dot));
 }
 
 void ChimeAlarm::storeState() { 
@@ -56,8 +61,8 @@ void ChimeAlarm::storeState() {
 }
 
 void ChimeAlarm::debugSerial() {
-  #ifdef DEBUG
-  Serial << F("Alarm ALARM") << id << F(": ") 
+  #ifdef TRACE
+  Serial << message_alarm << id << F(": ") 
          << _DEC(start_hour) << ':' << _DEC(start_minutes) << ' ' 
          << (enabled ? F("enabled") : F("disabled")) << ' '
          << _DEC(durationSoft) << ' ' << _DEC(durationStrong) << F(" days:")
@@ -114,7 +119,7 @@ void ChimeAlarm::publishBluetoothData() {
   } else if (id == 2) {
     this->bluetooth->publishAlarm2(content);
   } else {
-    DEBUG_PRINTLN(F("ERROR: wrong alarm id"));
+    ERROR_PRINTLN(F("ERROR: wrong alarm id"));
   }
 }
 
@@ -200,18 +205,18 @@ Intention ChimeAlarm::proposeNextMode(enum mode current_mode, unsigned long next
   if (shouldPrering()) {
     if (current_mode != PREALARM) {
       // we should prering, but we don't; let's propose to act !
-      DEBUG_PRINT(F("alarm")); DEBUG_PRINT_DEC(id); DEBUG_PRINTLN(F(" prering"));
+      TRACE_PRINT(F("alarm")); TRACE_PRINT_DEC(id); TRACE_PRINTLN(F(" prering"));
       return Intention { PREALARM,  millis() + random(1*60*1000l,5*60*1000l) };
     }
   } else if (shouldRing()) {
     if (current_mode != ALARM) {
       // we should ring, but we don't; let's propose to ring !
-      DEBUG_PRINT(F("alarm")); DEBUG_PRINT_DEC(id); DEBUG_PRINTLN(F(" ring"));
+      TRACE_PRINT(F("alarm")); TRACE_PRINT_DEC(id); TRACE_PRINTLN(F(" ring"));
       return Intention { ALARM,  millis() + random(1*60*1000l,5*60*1000l) };
     }
   } else if (current_mode == PREALARM or current_mode == ALARM) {
     // we were intending to alarm, but it's no time anymore; let's stop and leave some silence
-    DEBUG_PRINT(F("no more alarm ALARM"));DEBUG_PRINTLN(id);
+    TRACE_PRINT(F("no more alarm ALARM"));TRACE_PRINTLN(id);
     return Intention { SILENCE,  millis() + 60*1000l };
   }
 

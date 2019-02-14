@@ -63,7 +63,7 @@ BluetoothListenerAnswer Chime::receivedActionRing(ble_ring_action action) {
 Intention Chime::proposeNextMode(enum mode current_mode, unsigned long next_planned_action) {
 
   if ( (current_mode == NOTHING or current_mode == SILENCE) and demoAsked != NOTHING) {
-    DEBUG_PRINT("Doing demo of "); DEBUG_PRINTLN(mode2str(demoAsked));
+    TRACE_PRINT("Doing demo of "); TRACE_PRINTLN(mode2str(demoAsked));
     enum mode demoAsked2 = demoAsked;
     demoAsked = NOTHING;
     return Intention { demoAsked2,  millis() }; 

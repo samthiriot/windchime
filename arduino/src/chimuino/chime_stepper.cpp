@@ -19,8 +19,8 @@ ChimeStepper::ChimeStepper(
     
 void ChimeStepper::setup() {
 
-    DEBUG_PRINT(message_init); 
-    DEBUG_PRINTLN(F("stepper..."));
+    TRACE_PRINT(message_init); 
+    TRACE_PRINTLN(F("stepper..."));
 
     pinMode(pin1, OUTPUT);
     pinMode(pin2, OUTPUT);
@@ -31,8 +31,8 @@ void ChimeStepper::setup() {
     pull_medium = steps/12;
     pull_strong = steps/10;
 
-    DEBUG_PRINT(message_init); 
-    DEBUG_PRINTLN(F("going to position free"));
+    TRACE_PRINT(message_init); 
+    TRACE_PRINTLN(F("going to position free"));
  
     motor.setSpeed(MOTOR_SPEED_SLOW);
     motor.step(pull_medium);
@@ -41,8 +41,8 @@ void ChimeStepper::setup() {
       
     doFreeWheel(); // relax and don't consume energy
 
-    DEBUG_PRINT(message_init); 
-    DEBUG_PRINTLN(F("stepper ok"));
+    TRACE_PRINT(message_init); 
+    TRACE_PRINTLN(F("stepper ok"));
 }
 
 /**
@@ -56,7 +56,7 @@ void ChimeStepper::doFreeWheel() {
 }
 
 void ChimeStepper::doReveil() {
-  DEBUG_PRINTLN(F("reveil..."));
+  TRACE_PRINTLN(F("reveil..."));
   for (int i=0; i<random(3,7); i++){
     motor.setSpeed(MOTOR_SPEED_QUICK);
     motor.step(pull_strong);
@@ -69,7 +69,7 @@ void ChimeStepper::doReveil() {
 }
   
 void ChimeStepper::doPreReveil() {
-  DEBUG_PRINTLN(F("prereveil..."));
+  TRACE_PRINTLN(F("prereveil..."));
   for (int i=0; i<random(2,7); i++){
     motor.setSpeed(MOTOR_SPEED_SLOW);
     motor.step(pull_medium);
@@ -83,7 +83,7 @@ void ChimeStepper::doPreReveil() {
 
 
 void ChimeStepper::doTintement() {
-  DEBUG_PRINTLN(F("prereveil..."));
+  TRACE_PRINTLN(F("prereveil..."));
   for (int i=0; i<random(1,5); i++){
     motor.setSpeed(MOTOR_SPEED_SLOW);
     motor.step(pull_light);

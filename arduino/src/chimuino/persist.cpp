@@ -13,13 +13,13 @@ void Persist::setup() {
   EEPROM.get(PERSIST_BASE_ADDRESS, persisted);
   isReadValid = (persisted.magic == PERSIST_MAGIC);
   if (!isReadValid) {
-    DEBUG_PRINTLN("init persistence: wrong magic, will not read anything !");
+    ERROR_PRINTLN("init persistence: wrong magic, will not read anything !");
     // init values with something which makes sense
     persisted.magic = PERSIST_MAGIC;
     persisted.struct_version = PERSIST_VERSION_CURRENT;
     // the other (nice !) components should tell us soon which default value to write for each parameter.
   } else {
-    DEBUG_PRINTLN("init persistence: read from EEPROM.");
+    TRACE_PRINTLN("init persistence: read from EEPROM.");
   }
 };
 
@@ -27,7 +27,7 @@ void Persist::setup() {
 void Persist::storeIfRequired() {
   
   if ((lastUpdate > 0) and (millis()-lastUpdate >= PERSIST_DELAY_MS)) {
-    DEBUG_PRINTLN(F("Time to persist data into non-volatile memory..."));
+    TRACE_PRINTLN(F("Time to persist data into non-volatile memory..."));
     EEPROM.put(PERSIST_BASE_ADDRESS, persisted);
     lastUpdate = 0;
   }

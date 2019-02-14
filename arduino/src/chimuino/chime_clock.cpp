@@ -35,15 +35,15 @@ time_t compileTime()
 
 void ChimeClock::setup() {
 
-  DEBUG_PRINT(message_init); 
-  DEBUG_PRINTLN(F("RTC..."));
+  TRACE_PRINT(PGMSTR(message_init)); 
+  TRACE_PRINTLN(F("RTC..."));
   
   // tells the TimeLib library that time is provided by our RTC chip
   setSyncProvider(RTC.get);
   setSyncInterval(1);         // only one second for resync
 
   if (timeStatus() == timeNotSet or RTC.oscStopped(false)) {
-     DEBUG_PRINTLN(F("WARN: RTC is NOT running! Initializing with compilation time."));
+     ERROR_PRINTLN(F("WARN: RTC is NOT running! Initializing with compilation time."));
      time_t compilation_time = compileTime();
      RTC.set(compilation_time);
      setTime(compilation_time);
@@ -59,8 +59,8 @@ void ChimeClock::setup() {
 
   startTimestamp = millis();
 
-  DEBUG_PRINT(message_init); 
-  DEBUG_PRINTLN(F("RTC ok"));
+  TRACE_PRINT(PGMSTR(message_init)); 
+  TRACE_PRINTLN(F("RTC ok"));
 
 }
 
