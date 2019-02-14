@@ -19,7 +19,7 @@ const char msg_ok_dot[] PROGMEM  = { "ok."};
 
 #ifdef SERIAL
 
-  #define DEBUG_SETUP()       Serial.begin(115200)
+  #define DEBUG_SETUP()       Serial.begin(115200); while (!Serial);
   
 #else
 

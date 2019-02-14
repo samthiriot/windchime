@@ -37,6 +37,12 @@
 #include "Adafruit_BLEGatt.h"
 //#include "IEEE11073float.h"
 
+const uint8_t BLUEFRUIT_UART_CTS_PIN=9;
+const uint8_t BLUEFRUIT_UART_MODE_PIN=8;
+const uint8_t BLUEFRUIT_SWUART_TXD_PIN=11;
+const uint8_t BLUEFRUIT_SWUART_RXD_PIN=10;
+const uint8_t BLUEFRUIT_UART_RTS_PIN=12;
+
 // the services and characteristics we will publish
 #define BLE_GATT_SERVICE_SENSING      0x181A // https://www.bluetooth.com/specifications/assigned-numbers/environmental-sensing-service-characteristics
 #define BLE_GATT_CHAR_TEMPERATURE     0x2A6E // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.temperature.xml
@@ -53,6 +59,7 @@
 #define BLE_GATT_CHAR_ALARM2          0x5552
 #define BLE_GATT_CHAR_AMBIANCE        0x5553 // settings such as "enable chiming"
 #define BLE_GATT_CHAR_UPTIME          0x5554 // in minutes
+
 
 
 // if true, the initialization of the dongle is verbose
@@ -131,12 +138,10 @@ class ChimeSoundSensor;
 class Chime; 
 class Ambiance;
 
+
 class ChimeBluetooth {
 
   private:
-
-    // the singleton instance
-    static ChimeBluetooth* singleton;
 
     ChimeClock* clock;
     ChimeAlarm* alarm1;
@@ -163,21 +168,22 @@ class ChimeBluetooth {
     int32_t bleCharSoundSensor;
     int32_t bleCharSoundSettings;
 
+  /*  TODO
     // the serial access to the bluetooth dongle
     SoftwareSerial bluefruitSS;
     // the UART wrapper to the bluetooth dongle
     Adafruit_BluefruitLE_UART ble;
     // the Gatt accessor to bluetooth services
     Adafruit_BLEGatt gatt;
+*/ 
 
-    // called when a central device connected to BLE
-    void reactCentralConnected();
-    void reactCentralDisconnected();
-    void reactCharacteristicReceived(int32_t chars_id, uint8_t data[], uint16_t len);
-    // callbacks have to be static; they redirect the query to the singleton instance
-    static void reactCentralConnectedStatic();
-    static void reactCentralDisconnectedStatic();
-    static void reactCharacteristicReceivedStatic(int32_t chars_id, uint8_t data[], uint16_t len);
+
+    SoftwareSerial bluefruitSS = SoftwareSerial(BLUEFRUIT_SWUART_TXD_PIN, BLUEFRUIT_SWUART_RXD_PIN);
+    
+    Adafruit_BluefruitLE_UART ble = Adafruit_BluefruitLE_UART(bluefruitSS, BLUEFRUIT_UART_MODE_PIN, BLUEFRUIT_UART_CTS_PIN, BLUEFRUIT_UART_RTS_PIN);
+    Adafruit_BLEGatt gatt = Adafruit_BLEGatt(ble);
+    
+
 
     // declarations of services and of the corresponding characteristics
     void setup_service_chimuino();
@@ -209,6 +215,11 @@ class ChimeBluetooth {
     ChimeBluetooth(unsigned short _pinTXD, unsigned short _pinRXD,
                    unsigned short _pinMode, unsigned short _pinCTS, unsigned short _pinRTS);
     void setup();
+
+    // called when a central device connected to BLE
+    void reactCentralConnected();
+    void reactCentralDisconnected();
+    void reactCharacteristicReceived(int32_t chars_id, uint8_t data[], uint16_t len);
 
     void sendDebug();
 

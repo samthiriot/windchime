@@ -43,7 +43,19 @@
 
 #include <Arduino.h>
 
-ChimeBluetooth* ChimeBluetooth::singleton = NULL;
+// callbacks have to be static; they redirect the query to the singleton instance
+
+ChimeBluetooth* ble_singleton = NULL;
+void reactCharacteristicReceivedStatic(int32_t chars_id, uint8_t data[], uint16_t len) {
+  ble_singleton->reactCharacteristicReceived(chars_id, data, len);
+};
+
+void reactCentralConnectedStatic() {
+    ble_singleton->reactCentralConnected();
+};
+void reactCentralDisconnectedStatic()  {
+  ble_singleton->reactCentralDisconnected();
+};
 
 // converter between uint16 and bytes
 union ble_uint16_bytes {
@@ -106,14 +118,13 @@ union ble_sound_settings_bytes {
 };
 
 ChimeBluetooth::ChimeBluetooth(unsigned short _pinTXD, unsigned short _pinRXD, 
-                               unsigned short _pinMode, unsigned short _pinCTS, unsigned short _pinRTS):
-      bluefruitSS(_pinTXD, _pinRXD),
+                               unsigned short _pinMode, unsigned short _pinCTS, unsigned short _pinRTS)//:
+      /*bluefruitSS(_pinTXD, _pinRXD),
       ble(bluefruitSS, _pinMode, _pinCTS, _pinRTS),
-      gatt(ble) {
+      gatt(ble)*/ {
 
   // store this instance as the singleton instance
-  ChimeBluetooth::singleton = this;
-  // TODO detect redefinition of singleton
+  ble_singleton = this;
   
 }
 
@@ -128,8 +139,6 @@ void ChimeBluetooth::setup() {
   } else {
     DEBUG_PRINTLN(PGMSTR(msg_ok_dot));
   }
-
-  DEBUG_PRINTLN("toto1");
   
   #ifdef BLE_FACTORYRESET_ENABLE 
   /* Perform a factory reset to make sure everything is in a known state */
@@ -145,8 +154,6 @@ void ChimeBluetooth::setup() {
   /* Disable command echo from Bluefruit */
   ble.echo(false);
 
-DEBUG_PRINTLN("toto2");
-  
   TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
   TRACE_PRINT(F("setting name... "));
   if (! ble.sendCommandCheckOK(F( "AT+GAPDEVNAME=Chimuino2" ))) {
@@ -171,15 +178,16 @@ DEBUG_PRINTLN("toto2");
   TRACE_PRINTLN(F("installing callbacks... "));
   // set callbacks to be called when...
   // ... some central device connects,
-  ble.setConnectCallback(ChimeBluetooth::reactCentralConnectedStatic);
+  ble.setConnectCallback(reactCentralConnectedStatic);
   // ... disconnects,
-  ble.setDisconnectCallback(ChimeBluetooth::reactCentralDisconnectedStatic);
+  ble.setDisconnectCallback(reactCentralDisconnectedStatic);
   // ... or when an attribute value changed!
-  ble.setBleGattRxCallback(bleCharCurrentTime,    ChimeBluetooth::reactCharacteristicReceivedStatic);
-  ble.setBleGattRxCallback(bleCharAlarm1,         ChimeBluetooth::reactCharacteristicReceivedStatic);
-  ble.setBleGattRxCallback(bleCharAlarm2,         ChimeBluetooth::reactCharacteristicReceivedStatic);
-  ble.setBleGattRxCallback(bleCharAmbiance,       ChimeBluetooth::reactCharacteristicReceivedStatic);
-  ble.setBleGattRxCallback(bleCharLightSettings,  ChimeBluetooth::reactCharacteristicReceivedStatic);
+  ble.setBleGattRxCallback(bleCharCurrentTime,    reactCharacteristicReceivedStatic);
+  ble.setBleGattRxCallback(bleCharAlarm1,         reactCharacteristicReceivedStatic);
+  ble.setBleGattRxCallback(bleCharAlarm2,         reactCharacteristicReceivedStatic);
+  ble.setBleGattRxCallback(bleCharAmbiance,       reactCharacteristicReceivedStatic);
+  ble.setBleGattRxCallback(bleCharLightSettings,  reactCharacteristicReceivedStatic);
+  ble.setBleGattRxCallback(bleCharSoundSettings,  reactCharacteristicReceivedStatic);
 
   DEBUG_PRINT(PGMSTR(message_ble_init_bluetooth));
   DEBUG_PRINTLN(PGMSTR(msg_ok_dot));
@@ -372,7 +380,7 @@ void ChimeBluetooth::setup_char_sound_settings() {
     // GATT_CHARS_PROPERTIES_WRITE
     bleCharSoundSettings = gatt.addCharacteristic(
       // format
-      BLE_GATT_CHAR_LIGHT_SETTINGS,
+      BLE_GATT_CHAR_SOUND_SETTINGS,
       // properties
       GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_WRITE, 
       // data size min, max, 
@@ -631,6 +639,9 @@ void ChimeBluetooth::decodeSoundSettings(uint8_t data[], uint16_t len) {
 
 void ChimeBluetooth::reactCharacteristicReceived(int32_t chars_id, uint8_t data[], uint16_t len) {
 
+  DEBUG_PRINT(F("bluetooth: received val for char"));
+  DEBUG_PRINTLN(chars_id);
+  
   if (chars_id == bleCharCurrentTime) {
     decodeCurrentDateTime(data, len);
   } else if (chars_id == bleCharAlarm1) {
@@ -649,9 +660,9 @@ void ChimeBluetooth::reactCharacteristicReceived(int32_t chars_id, uint8_t data[
   }
 }
 
-void ChimeBluetooth::reactCharacteristicReceivedStatic(int32_t chars_id, uint8_t data[], uint16_t len) {
-  singleton->reactCharacteristicReceivedStatic(chars_id, data, len);
-};
+/*void ChimeBluetooth::reactCharacteristicReceivedStatic(int32_t chars_id, uint8_t data[], uint16_t len) {
+  ble_singleton->reactCharacteristicReceivedStatic(chars_id, data, len);
+};*/
 
 void ChimeBluetooth::reactCentralConnected() {
   TRACE_PRINT(PGMSTR(message_ble_bluetooth));
@@ -664,19 +675,11 @@ void ChimeBluetooth::reactCentralConnected() {
   }
 };
 
-void ChimeBluetooth::reactCentralConnectedStatic() {
-    singleton->reactCentralConnected();
-};
 
 void ChimeBluetooth::reactCentralDisconnected()  {
   TRACE_PRINT(PGMSTR(message_ble_bluetooth));
   TRACE_PRINTLN(F("central disconnected"));
 };
-
-void ChimeBluetooth::reactCentralDisconnectedStatic()  {
-  singleton->reactCentralDisconnected();
-};
-
 
 void ChimeBluetooth::publishAmbiance(ble_ambiance ambiance) {
 

@@ -102,7 +102,9 @@ mode current_mode = NOTHING;
 void setup() {
   
   DEBUG_SETUP();
-
+  
+  delay(500);
+  
   setupRandom();
 
   persist.setup();

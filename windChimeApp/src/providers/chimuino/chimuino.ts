@@ -313,18 +313,18 @@ export class ChimuinoProvider {
 	alarm2loaded:boolean = false;
 
 	// data for alarm 1
-	_alarm2hour:number = 7;
-	_alarm2minutes:number = 25;
+	_alarm2hour:number = 9;
+	_alarm2minutes:number = 30;
 	_alarm2enabled:boolean = false;
-	_alarm2soft:number = 10;
-	_alarm2strong:number = 15;
-	_alarm2sunday:boolean = false;
-	_alarm2monday:boolean = true;
-	_alarm2tuesday:boolean = true;
-	_alarm2wednesday:boolean = true;
-	_alarm2thursday:boolean = true;
-	_alarm2friday:boolean = true;
-	_alarm2saturday:boolean = false;
+	_alarm2soft:number = 30;
+	_alarm2strong:number = 0;
+	_alarm2sunday:boolean = true;
+	_alarm2monday:boolean = false;
+	_alarm2tuesday:boolean = false;
+	_alarm2wednesday:boolean = false;
+	_alarm2thursday:boolean = false;
+	_alarm2friday:boolean = false;
+	_alarm2saturday:boolean = true;
 
 	// getters for alarm2 data
 	get alarm2enabled():boolean 	{ return this._alarm2enabled; 		}
@@ -804,6 +804,7 @@ export class ChimuinoProvider {
 					(enabled) => {
 						this.ble.connect(this._device.id).subscribe( 
 							(device) => {
+										this.displayDebug("updating char "+characteristic);
 										this.ble.write(
 												this._device.id, service, characteristic, 
 												buffer);
@@ -818,7 +819,9 @@ export class ChimuinoProvider {
 		} else {
 			this.ble.write(
 				this._device.id, service, characteristic, 
-				buffer);	
+				buffer)
+			.then( (success) => { this.displayDebug("updated char "+characteristic); } )
+			.catch( (error) => { this.displayDebug("error update char "+error); } );
 		}
 
 		
