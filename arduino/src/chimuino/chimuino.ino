@@ -29,7 +29,7 @@
 // sketch settings
 
 // frequency for displaying debug messages on the state
-#define FREQUENCY_DEBUG 5000
+#define FREQUENCY_DEBUG 1000
 long lastDisplayDebug = millis();
 
 
@@ -56,8 +56,9 @@ long lastDisplayDebug = millis();
 
 #define SOUND_PIN A1
 #define PHOTOCELL_PIN A0                                                  // port for the photovoltaic cell
+#define BUTTON_BLUETOOTH_CONNECT A2
+#define RANDOM_PIN A3                                                     // refers to a pin unconnected supposed to catch white noise 
 
-#define RANDOM_PIN A2                                                     // refers to a pin unconnected supposed to catch white noise 
 
 Persist persist;      // persistence object
 

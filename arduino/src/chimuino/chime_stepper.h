@@ -11,7 +11,7 @@
 #include <Stepper.h>
 
 #define MOTOR_SPEED_SLOW 5                                        // speed silencious
-#define MOTOR_SPEED_QUICK 10                                      // speed quick but less silencious
+#define MOTOR_SPEED_QUICK 7                                      // speed quick but less silencious
 #define MOTOR_SPEED_MAX 15                                        // max speed never to go beyond
 
 class ChimeStepper {
@@ -23,7 +23,8 @@ class ChimeStepper {
  
     // state
     unsigned short pull_light, pull_medium, pull_strong;
-    
+    unsigned short pull_light_bck, pull_medium_bck, pull_strong_bck;
+
     Stepper motor; 
 
   public:

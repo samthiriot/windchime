@@ -59,6 +59,7 @@ export class ChimuinoProvider {
 	private static readonly CHARACTERISTIC_ALARM2:string = "5552"; 
 	private static readonly CHARACTERISTIC_AMBIANCE:string = "5553"; 
 	private static readonly CHARACTERISTIC_UPTIME:string = "5554"; 
+	private static readonly CHARACTERISTIC_ACTIONS:string = "5555"; 
 
 	/**********************************************************************
 	 * Ambiance data storage and access
@@ -386,9 +387,7 @@ export class ChimuinoProvider {
 		dv.setUint8(10, durationSoft);
 		dv.setUint8(11, durationStrong);
 		
-		// ensure bluetooth is still enabled...
 		this.write(ChimuinoProvider.SERVICE_CHIMUINO, ChimuinoProvider.CHARACTERISTIC_ALARM2, dv.buffer);
-
 
 	}
 
@@ -500,7 +499,30 @@ export class ChimuinoProvider {
 		this.uptimeLoaded = true;
 	}
 
+	private sendActions(demo_ring:number, snooze:boolean, shutup:number) {
+		
+		let buffer = new ArrayBuffer(4);
+		let dv = new DataView(buffer);
+		dv.setUint8(0, demo_ring); 
+		dv.setUint8(1, snooze?1:0); 
+		dv.setUint16(2, shutup, true);
 
+		this.write(ChimuinoProvider.SERVICE_CHIMUINO, ChimuinoProvider.CHARACTERISTIC_ACTIONS, dv.buffer);
+
+	}
+	public doChimeLight() { 
+		this.sendActions(1, false, false);
+	}
+	public doChimeMedium() { 
+		this.sendActions(2, false, false);
+	}
+	public doChimeStrong() { 
+		this.sendActions(3, false, false);
+	}
+	public doSnooze() { 
+		this.sendActions(0, true, false);
+	}
+	
 	constructor(//public http: HttpClient,
   			  private ble: BLE,
   			  private storage: Storage,
@@ -954,10 +976,7 @@ export class ChimuinoProvider {
 
 	// TODO envelopes
 
-	doChimeLight()		{ this.sendMessage("DO CHIME LIGHT");		}
-	doChimeMedium()		{ this.sendMessage("DO CHIME MEDIUM");		}
-	doChimeStrong()		{ this.sendMessage("DO CHIME STRONG");		}
-	doSnooze()			{ this.sendMessage("DO SNOOZE");			}
+	
 
 	setSoundThreshold(t:number) { this.sendMessage("SET SOUNDTHRESHOLD "+t); }
 	setLightThreshold(t:number) { this.sendMessage("SET LIGHTTHRESHOLD "+t); }

@@ -47,18 +47,15 @@ void Chime::publishBluetoothData() {
   // this->bluetooth->publishAmbiance(content);
 }
 
-BluetoothListenerAnswer Chime::receivedActionRing(ble_ring_action action) {
-
-  // TODO react action !
-
-  /*
+void Chime::doDemoLight() {
   demoAsked = DEMO_LIGHT;
+}
+void Chime::doDemoMedium() {
   demoAsked = DEMO_MEDIUM;
+}
+void Chime::doDemoStrong() {
   demoAsked = DEMO_STRONG;
-  */
-
-  return PROCESSED;  
-};
+}
 
 Intention Chime::proposeNextMode(enum mode current_mode, unsigned long next_planned_action) {
 

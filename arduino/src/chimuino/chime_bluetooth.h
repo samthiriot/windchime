@@ -59,6 +59,7 @@ const uint8_t BLUEFRUIT_UART_RTS_PIN=12;
 #define BLE_GATT_CHAR_ALARM2          0x5552
 #define BLE_GATT_CHAR_AMBIANCE        0x5553 // settings such as "enable chiming"
 #define BLE_GATT_CHAR_UPTIME          0x5554 // in minutes
+#define BLE_GATT_CHAR_ACTIONS         0x5555 // in minutes
 
 
 
@@ -98,10 +99,6 @@ struct ble_ambiance {
   bool enabled;
 };
 
-struct ble_ring_action {
-  uint8_t strength;
-};
-
 struct ble_light_sensor {
   uint8_t level;
   uint8_t min;
@@ -123,6 +120,12 @@ struct ble_sound_sensor {
 
 struct ble_sound_settings {
   uint8_t threshold;
+};
+
+struct ble_actions {
+  uint8_t ring;     // 0 no ring; 1 ring slow; 3 ring strong 
+  bool snooze;      // if true, snooze (else 0)
+  uint16_t shutup;  // be quiet for that many minutes (or 0)
 };
   
 enum BluetoothListenerAnswer {
@@ -158,6 +161,7 @@ class ChimeBluetooth {
     int32_t bleCharAlarm2;
     int32_t bleCharAmbiance;
     int32_t bleCharUptime;
+    int32_t bleCharActions;
 
     int32_t bleServiceSensingId;
     int32_t bleCharTemperature;
@@ -168,22 +172,9 @@ class ChimeBluetooth {
     int32_t bleCharSoundSensor;
     int32_t bleCharSoundSettings;
 
-  /*  TODO
-    // the serial access to the bluetooth dongle
-    SoftwareSerial bluefruitSS;
-    // the UART wrapper to the bluetooth dongle
-    Adafruit_BluefruitLE_UART ble;
-    // the Gatt accessor to bluetooth services
-    Adafruit_BLEGatt gatt;
-*/ 
-
-
-    SoftwareSerial bluefruitSS = SoftwareSerial(BLUEFRUIT_SWUART_TXD_PIN, BLUEFRUIT_SWUART_RXD_PIN);
-    
+    SoftwareSerial bluefruitSS = SoftwareSerial(BLUEFRUIT_SWUART_TXD_PIN, BLUEFRUIT_SWUART_RXD_PIN);    
     Adafruit_BluefruitLE_UART ble = Adafruit_BluefruitLE_UART(bluefruitSS, BLUEFRUIT_UART_MODE_PIN, BLUEFRUIT_UART_CTS_PIN, BLUEFRUIT_UART_RTS_PIN);
     Adafruit_BLEGatt gatt = Adafruit_BLEGatt(ble);
-    
-
 
     // declarations of services and of the corresponding characteristics
     void setup_service_chimuino();
@@ -192,7 +183,8 @@ class ChimeBluetooth {
     void setup_char_light_settings();
     void setup_char_sound_sensor();
     void setup_char_sound_settings();
-    
+    void setup_char_actions();
+
     void setup_service_sensing();
     void setup_attribute_current_time();
     void setup_attribute_alarm1();
@@ -210,6 +202,7 @@ class ChimeBluetooth {
     void decodeAmbiance(uint8_t data[], uint16_t len);
     void decodeLightSettings(uint8_t data[], uint16_t len);
     void decodeSoundSettings(uint8_t data[], uint16_t len);
+    void decodeActions(uint8_t data[], uint16_t len);
 
   public:
     ChimeBluetooth(unsigned short _pinTXD, unsigned short _pinRXD,

@@ -34,13 +34,13 @@
             <ion-label range-left>0 min</ion-label>
             <ion-label range-right>30 min</ion-label>
       </ion-range>
-      <button ion-button block (click)="demoAlarmPrereveil()">demo prereveil</button>
+      <button ion-button block [disabled]="!chimuino.isConnected" (click)="demoAlarmPrereveil()">demo prereveil</button>
 
       <ion-range [disabled]="!chimuino.alarm1loaded" [(ngModel)]="chimuino.alarm1strong" debounce="100" min="5" max="30">
             <ion-label range-left>5 min</ion-label>
             <ion-label range-right>30 min</ion-label>
       </ion-range>
-      <button ion-button block (click)="demoAlarmReveil()">demo reveil</button>
+      <button ion-button block [disabled]="!chimuino.isConnected" (click)="demoAlarmReveil()">demo reveil</button>
 
     </ion-card-content>
   </ion-card>
@@ -71,13 +71,13 @@
             <ion-label range-left>0 min</ion-label>
             <ion-label range-right>30 min</ion-label>
       </ion-range>
-      <button ion-button block (click)="demoAlarmPrereveil()">demo prereveil</button>
+      <button ion-button block [disabled]="!chimuino.isConnected" (click)="demoAlarmPrereveil()">demo prereveil</button>
 
       <ion-range [disabled]="!chimuino.alarm2loaded" [(ngModel)]="chimuino.alarm2strong" debounce="100" min="5" max="30">
             <ion-label range-left>5 min</ion-label>
             <ion-label range-right>30 min</ion-label>
       </ion-range>
-      <button ion-button block (click)="demoAlarmReveil()">demo reveil</button>
+      <button ion-button block [disabled]="!chimuino.isConnected" (click)="demoAlarmReveil()">demo reveil</button>
 
     </ion-card-content>
   </ion-card>

@@ -19,12 +19,13 @@
 // messages for debug
 // factorized to save memory space
 
- const char message_ble_light_sensor [] PROGMEM = "light sensor";
+  const char message_ble_light_sensor [] PROGMEM = "light sensor";
   const char message_ble_light_settings [] PROGMEM = "light settings";
   const char message_ble_sound_sensor [] PROGMEM = "sound sensor";
   const char message_ble_sound_settings [] PROGMEM = "sound settings";
   const char message_ble_ambiance [] PROGMEM = "ambiance";
-
+  const char message_ble_actions [] PROGMEM = "actions";
+  
   const char message_ble_sensing [] PROGMEM = "sensing";
   const char message_ble_temperature [] PROGMEM = "temperature";  
   const char message_ble_current_time [] PROGMEM = "current time";
@@ -117,6 +118,12 @@ union ble_sound_settings_bytes {
   uint8_t bytes[sizeof(ble_sound_settings)];
 };
 
+// converter between actions and bytes
+union ble_actions_bytes {
+  ble_actions data;
+  uint8_t bytes[sizeof(ble_actions)];
+};
+
 ChimeBluetooth::ChimeBluetooth(unsigned short _pinTXD, unsigned short _pinRXD, 
                                unsigned short _pinMode, unsigned short _pinCTS, unsigned short _pinRTS)//:
       /*bluefruitSS(_pinTXD, _pinRXD),
@@ -130,7 +137,12 @@ ChimeBluetooth::ChimeBluetooth(unsigned short _pinTXD, unsigned short _pinRXD,
 
 
 void ChimeBluetooth::setup() {
-  
+
+  // TODO button pin is INPUT and has internal pullup active
+  // BUTTON_BLUETOOTH_CONNECT
+  // pinMode(2,INPUT_PULLUP);
+
+
   // initialize the BLE access (and detect HW problems)
   DEBUG_PRINT(PGMSTR(message_ble_init_bluetooth));
   DEBUG_PRINT(F("connecting hardware... "));
@@ -188,6 +200,7 @@ void ChimeBluetooth::setup() {
   ble.setBleGattRxCallback(bleCharAmbiance,       reactCharacteristicReceivedStatic);
   ble.setBleGattRxCallback(bleCharLightSettings,  reactCharacteristicReceivedStatic);
   ble.setBleGattRxCallback(bleCharSoundSettings,  reactCharacteristicReceivedStatic);
+  ble.setBleGattRxCallback(bleCharActions,        reactCharacteristicReceivedStatic);
 
   DEBUG_PRINT(PGMSTR(message_ble_init_bluetooth));
   DEBUG_PRINTLN(PGMSTR(msg_ok_dot));
@@ -212,7 +225,7 @@ void ChimeBluetooth::setup_service_sensing() {
     setup_char_light_settings();
     setup_char_sound_sensor();
     setup_char_sound_settings();
-    
+
     // TODO sound
     // TODO ...
     
@@ -394,6 +407,7 @@ void ChimeBluetooth::setup_char_sound_settings() {
     } 
 }
 
+
 void ChimeBluetooth::setup_service_chimuino() {
 
   TRACE_PRINT(PGMSTR(message_ble_bluetooth_publishing));
@@ -409,6 +423,7 @@ void ChimeBluetooth::setup_service_chimuino() {
     setup_attribute_alarm2();
     setup_attribute_ambiance();
     setup_attribute_uptime();
+    setup_char_actions();
 
     // TODO ...
     
@@ -536,6 +551,28 @@ void ChimeBluetooth::setup_attribute_uptime() {
     } 
 }
 
+void ChimeBluetooth::setup_char_actions() {
+
+    TRACE_PRINT(PGMSTR(message_ble_adding_char));
+    TRACE_PRINTLN(PGMSTR(message_ble_actions));
+ 
+    // GATT_CHARS_PROPERTIES_WRITE
+    bleCharActions = gatt.addCharacteristic(
+      // format
+      BLE_GATT_CHAR_ACTIONS,
+      // properties
+      GATT_CHARS_PROPERTIES_WRITE, 
+      // data size min, max, 
+      sizeof(ble_actions_bytes), sizeof(ble_actions_bytes), 
+      // present format
+      BLE_DATATYPE_BYTEARRAY
+      );
+    if (bleCharActions == 0) {
+      ERROR_PRINT(PGMSTR(message_ble_error_creating_char));
+      ERROR_PRINTLN(PGMSTR(message_ble_actions));
+    } 
+}
+
 void ChimeBluetooth::decodeCurrentDateTime(uint8_t data[], uint16_t len) {
 
    // ensure the length is ok
@@ -636,6 +673,38 @@ void ChimeBluetooth::decodeSoundSettings(uint8_t data[], uint16_t len) {
   soundSensor->receivedSoundSettings(received_settings.data);
 }
 
+void ChimeBluetooth::decodeActions(uint8_t data[], uint16_t len) {
+  
+  // ensure the length is ok
+  if (len != sizeof(ble_actions_bytes)) {
+    TRACE_PRINT(PGMSTR(message_wrong_size));
+    TRACE_PRINTLN(len);
+    return;
+  } 
+
+  // decode from bytes
+  ble_actions_bytes content;
+  memcpy(&content, data, len);
+
+  if (content.data.ring > 0) {
+    switch (content.data.ring) {
+      case 1: { chime->doDemoLight(); break; }
+      case 2: { chime->doDemoMedium(); break; }
+      case 3: { chime->doDemoStrong(); break; }
+      default: {
+        ERROR_PRINT(F("wrong action ring strength:")); ERROR_PRINTLN(content.data.ring);
+      }
+    }
+  } 
+  if (content.data.snooze) {
+    // TODO
+  }
+  if (content.data.shutup) {
+    // TODO
+  }
+  
+}
+
 
 void ChimeBluetooth::reactCharacteristicReceived(int32_t chars_id, uint8_t data[], uint16_t len) {
 
@@ -654,6 +723,8 @@ void ChimeBluetooth::reactCharacteristicReceived(int32_t chars_id, uint8_t data[
     decodeLightSettings(data, len); 
   } else if (chars_id == bleCharSoundSettings) {
     decodeSoundSettings(data, len); 
+  } else if (chars_id == bleCharActions) {
+    decodeActions(data, len); 
   } else {
     ERROR_PRINT(F("ERROR: unknown bluetooth characteristic "));
     ERROR_PRINTLN(chars_id);

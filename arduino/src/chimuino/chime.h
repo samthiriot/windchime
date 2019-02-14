@@ -72,7 +72,9 @@ class Chime: public BluetoothInformationProducer,
     
     // inherited
 
-    virtual BluetoothListenerAnswer receivedActionRing(ble_ring_action action);
+    void doDemoLight();
+    void doDemoMedium();
+    void doDemoStrong();
     
     virtual Intention proposeNextMode(enum mode current_mode, unsigned long next_planned_action);
 
