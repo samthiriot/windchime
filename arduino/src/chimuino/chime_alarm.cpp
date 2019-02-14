@@ -9,7 +9,7 @@
 #include <TimeLib.h>
 
 ChimeAlarm::ChimeAlarm(byte _id):
-            BluetoothUser(),
+            BluetoothInformationProducer(),
             IntentionProvider() {
   id = _id;
   monday = tuesday = wednesday = thursday = friday = (id == 1);
@@ -20,7 +20,7 @@ ChimeAlarm::ChimeAlarm(byte _id):
 
 void ChimeAlarm::setup(Persist* _persist) {
 
-  DEBUG_PRINT(F("init: ALARM")); DEBUG_PRINT_DEC(id); DEBUG_PRINTLN(F("..."));
+  DEBUG_PRINT(message_init); DEBUG_PRINT(F("ALARM")); DEBUG_PRINT_DEC(id); DEBUG_PRINTLN(F("..."));
 
   persist = _persist; 
   if (persist->hasDataStored()) {
@@ -44,7 +44,7 @@ void ChimeAlarm::setup(Persist* _persist) {
     storeState();
   }
 
-  DEBUG_PRINT(F("init: ALARM")); DEBUG_PRINT_DEC(id); DEBUG_PRINTLN(F(" ok"));
+  DEBUG_PRINT(message_init); DEBUG_PRINT(F("ALARM")); DEBUG_PRINT_DEC(id); DEBUG_PRINTLN(F(" ok"));
 }
 
 void ChimeAlarm::storeState() { 
@@ -95,18 +95,18 @@ void ChimeAlarm::publishBluetoothData() {
 
   // forge the content
   ble_alarm content;
-  enabled = content.active;
-  start_hour = content.hour;
-  start_minutes = content.minutes;
-  durationSoft = content.duration_soft;
-  durationStrong = content.duration_strong;
-  monday = content.monday;
-  tuesday = content.tuesday;
-  wednesday = content.wednesday;
-  thursday = content.thursday;
-  friday = content.friday;
-  saterday = content.saterday;
-  sunday = content.sunday;
+  content.active = enabled;
+  content.hour = start_hour;
+  content.minutes = start_minutes;
+  content.duration_soft = durationSoft;
+  content.duration_strong = durationStrong;
+  content.monday = monday;
+  content.tuesday = tuesday;
+  content.wednesday = wednesday;
+  content.thursday = thursday;
+  content.friday = friday;
+  content.saterday = saterday;
+  content.sunday = sunday;
 
   // send it
   if (id == 1) {
@@ -117,7 +117,6 @@ void ChimeAlarm::publishBluetoothData() {
     DEBUG_PRINTLN(F("ERROR: wrong alarm id"));
   }
 }
-
 
 BluetoothListenerAnswer ChimeAlarm::receivedAlarm1(ble_alarm content) {
    if (id == 1) {

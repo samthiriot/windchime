@@ -6,7 +6,7 @@
 #include "debug.h"
 
 ChimeLightSensor::ChimeLightSensor(const byte _pin):
-              BluetoothUser(),
+              BluetoothInformationProducer(),
               IntentionProvider(),
               sensor( CHIME_LIGHTSENSOR_MEASURES_ETA, _pin, 
                       CHIME_LIGHTSENSOR_MEASURES_FREQUENCY,// read every 100ms
@@ -47,7 +47,8 @@ void ChimeLightSensor::debugSerial() {
 
 void ChimeLightSensor::setup(Persist* _persist) {
 
-  DEBUG_PRINTLN(F("init: light sensor..."));
+  DEBUG_PRINT(message_init); 
+  DEBUG_PRINTLN(F("light sensor..."));
 
   sensor.setup(0, -1); // we assume no light means 0, but have no idea of the max
   sensor.sense();
@@ -62,8 +63,8 @@ void ChimeLightSensor::setup(Persist* _persist) {
     storeState();
   }
 
-
-  DEBUG_PRINTLN(F("init: light sensor ok"));
+  DEBUG_PRINT(message_init); 
+  DEBUG_PRINTLN(F("light sensor ok"));
 }
 
 void ChimeLightSensor::storeState() {

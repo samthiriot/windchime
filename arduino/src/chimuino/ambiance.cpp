@@ -7,7 +7,7 @@
 #include "utils.h"
 
 Ambiance::Ambiance(): 
-          BluetoothUser(),
+          BluetoothInformationProducer(),
           IntentionProvider()
           {
 

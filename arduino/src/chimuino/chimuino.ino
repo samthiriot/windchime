@@ -124,6 +124,11 @@ void setup() {
   chime.setBluetooth(&bluetooth);
   ambiance.setBluetooth(&bluetooth);
 
+  // inform bluetooth of the 
+  bluetooth.setUsers(&clock, &alarm1, &alarm2, &lightSensor, &soundSensor, &chime, &ambiance);
+  
+  // plugin 
+
   DEBUG_PRINTLN("init: end.");
 
 }

@@ -7,7 +7,7 @@
 #include "chime_soundsensor.h"
 #include "persist.h"
 
-class Ambiance: public BluetoothUser,
+class Ambiance: public BluetoothInformationProducer,
                 public IntentionProvider {
   
   private:

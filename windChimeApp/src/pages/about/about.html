@@ -38,6 +38,8 @@
     <li>Light level is: {{chimuino.isDark}} ({{chimuino.lightLevelStr}}% of [{{chimuino.lightMinMax}}])</li>    
     <li>Sound level is: {{chimuino.isQuiet}} ({{chimuino.soundLevelStr}}% of [{{chimuino.soundMinMax}}])</li>    
     <li>Temperature is: {{chimuino.temperature}}</li>
+    <li>RTC Temperature is: {{chimuino.temperature1}}</li>
+    <li>BLE Temperature is: {{chimuino.temperature2}}</li>
     <li>Uptime is:      {{chimuino.uptime}}</li>
   </ul>
   <button ion-button block (click)="loadInfoFromChimuino()">update</button>

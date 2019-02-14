@@ -15,7 +15,7 @@
 
 #include <Arduino.h>
 
-class ChimeSoundSensor: public BluetoothUser {
+class ChimeSoundSensor: public BluetoothInformationProducer {
   
   private:
   

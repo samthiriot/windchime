@@ -53,7 +53,7 @@ class IntentionProvider {
 char* mode2str(enum mode v);
 
 
-class Chime: public BluetoothUser,
+class Chime: public BluetoothInformationProducer,
              public IntentionProvider {
   
   private:

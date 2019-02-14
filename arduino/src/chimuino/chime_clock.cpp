@@ -34,8 +34,9 @@ time_t compileTime()
 
 
 void ChimeClock::setup() {
-  
-  DEBUG_PRINTLN(F("init: RTC..."));
+
+  DEBUG_PRINT(message_init); 
+  DEBUG_PRINTLN(F("RTC..."));
   
   // tells the TimeLib library that time is provided by our RTC chip
   setSyncProvider(RTC.get);
@@ -57,8 +58,9 @@ void ChimeClock::setup() {
   RTC.squareWave(SQWAVE_NONE);
 
   startTimestamp = millis();
-  
-  DEBUG_PRINTLN(F("init: RTC ok"));
+
+  DEBUG_PRINT(message_init); 
+  DEBUG_PRINTLN(F("RTC ok"));
 
 }
 

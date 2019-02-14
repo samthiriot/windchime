@@ -44,14 +44,21 @@ export class ChimuinoProvider {
 
 	private _firstConnection:boolean = true;
 
+	private static readonly SERVICE_SENSING:string = "181A"; // https://www.bluetooth.com/specifications/assigned-numbers/environmental-sensing-service-characteristics
+	private static readonly CHARACTERISTIC_TEMPERATURE:string = "2A6E"; // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.temperature.xml
+	private static readonly CHARACTERISTIC_TEMPERATURE1:string = "5561";
+	private static readonly CHARACTERISTIC_TEMPERATURE2:string = "5562";
+	private static readonly CHARACTERISTIC_LIGHT_SENSOR:string = "5563";
+	private static readonly CHARACTERISTIC_LIGHT_SETTINGS:string = "5564";
+	private static readonly CHARACTERISTIC_SOUND_SENSOR:string = "5565";
+	private static readonly CHARACTERISTIC_SOUND_SETTINGS:string = "5566";
+
 	private static readonly SERVICE_CHIMUINO:string = "5550";
-	private static readonly CHARACTERISTIC_TIME:string = "2A08";
-	private static readonly CHARACTERISTIC_ALARM1:string = "5551";
-	private static readonly CHARACTERISTIC_ALARM2:string = "5552"; // TODO 
-
-	private static readonly SERVICE_SENSING:string = "181A";
-	private static readonly CHARACTERISTIC_TEMPERATURE:string = "2A6E";
-
+	private static readonly CHARACTERISTIC_TIME:string = "2A08";			// https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.date_time.xml
+	private static readonly CHARACTERISTIC_ALARM1:string = "5551";	
+	private static readonly CHARACTERISTIC_ALARM2:string = "5552"; 
+	private static readonly CHARACTERISTIC_AMBIANCE:string = "5553"; 
+	private static readonly CHARACTERISTIC_UPTIME:string = "5554"; 
 
 	/**********************************************************************
 	 * Ambiance data storage and access
@@ -68,12 +75,14 @@ export class ChimuinoProvider {
 	private _soundThreshold:number = 50;
 	public soundLevel:number = 50;
 	public isQuiet:boolean = false;
-	public soundMinMax:String = "?:?";
+	private _soundMin:number = 0;
+	private _soundMax:number = 255;
 
 	public isLightLevelLoaded:boolean = false;
 	public lightLevel:number = 50;
 	public isDark:boolean = false;
-	public lightMinMaxStr:String = "?:?";
+	public _lightMin:number = 0;
+	public _lightMax:number = 255;
 
 
 	set chimeEnabled(value:boolean) {
@@ -89,6 +98,7 @@ export class ChimuinoProvider {
 	set chimeLevel(value:number) {
 		this._chimeLevel = value;
 		this.storage.set('chime-level', value);
+		// TODO update
 	}
 
 	get chimeLevel():number {
@@ -102,6 +112,9 @@ export class ChimuinoProvider {
 		this._lightThreshold = value;
 		this.setLightThreshold(this._lightThreshold);
 	}
+	get lightMinMaxStr():String {
+		return ""+(this._lightMin)+":"+(this._lightMax);
+	}
 
 	get soundThreshold():number {
 		return this._soundThreshold;
@@ -109,6 +122,58 @@ export class ChimuinoProvider {
 	set soundThreshold(value:number) {
 		this._soundThreshold = value;
 		this.setSoundThreshold(this._soundThreshold);
+		// TODO update
+	}
+	get soundMinMaxStr():String {
+		return ""+(this._soundMin)+":"+(this._soundMax);
+	}
+
+
+
+	private onAmbianceReceived(buffer:any) {
+
+		let dv = new DataView(buffer);
+		
+   		this._isChimeEnabled = dv.getUint8(0) > 0;
+   		this.isAmbianceLoaded = true;
+		//this.displayDebug("received alarm1: "+active+" "+hour+":"+minutes+" "+sunday+monday+tuesday+wednesday+thursday+friday+saturday+" "+durationSoft+" "+durationStrong);
+
+	}
+	private onLightSensorReceived(buffer:any) {
+
+		let dv = new DataView(buffer);
+		this.lightLevel = dv.getUint8(0);
+		this._lightMin = dv.getUint8(1);
+		this._lightMax = dv.getUint8(2);
+		this.isDark = dv.getUint8(3) > 0;
+
+		this.isLightLevelLoaded = true;
+
+	}
+	private onLightSettingsReceived(buffer:any) {
+
+		let dv = new DataView(buffer);
+		this._lightThreshold = dv.getUint8(0);
+
+		this.isLightThresholdLoaded = true;
+	}
+	private onSoundSensorReceived(buffer:any) {
+
+		let dv = new DataView(buffer);
+		this.soundLevel = dv.getUint8(0);
+		this._soundMin = dv.getUint8(1);
+		this._soundMax = dv.getUint8(2);
+		this.isQuiet = dv.getUint8(3) > 0;
+
+		// TODO ??? this.isSoundLevelLoaded = true;
+
+	}
+	private onSoundSettingsReceived(buffer:any) {
+
+		let dv = new DataView(buffer);
+		this._soundThreshold = dv.getUint8(0);
+
+		this.isSoundThresholdLoaded = true;
 	}
 
 	/**********************************************************************
@@ -371,10 +436,40 @@ export class ChimuinoProvider {
 	public firmwareVersion:String = "???";
 
 	public temperatureLoaded:boolean = false;
-	_temperature:number = null;
-	_temperatureStr:string = "?";
-	get temperature():any{ return this._temperatureStr; }
-	
+	private _temperature:number = null;
+	private _temperature1:number = null;
+	private _temperature2:number = null;
+	get temperature():any{ 	return (this._temperature==null) ? "?" : ""+this._temperature+"°C"; }
+	get temperature1():any{ return (this._temperature1==null) ? "?" : ""+this._temperature1+"°C"; }
+	get temperature2():any{ return (this._temperature2==null) ? "?" : ""+this._temperature2+"°C"; }
+
+
+	/**
+	 * Called when the temperature changed.
+	 * Decodes it from the bytes array and notifies of data
+	 */
+	private onTemperatureReceived(buffer:any) {
+
+		let dv = new DataView(buffer);
+
+		let intval:number = dv.getUint16(0, true)
+		let temp:number = intval/100.0;
+
+		this._temperature = temp;
+	}
+	private onTemperature1Received(buffer:any) {
+
+		let dv = new DataView(buffer);
+		
+		this._temperature1 = dv.getFloat32(0);
+	}
+	private onTemperature2Received(buffer:any) {
+
+		let dv = new DataView(buffer);
+		
+		this._temperature2 = dv.getFloat32(0);
+	}
+
 
 	public uptimeLoaded = false;
 	public uptime:String = "???";
@@ -566,7 +661,7 @@ export class ChimuinoProvider {
 		this.ble
 			.connect(this._device.id)
 			.subscribe( 
-				(device) => { this.reactDeviceConnected(device); },
+				(device) => { this.reactDeviceConnected(); },
 				(disconnected) => { this.reactDisconnected(); } 
 				);
 
@@ -609,18 +704,45 @@ export class ChimuinoProvider {
 
 		this._isConnected = true;
 
-		// read data, and listen to it 
-
+		// read data to know the current state of parameters
+		// ... sensing settings
+		this.read(
+			ChimuinoProvider.SERVICE_SENSING, 	ChimuinoProvider.CHARACTERISTIC_LIGHT_SETTINGS, 
+			(data) => { this.onLightSettingsReceived(data); });
+		this.read(
+			ChimuinoProvider.SERVICE_SENSING, 	ChimuinoProvider.CHARACTERISTIC_SOUND_SETTINGS, 
+			(data) => { this.onSoundSettingsReceived(data); });
+		// ... chimuino settings
 		this.read(
 			ChimuinoProvider.SERVICE_CHIMUINO, 	ChimuinoProvider.CHARACTERISTIC_ALARM1, 
 			(data) => { this.onAlarm1Received(data); });
 		this.read(
 			ChimuinoProvider.SERVICE_CHIMUINO, 	ChimuinoProvider.CHARACTERISTIC_ALARM2, 
 			(data) => { this.onAlarm2Received(data); });
+		this.read(
+			ChimuinoProvider.SERVICE_CHIMUINO, 	ChimuinoProvider.CHARACTERISTIC_AMBIANCE, 
+			(data) => { this.onAmbianceReceived(data); });
+		// ... and also pure characteristics
+		this.read(
+			ChimuinoProvider.SERVICE_CHIMUINO, 	ChimuinoProvider.CHARACTERISTIC_UPTIME, 
+			(data) => { this.onAmbianceReceived(data); });
 
+		// read and listen to data which evolves 
 		this.readAndListen(
 			ChimuinoProvider.SERVICE_SENSING, 	ChimuinoProvider.CHARACTERISTIC_TEMPERATURE, 
 			(data) => { this.onTemperatureReceived(data); });
+		this.readAndListen(
+			ChimuinoProvider.SERVICE_SENSING, 	ChimuinoProvider.CHARACTERISTIC_TEMPERATURE1, 
+			(data) => { this.onTemperature1Received(data); });
+		this.readAndListen(
+			ChimuinoProvider.SERVICE_SENSING, 	ChimuinoProvider.CHARACTERISTIC_TEMPERATURE2, 
+			(data) => { this.onTemperature2Received(data); });
+		this.readAndListen(
+			ChimuinoProvider.SERVICE_SENSING, 	ChimuinoProvider.CHARACTERISTIC_LIGHT_SENSOR, 
+			(data) => { this.onLightSensorReceived(data); });
+		this.readAndListen(
+			ChimuinoProvider.SERVICE_SENSING, 	ChimuinoProvider.CHARACTERISTIC_SOUND_SENSOR, 
+			(data) => { this.onSoundSensorReceived(data); });
 
 		// send information to the Chimuino
 		if (this._firstConnection) {
@@ -649,20 +771,23 @@ export class ChimuinoProvider {
 		// TODO enable if disabled?
 		if (!this._isConnected) {
 
-			this.ble
-				.enable()
+			this.ble.enable()
 				// connect first
-				.connect(this._device.id)
-				// 
-				.subscribe( 
-					(device) => {
-								this.ble.write(
-										this._device.id, service, characteristic, 
-										buffer);
-								this.reactDeviceConnected(device); 
-								},
-					(disconnected) => { this.reactDisconnected(); } 
-					);
+				.then( 
+					(enabled) => {
+						this.ble.connect(this._device.id).subscribe( 
+							(device) => {
+										this.ble.write(
+												this._device.id, service, characteristic, 
+												buffer);
+										this.reactDeviceConnected(); 
+										},
+							(disconnected) => { this.reactDisconnected(); } 
+						);
+
+					} )
+				
+
 		} else {
 			this.ble.write(
 				this._device.id, service, characteristic, 
@@ -724,26 +849,6 @@ export class ChimuinoProvider {
 
 	}
 	*/
-
-	/**
-	 * Called when the temperature changed.
-	 * Decodes it from the bytes array and notifies of data
-	 */
-	private onTemperatureReceived(buffer:any) {
-
-		let dv = new DataView(buffer);
-		//this.displayToastMessage("notified by bluetooth: "+ buffer);
-
-		let intval:number = dv.getUint16(0, true)
-		let temp:number = intval/100.0;
-
-		this._temperature = temp;
-		this._temperatureStr = ""+temp+"°C"; 
-		//this.displayDebug("received temperature: "+temp);
-
-
-	}
-
 
 	/**
 	 * Called when the time changed.

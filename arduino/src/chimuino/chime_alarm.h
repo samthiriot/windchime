@@ -7,7 +7,7 @@
 
 // TODO alarm with interrupts?
 
-class ChimeAlarm: public BluetoothUser,
+class ChimeAlarm: public BluetoothInformationProducer,
                   public IntentionProvider {
   
   private:

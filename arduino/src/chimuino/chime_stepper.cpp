@@ -19,7 +19,8 @@ ChimeStepper::ChimeStepper(
     
 void ChimeStepper::setup() {
 
-    DEBUG_PRINTLN(F("init: stepper..."));
+    DEBUG_PRINT(message_init); 
+    DEBUG_PRINTLN(F("stepper..."));
 
     pinMode(pin1, OUTPUT);
     pinMode(pin2, OUTPUT);
@@ -30,7 +31,8 @@ void ChimeStepper::setup() {
     pull_medium = steps/12;
     pull_strong = steps/10;
 
-    DEBUG_PRINTLN(F("init: going to position free"));
+    DEBUG_PRINT(message_init); 
+    DEBUG_PRINTLN(F("going to position free"));
  
     motor.setSpeed(MOTOR_SPEED_SLOW);
     motor.step(pull_medium);
@@ -39,7 +41,8 @@ void ChimeStepper::setup() {
       
     doFreeWheel(); // relax and don't consume energy
 
-    DEBUG_PRINTLN(F("init: stepper ok"));
+    DEBUG_PRINT(message_init); 
+    DEBUG_PRINTLN(F("stepper ok"));
 }
 
 /**

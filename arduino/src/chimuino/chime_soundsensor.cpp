@@ -6,7 +6,7 @@
 #include "debug.h"
 
 ChimeSoundSensor::ChimeSoundSensor(const byte _pin):
-              BluetoothUser(),
+              BluetoothInformationProducer(),
               sensor(CHIME_SOUNDSENSOR_MEASURES_ETA, _pin, 
                     CHIME_SOUNDSENSOR_MEASURES_FREQUENCY, // read every 100ms
                     CHIME_SOUNDSENSOR_ENVELOPE_ETA_SLOW, CHIME_SOUNDSENSOR_ENVELOPE_ETA_QUICK
@@ -46,7 +46,8 @@ void ChimeSoundSensor::debugSerial() {
 
 void ChimeSoundSensor::setup(Persist* _persist) {
 
-  DEBUG_PRINTLN(F("init: sound sensor..."));
+  DEBUG_PRINT(message_init); 
+  DEBUG_PRINTLN(F("sound sensor..."));
 
   sensor.setup(-1, -1); // we have no f idea of what are the min and max for such a sensor !
   sensor.sense();
@@ -61,7 +62,8 @@ void ChimeSoundSensor::setup(Persist* _persist) {
     storeState();
   }
   
-  DEBUG_PRINTLN(F("init: sound sensor ok"));
+  DEBUG_PRINT(message_init); 
+  DEBUG_PRINTLN(F("sound sensor ok"));
 }
 
 

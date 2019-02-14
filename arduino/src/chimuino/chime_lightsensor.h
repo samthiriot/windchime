@@ -21,7 +21,7 @@
 #include <Arduino.h>
 
 
-class ChimeLightSensor: public BluetoothUser,
+class ChimeLightSensor: public BluetoothInformationProducer,
                         public IntentionProvider {
   
   private:
