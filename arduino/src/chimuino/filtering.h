@@ -11,7 +11,7 @@
  */
 class LowPassFilterSensor {
   
-  private:
+  protected:
 
     float ETA;                  // the smoothing constant in 0:1. 0.5= mean, 0.9 strong weight on last value, 0.1 smooth a lot
     byte pin;                   // the pin to read data from
@@ -40,13 +40,15 @@ class LowPassFilterSensor {
  */
 class LowPassFilterSensorWithMinMax: public LowPassFilterSensor {
   
-  private:
+  protected:
   
     float ETAquick = 0.95;
     float ETAslow = 0.000001;
   
     float currentMin;
     float currentMax;
+
+    void adaptMinMax(float v);
     
   public:
   

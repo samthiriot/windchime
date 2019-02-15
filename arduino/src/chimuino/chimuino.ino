@@ -29,7 +29,7 @@
 // sketch settings
 
 // frequency for displaying debug messages on the state
-#define FREQUENCY_DEBUG 1000
+#define FREQUENCY_DEBUG 5000
 long lastDisplayDebug = millis();
 
 
@@ -56,8 +56,9 @@ long lastDisplayDebug = millis();
 
 #define SOUND_PIN A1
 #define PHOTOCELL_PIN A0                                                  // port for the photovoltaic cell
-#define BUTTON_BLUETOOTH_CONNECT A2
-#define RANDOM_PIN A3                                                     // refers to a pin unconnected supposed to catch white noise 
+#define BUTTON_BLUETOOTH_SWITCH A2
+#define BUTTON_BLUETOOTH_CONNECT A3
+#define RANDOM_PIN A6                                                     // refers to a pin unconnected supposed to catch white noise 
 
 
 Persist persist;      // persistence object
@@ -69,7 +70,11 @@ ChimeClock clock;
 ChimeAlarm alarm1(1);
 ChimeAlarm alarm2(2);
 
-ChimeBluetooth bluetooth(BLUEFRUIT_SWUART_TXD_PIN, BLUEFRUIT_SWUART_RXD_PIN, BLUEFRUIT_UART_MODE_PIN, BLUEFRUIT_UART_CTS_PIN, BLUEFRUIT_UART_CTS_PIN);
+ChimeBluetooth bluetooth(
+  BLUEFRUIT_SWUART_TXD_PIN, BLUEFRUIT_SWUART_RXD_PIN, 
+  BLUEFRUIT_UART_MODE_PIN, 
+  BLUEFRUIT_UART_CTS_PIN, BLUEFRUIT_UART_CTS_PIN, 
+  BUTTON_BLUETOOTH_CONNECT, BUTTON_BLUETOOTH_SWITCH);
 
 ChimeSoundSensor soundSensor(SOUND_PIN);
 ChimeLightSensor lightSensor(PHOTOCELL_PIN);
@@ -119,7 +124,7 @@ void setup() {
   chime.setup(&soundSensor, &stepper);
   ambiance.setup(&persist, &soundSensor, &lightSensor);
 
-  // ... add the chain of listeners, which might react to bluetooth commands
+  // ... add the chain of producers, which might send inforation to bluetooth
   clock.setBluetooth(&bluetooth);
   alarm1.setBluetooth(&bluetooth);
   alarm2.setBluetooth(&bluetooth);
@@ -128,11 +133,9 @@ void setup() {
   chime.setBluetooth(&bluetooth);
   ambiance.setBluetooth(&bluetooth);
 
-  // inform bluetooth of the 
+  // inform bluetooth of the users of data it produces
   bluetooth.setUsers(&clock, &alarm1, &alarm2, &lightSensor, &soundSensor, &chime, &ambiance);
   
-  // plugin 
-
   DEBUG_PRINTLN("init: end.");
 
 }

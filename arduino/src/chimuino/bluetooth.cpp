@@ -125,11 +125,13 @@ union ble_actions_bytes {
 };
 
 ChimeBluetooth::ChimeBluetooth(unsigned short _pinTXD, unsigned short _pinRXD, 
-                               unsigned short _pinMode, unsigned short _pinCTS, unsigned short _pinRTS)//:
-      /*bluefruitSS(_pinTXD, _pinRXD),
-      ble(bluefruitSS, _pinMode, _pinCTS, _pinRTS),
-      gatt(ble)*/ {
+                               unsigned short _pinMode, unsigned short _pinCTS, unsigned short _pinRTS,
+                               unsigned short _pinButtonConnect, unsigned short _pinButtonSwitch) {
 
+  // store the pins
+  pinButtonConnect = _pinButtonConnect;
+  pinButtonSwitch = _pinButtonSwitch;
+  
   // store this instance as the singleton instance
   ble_singleton = this;
   
@@ -138,9 +140,9 @@ ChimeBluetooth::ChimeBluetooth(unsigned short _pinTXD, unsigned short _pinRXD,
 
 void ChimeBluetooth::setup() {
 
-  // TODO button pin is INPUT and has internal pullup active
-  // BUTTON_BLUETOOTH_CONNECT
-  // pinMode(2,INPUT_PULLUP);
+  // button pin is INPUT and has internal pullup active
+  pinMode(pinButtonConnect,INPUT_PULLUP);
+  pinMode(pinButtonSwitch,INPUT_PULLUP);
 
 
   // initialize the BLE access (and detect HW problems)
@@ -900,6 +902,14 @@ void ChimeBluetooth::publishSoundSettings(ble_sound_settings settings) {
  */
 void ChimeBluetooth::readAndReact() {
 
+  // is button pressed???
+  if (digitalRead(pinButtonConnect) == LOW) {
+    DEBUG_PRINTLN(F("********* button pressed *********"));
+  }
+  if (digitalRead(pinButtonSwitch) == LOW) {
+    DEBUG_PRINTLN(F("********* bluetooth off *********"));
+  }
+  
   // check if anything new on the side of BLE?
   ble.update(200);
 

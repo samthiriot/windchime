@@ -146,6 +146,9 @@ class ChimeBluetooth {
 
   private:
 
+    unsigned short pinButtonConnect;
+    unsigned short pinButtonSwitch;
+  
     ChimeClock* clock;
     ChimeAlarm* alarm1;
     ChimeAlarm* alarm2;
@@ -206,7 +209,8 @@ class ChimeBluetooth {
 
   public:
     ChimeBluetooth(unsigned short _pinTXD, unsigned short _pinRXD,
-                   unsigned short _pinMode, unsigned short _pinCTS, unsigned short _pinRTS);
+                   unsigned short _pinMode, unsigned short _pinCTS, unsigned short _pinRTS,
+                   unsigned short _pinButtonConnect, unsigned short _pinButtonSwitch);
     void setup();
 
     // called when a central device connected to BLE

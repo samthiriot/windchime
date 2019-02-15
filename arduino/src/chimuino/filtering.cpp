@@ -24,14 +24,10 @@ void LowPassFilterSensor::setup() {
 bool LowPassFilterSensor::sense() {
   const unsigned long now = millis();
   if (now - lastReading >= period) {
-    //TRACE_PRINT(F("reading sensor value: ")); 
     
     // let's read
     float v = float(analogRead(pin));
-    //TRACE_PRINT(v);
     pastvalue = (int)(ETA * v + (1.0 - ETA) * float(pastvalue));
-    //TRACE_PRINT(F(" => "));
-    //TRACE_PRINTLN(pastvalue);
     lastReading = now;
     return true;
   }
@@ -42,8 +38,8 @@ bool LowPassFilterSensor::sense() {
  
 LowPassFilterSensorWithMinMax::LowPassFilterSensorWithMinMax(
                   const float _ETA, const byte _pin, const unsigned int _period, 
-                  const float _ETAslow, const float _ETAquick)
-             :LowPassFilterSensor(_ETA, _pin, _period) {
+                  const float _ETAslow, const float _ETAquick
+                  ):LowPassFilterSensor(_ETA, _pin, _period) {
 
   ETAquick = _ETAquick;
   ETAslow = _ETAslow;
@@ -74,18 +70,12 @@ void LowPassFilterSensorWithMinMax::setup(int initialMin, int initialMax) {
   }
 
   TRACE_PRINT(F("init min="));  TRACE_PRINT(currentMin);
-  TRACE_PRINT(F(" max="));  TRACE_PRINTLN(currentMax);
+  TRACE_PRINT(F(" max="));      TRACE_PRINTLN(currentMax);
   
 }
-bool LowPassFilterSensorWithMinMax::sense() {
 
-  // measure the current value
-  if (!LowPassFilterSensor::sense()) {
-    return false;
-  }
-
-  float v = float(value());
-
+void LowPassFilterSensorWithMinMax::adaptMinMax(float v) {
+  
   if (v >= currentMin) {
     currentMin = ETAslow * v + (1.0 - ETAslow)*currentMin;
   } else {
@@ -104,6 +94,17 @@ bool LowPassFilterSensorWithMinMax::sense() {
   if (currentMax < 1) {
     currentMax = 1;
   }
+}
+
+bool LowPassFilterSensorWithMinMax::sense() {
+
+  // measure the current value
+  if (!LowPassFilterSensor::sense()) {
+    return false;
+  }
+
+  adaptMinMax(value());
+  
   return true;
 }
 

@@ -15,6 +15,26 @@
 
 #include <Arduino.h>
 
+/**
+ * Implements a low pass filter sensor with min and max
+ * adapted to the specific case of sound: we do not measure a single point,
+ * but rather the variations received from the sensor during several milliseconds.
+ */
+class SoundLowPassFilterSensorWithMinMax: public LowPassFilterSensorWithMinMax {
+  
+  private:
+  
+    
+  public:
+  
+    SoundLowPassFilterSensorWithMinMax(const float ETA, const byte pin, const unsigned int period, 
+                                  const float ETAslow, const float ETAquick
+                                  );
+                                  
+    bool sense();
+    
+};
+
 class ChimeSoundSensor: public BluetoothInformationProducer {
   
   private:
@@ -23,7 +43,7 @@ class ChimeSoundSensor: public BluetoothInformationProducer {
     byte pin;
 
     // 
-    LowPassFilterSensorWithMinMax sensor;                                                // the sensor plugged on the pin
+    SoundLowPassFilterSensorWithMinMax sensor;                                                // the sensor plugged on the pin
       
     // state
     unsigned short quietThreshold = 20;                  // the silence / noise threshold
