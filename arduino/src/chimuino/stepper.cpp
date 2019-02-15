@@ -64,7 +64,7 @@ void ChimeStepper::doFreeWheel() {
 
 void ChimeStepper::doReveil() {
   TRACE_PRINTLN(F("reveil..."));
-  for (int i=0; i<random(3,7); i++){
+  for (uint8_t i=0; i<random(3,7); i++){
     motor.setSpeed(MOTOR_SPEED_QUICK);
     motor.step(pull_strong);
     delay(100);
@@ -77,7 +77,7 @@ void ChimeStepper::doReveil() {
   
 void ChimeStepper::doPreReveil() {
   TRACE_PRINTLN(F("prereveil..."));
-  for (int i=0; i<random(2,7); i++){
+  for (uint8_t i=0; i<random(2,7); i++){
     motor.setSpeed(MOTOR_SPEED_SLOW);
     motor.step(pull_medium);
     delay(100);
@@ -91,7 +91,7 @@ void ChimeStepper::doPreReveil() {
 
 void ChimeStepper::doTintement() {
   TRACE_PRINTLN(F("tintement..."));
-  for (int i=0; i<random(1,5); i++){
+  for (uint8_t i=0; i<random(1,5); i++){
     motor.setSpeed(MOTOR_SPEED_SLOW);
     motor.step(pull_light);
     delay(100);
@@ -102,7 +102,3 @@ void ChimeStepper::doTintement() {
   doFreeWheel(); 
 }
   
-
-
-
-

@@ -21,13 +21,25 @@ void LowPassFilterSensor::setup() {
   
 }
 
+uint8_t LowPassFilterSensor::update_value(uint8_t v, uint8_t pastvalue, float ETA) {
+    
+    return update_value(float(v), pastvalue, ETA);
+
+}
+
+uint8_t LowPassFilterSensor::update_value(float vf, uint8_t pastvalue, float ETA) {
+    
+    return (uint8_t)(ETA * vf + (1.0 - ETA) * float(pastvalue));
+
+}
+
+
 bool LowPassFilterSensor::sense() {
   const unsigned long now = millis();
   if (now - lastReading >= period) {
     
     // let's read
-    float v = float(analogRead(pin));
-    pastvalue = (int)(ETA * v + (1.0 - ETA) * float(pastvalue));
+    pastvalue = update_value(uint8_t(analogRead(pin)), pastvalue, ETA);
     lastReading = now;
     return true;
   }
@@ -45,7 +57,7 @@ LowPassFilterSensorWithMinMax::LowPassFilterSensorWithMinMax(
   ETAslow = _ETAslow;
 }
 
-void LowPassFilterSensorWithMinMax::setup(int initialMin, int initialMax) {
+void LowPassFilterSensorWithMinMax::setup(uint8_t initialMin, uint8_t initialMax) {
   LowPassFilterSensor::setup();
 
   if (initialMin >= 0) {
@@ -77,15 +89,20 @@ void LowPassFilterSensorWithMinMax::setup(int initialMin, int initialMax) {
 void LowPassFilterSensorWithMinMax::adaptMinMax(float v) {
   
   if (v >= currentMin) {
-    currentMin = ETAslow * v + (1.0 - ETAslow)*currentMin;
+    //currentMin = ETAslow * v + (1.0 - ETAslow)*currentMin;
+    currentMin = update_value(v, currentMin, ETAslow);
+
   } else {
-    currentMin = ETAquick * v + (1.0 - ETAquick)*currentMin;
+    //currentMin = ETAquick * v + (1.0 - ETAquick)*currentMin;
+    currentMin = update_value(v, currentMin, ETAquick);
   }
   
   if (v <= currentMax) {
-    currentMax = ETAslow * v + (1.0 - ETAslow)*currentMax;
+    currentMax = update_value(v, currentMax, ETAslow);
+    //currentMax = ETAslow * v + (1.0 - ETAslow)*currentMax;
   } else {
-    currentMax = ETAquick * v + (1.0 - ETAquick)*currentMax;
+    currentMax = update_value(v, currentMax, ETAquick);
+    //currentMax = ETAquick * v + (1.0 - ETAquick)*currentMax;
   }
   
   if (currentMin < 1) {
@@ -107,6 +124,3 @@ bool LowPassFilterSensorWithMinMax::sense() {
   
   return true;
 }
-
-
-

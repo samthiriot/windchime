@@ -18,6 +18,7 @@ SoundLowPassFilterSensorWithMinMax::SoundLowPassFilterSensorWithMinMax(
                                     
 }
 
+
 bool SoundLowPassFilterSensorWithMinMax::sense() {
   
   const unsigned long startMillis = millis();
@@ -27,11 +28,11 @@ bool SoundLowPassFilterSensorWithMinMax::sense() {
   }
 
   // measure the value 
-  const int sampleWindow = 50; // Sample window width in mS (50 mS = 20Hz)
-  unsigned int peakToPeak = 0;   // peak-to-peak level  
-  unsigned int signalMax = 0;
-  unsigned int signalMin = 1024;
-  unsigned int sample;
+  const uint8_t sampleWindow = 50; // Sample window width in mS (50 mS = 20Hz)
+  uint8_t peakToPeak = 0;   // peak-to-peak level  
+  uint8_t signalMax = 0;
+  uint8_t signalMin = 1024;
+  uint8_t sample;
 
   // collect data for 50 ms
   while (millis() - startMillis <= sampleWindow) {
@@ -51,7 +52,7 @@ bool SoundLowPassFilterSensorWithMinMax::sense() {
 
   // let's read
   float v = float(peakToPeak);
-  pastvalue = (int)(ETA * v + (1.0 - ETA) * float(pastvalue));
+  pastvalue = update_value(peakToPeak, pastvalue, ETA);
   lastReading = millis();
   
   // smoothed value
@@ -94,7 +95,7 @@ void ChimeSoundSensor::perceive() {
 void ChimeSoundSensor::debugSerial() {
   
   #ifdef DEBUG
-  Serial << F("SOUND LEVEL: ") << _DEC(sensor.value()) << ' ' 
+  Serial << F("sound") << PGMSTR(msg_level) << _DEC(sensor.value()) << ' ' 
          << ( isQuiet() ? PGMSTR(msg_quiet):PGMSTR(msg_noisy) ) << ' '
          << _DEC(factorThreshold) << '>'
          << _DEC(quietThreshold) << ' '
@@ -179,7 +180,3 @@ BluetoothListenerAnswer ChimeSoundSensor::receivedSoundSettings(ble_sound_settin
   return PROCESSED;
 
 }
-
-
-
-

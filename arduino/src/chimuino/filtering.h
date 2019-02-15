@@ -15,22 +15,24 @@ class LowPassFilterSensor {
 
     float ETA;                  // the smoothing constant in 0:1. 0.5= mean, 0.9 strong weight on last value, 0.1 smooth a lot
     byte pin;                   // the pin to read data from
-    unsigned int period;        // how often to listen for the value (in milliseconds)
+    uint16_t period;        // how often to listen for the value (in milliseconds)
 
     unsigned long lastReading = 0;    // timestamp of the last reading
-    int pastvalue;
-    
+    uint8_t pastvalue;
+    uint8_t update_value(uint8_t v, uint8_t pastvalue, float ETA);
+    uint8_t update_value(float vf, uint8_t pastvalue, float ETA);
+
   public:
    
     // constructor
-    LowPassFilterSensor(const float ETA, const byte pin, const unsigned int period);
+    LowPassFilterSensor(const float ETA, const byte pin, const uint16_t period);
     void setup();
     /**
      * Returns true if something was sensed, false if it was not yet time
      */
     bool sense();
     
-    int value() { return pastvalue; }
+    uint8_t value() { return pastvalue; }
 };
 
 
@@ -45,8 +47,8 @@ class LowPassFilterSensorWithMinMax: public LowPassFilterSensor {
     float ETAquick = 0.95;
     float ETAslow = 0.000001;
   
-    float currentMin;
-    float currentMax;
+    uint8_t currentMin;
+    uint8_t currentMax;
 
     void adaptMinMax(float v);
     
@@ -55,15 +57,13 @@ class LowPassFilterSensorWithMinMax: public LowPassFilterSensor {
     LowPassFilterSensorWithMinMax(const float ETA, const byte pin, const unsigned int period, 
                                   const float ETAslow, const float ETAquick
                                   );
-    void setup(int initialMin = -1, int initialMax = -1);
+    void setup(uint8_t initialMin = -1, uint8_t initialMax = -1);
     bool sense();
     
-    int envelopeMin() { return int(currentMin); }
-    int envelopeMax() { return int(currentMax); }
-    bool isMeaningful() { return int(currentMax - currentMin) > 10; }
+    uint8_t envelopeMin() { return currentMin; }
+    uint8_t envelopeMax() { return currentMax; }
+    bool isMeaningful() { return uint8_t(currentMax - currentMin) > 10; }
 };
 
 
 #endif // SENSORS_FILTERING_H
-
-

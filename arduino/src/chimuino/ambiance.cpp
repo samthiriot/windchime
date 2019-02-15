@@ -72,7 +72,7 @@ Intention Ambiance::proposeNextMode(enum mode current_mode, unsigned long next_p
     int r = random(0,100);
     if (r <= 60) { 
       additionalDelay = millis() + random(10,60)*1000l;
-      TRACE_PRINT(F("a bit of silence for ")); TRACE_PRINT(additionalDelay/1000); TRACE_PRINTLN('s');
+      TRACE_PRINT(F("silence for ")); TRACE_PRINT(additionalDelay/1000); TRACE_PRINTLN('s');
       return Intention { SILENCE,  millis() + additionalDelay};
     } else if (r <= 65) {
       additionalDelay = millis() + random(4*60,15*60)*1000l;
@@ -98,5 +98,3 @@ Intention Ambiance::proposeNextMode(enum mode current_mode, unsigned long next_p
   return Intention { current_mode, next_planned_action };
   
 }
-
-

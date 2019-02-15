@@ -7,6 +7,9 @@
 
 // TODO alarm with interrupts?
 
+const char message_alarm [] PROGMEM = "ALARM";
+
+
 class ChimeAlarm: public BluetoothInformationProducer,
                   public IntentionProvider {
   
@@ -14,10 +17,10 @@ class ChimeAlarm: public BluetoothInformationProducer,
 
     // user settings
     bool enabled = false;                                           
-    unsigned short start_hour = 7;                               // the hour 
-    unsigned short start_minutes = 15;                           // minutes
-    unsigned short durationSoft = 15;    
-    unsigned short durationStrong = 15;
+    uint8_t start_hour = 7;                               // the hour 
+    uint8_t start_minutes = 15;                           // minutes
+    uint8_t durationSoft = 15;    
+    uint8_t durationStrong = 15;
     // TODO bool done = false;                          // true if we did the job of waking up the user
 
     bool monday = true;
@@ -60,8 +63,3 @@ class ChimeAlarm: public BluetoothInformationProducer,
 };
 
 #endif // CHIME_ALARM_H
-
-
-
-
-

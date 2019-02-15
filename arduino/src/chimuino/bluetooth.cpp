@@ -146,8 +146,8 @@ void ChimeBluetooth::setup() {
 
 
   // initialize the BLE access (and detect HW problems)
-  DEBUG_PRINT(PGMSTR(message_ble_init_bluetooth));
-  DEBUG_PRINT(F("connecting hardware... "));
+  TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
+  TRACE_PRINT(F("connecting hardware... "));
   if ( !ble.begin(BLE_VERBOSE_MODE) ) {
       ERROR_PRINT(PGMSTR(msg_error_semicol));
       ERROR_PRINTLN(F("BLE dongle not found")); // , make sure it's in command mode & check wiring?
@@ -157,8 +157,8 @@ void ChimeBluetooth::setup() {
   
   #ifdef BLE_FACTORYRESET_ENABLE 
   /* Perform a factory reset to make sure everything is in a known state */
-  DEBUG_PRINT(PGMSTR(message_ble_init_bluetooth));
-  DEBUG_PRINTLN(F("factory reset... "));
+  TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
+  TRACE_PRINTLN(F("factory reset... "));
   if ( !ble.factoryReset() ){
     ERROR_PRINTLN(PGMSTR(message_ble_error));
   } else {
@@ -177,15 +177,15 @@ void ChimeBluetooth::setup() {
     TRACE_PRINTLN(PGMSTR(msg_ok_dot));
   }
 
-  DEBUG_PRINT(PGMSTR(message_ble_init_bluetooth));
-  DEBUG_PRINTLN(F("creating services... "));
+  TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
+  TRACE_PRINTLN(F("creating services... "));
   // SET the services and characteristics
   setup_service_chimuino();
   setup_service_sensing();
    
   /* Reset the device for the new service setting changes to take effect */
-  DEBUG_PRINT(PGMSTR(message_ble_init_bluetooth));
-  DEBUG_PRINTLN(F("reset to apply changes... "));
+  TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
+  TRACE_PRINTLN(F("reset to apply changes... "));
   ble.reset();
   delay(200);
   
@@ -711,7 +711,7 @@ void ChimeBluetooth::decodeActions(uint8_t data[], uint16_t len) {
 
 void ChimeBluetooth::reactCharacteristicReceived(int32_t chars_id, uint8_t data[], uint16_t len) {
 
-  DEBUG_PRINT(F("bluetooth: received val for char"));
+  DEBUG_PRINT(F("BLE: val for char "));
   DEBUG_PRINTLN(chars_id);
   
   if (chars_id == bleCharCurrentTime) {
@@ -729,7 +729,8 @@ void ChimeBluetooth::reactCharacteristicReceived(int32_t chars_id, uint8_t data[
   } else if (chars_id == bleCharActions) {
     decodeActions(data, len); 
   } else {
-    ERROR_PRINT(F("ERROR: unknown bluetooth characteristic "));
+    ERROR_PRINT(PGMSTR(msg_error_semicol));
+    ERROR_PRINT(F("unknown BLE char "));
     ERROR_PRINTLN(chars_id);
   }
 }
@@ -776,7 +777,8 @@ void ChimeBluetooth::publishAlarm1(ble_alarm alarm) {
   content.data = alarm;
   
   TRACE_PRINT(PGMSTR(message_ble_bluetooth_publishing));
-  TRACE_PRINTLN(F("alarm1"));
+  TRACE_PRINT(PGMSTR(message_alarm));
+  TRACE_PRINTLN('1');
   
   // update the corresponding attribute value
   gatt.setChar(bleCharAlarm1, content.bytes, sizeof(content.bytes));
@@ -790,7 +792,8 @@ void ChimeBluetooth::publishAlarm2(ble_alarm alarm) {
   content.data = alarm;
   
   TRACE_PRINT(PGMSTR(message_ble_bluetooth_publishing));
-  TRACE_PRINTLN(F("alarm2"));
+  TRACE_PRINT(PGMSTR(message_alarm));
+  TRACE_PRINTLN('2');
   
   // update the corresponding attribute value
   gatt.setChar(bleCharAlarm2, content.bytes, sizeof(content.bytes));
@@ -904,14 +907,25 @@ void ChimeBluetooth::publishSoundSettings(ble_sound_settings settings) {
 void ChimeBluetooth::readAndReact() {
 
   // TODO only every few seconds!
+  // for all the op below except update 
+  
   // is button pressed???
   if (digitalRead(pinButtonConnect) == LOW) {
-    DEBUG_PRINTLN(F("button is pressed"));
+    DEBUG_PRINTLN(F("button pressed"));
   }
+  /*
   if (digitalRead(pinButtonSwitch) == LOW) {
     DEBUG_PRINTLN(F("bluetooth is off"));
+  }*/
+
+  // update the temperature if it changed? 
+  {
+    if (ble.sendCommandCheckOK(F("AT+HWGETDIETEMP"))) {
+      const float v = atof(ble.buffer);
+      publishTemperature2(v);
+    }
   }
-  
+   
   // check if anything new on the side of BLE?
   ble.update(200);
 
@@ -928,4 +942,3 @@ void ChimeBluetooth::setUsers(ChimeClock* _clock, ChimeAlarm* _alarm1, ChimeAlar
   chime = _chime;
   ambiance = _ambiance;
 }
-

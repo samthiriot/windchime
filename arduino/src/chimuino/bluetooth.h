@@ -23,6 +23,7 @@
 // TODO manage the connectable status !
 // TODO use the AT+DFUIRQ to use IRQ so we wake up only when data is available
 // TODO detect when the temperature is too high and alert (?)
+// TODO add description
 
 // see https://github.com/adafruit/Adafruit_BluefruitLE_nRF51/blob/master/changelog_firmware.md
 
@@ -37,11 +38,12 @@
 #include "Adafruit_BLEGatt.h"
 //#include "IEEE11073float.h"
 
-const uint8_t BLUEFRUIT_UART_CTS_PIN=9;
-const uint8_t BLUEFRUIT_UART_MODE_PIN=8;
+// TODO redondant with defines elsewhere
+const uint8_t BLUEFRUIT_UART_CTS_PIN  =9;
+const uint8_t BLUEFRUIT_UART_MODE_PIN =8;
 const uint8_t BLUEFRUIT_SWUART_TXD_PIN=11;
 const uint8_t BLUEFRUIT_SWUART_RXD_PIN=10;
-const uint8_t BLUEFRUIT_UART_RTS_PIN=12;
+const uint8_t BLUEFRUIT_UART_RTS_PIN  =12;
 
 // the services and characteristics we will publish
 #define BLE_GATT_SERVICE_SENSING      0x181A // https://www.bluetooth.com/specifications/assigned-numbers/environmental-sensing-service-characteristics

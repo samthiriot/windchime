@@ -31,7 +31,7 @@ void Persist::setup() {
 void Persist::storeIfRequired() {
   
   if ((lastUpdate > 0) and (millis()-lastUpdate >= PERSIST_DELAY_MS)) {
-    TRACE_PRINTLN(F("Persisting data."));
+    DEBUG_PRINTLN(F("Persisting data"));
     EEPROM.put(PERSIST_BASE_ADDRESS, persisted);
     lastUpdate = 0;
   }

@@ -39,7 +39,7 @@ void ChimeLightSensor::perceive() {
 void ChimeLightSensor::debugSerial() {
 
   #ifdef DEBUG
-  Serial << F("LIGHTLEVEL IS ") 
+  Serial << F("light") << PGMSTR(msg_level) << F(" IS ") 
          << _DEC(getLightLevel()) << ' ' 
          << (isDark() ? F("DARK"): F("LIT")) << ','
          << _DEC(factorThreshold) << '>'

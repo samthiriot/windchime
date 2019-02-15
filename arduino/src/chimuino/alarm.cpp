@@ -8,7 +8,6 @@
 #include <Streaming.h>
 #include <TimeLib.h>
 
-const char message_alarm [] PROGMEM = "ALARM";
  
 ChimeAlarm::ChimeAlarm(byte _id):
             BluetoothInformationProducer(),
@@ -140,7 +139,7 @@ BluetoothListenerAnswer ChimeAlarm::receivedAlarm2(ble_alarm content) {
 }
 
 bool ChimeAlarm::rightWeekdayForRing() {
-  int wd = weekday();
+  uint8_t wd = weekday();
   return ( (wd == 1 and sunday) or 
          (wd == 2 and monday) or 
          (wd == 3 and tuesday) or 
@@ -165,10 +164,10 @@ bool ChimeAlarm::shouldPrering() {
   }
 
   // define when we should prering based on 
-  int preringMinutesStart = start_hour * 60 + start_minutes;
-  int preringMinutesEnd = preringMinutesStart + durationSoft;
+  uint16_t preringMinutesStart = start_hour * 60 + start_minutes;
+  uint16_t preringMinutesEnd = preringMinutesStart + durationSoft;
 
-  int currentMinutes = hour() * 60 + minute();
+  uint16_t currentMinutes = hour() * 60 + minute();
   return (preringMinutesStart <= currentMinutes) and (currentMinutes <= preringMinutesEnd);
   
 }
@@ -187,10 +186,10 @@ bool ChimeAlarm::shouldRing() {
   }
 
    // define when we should prering based on 
-  int ringMinutesStart = start_hour * 60 + start_minutes + durationSoft;
-  int ringMinutesEnd = ringMinutesStart + durationStrong;
+  uint16_t ringMinutesStart = start_hour * 60 + start_minutes + durationSoft;
+  uint16_t ringMinutesEnd = ringMinutesStart + durationStrong;
 
-  int currentMinutes = hour() * 60 + minute();
+  uint16_t currentMinutes = hour() * 60 + minute();
   return (ringMinutesStart <= currentMinutes) and (currentMinutes <= ringMinutesEnd);
   
 }
@@ -221,5 +220,3 @@ Intention ChimeAlarm::proposeNextMode(enum mode current_mode, unsigned long next
   return Intention { current_mode, next_planned_action };
   
 }
-
-
