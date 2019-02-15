@@ -51,7 +51,6 @@ bool SoundLowPassFilterSensorWithMinMax::sense() {
   //double volts = (peakToPeak * 5.0) / 1024;  // convert to volts
 
   // let's read
-  float v = float(peakToPeak);
   pastvalue = update_value(peakToPeak, pastvalue, ETA);
   lastReading = millis();
   
@@ -84,7 +83,7 @@ void ChimeSoundSensor::perceive() {
     // the sensor was updated
 
     // ... update the threshold!
-    quietThreshold = sensor.envelopeMin() + int(float(factorThreshold)* float(sensor.envelopeMax() - sensor.envelopeMin())/100.0);
+    quietThreshold = sensor.envelopeMin() + uint8_t(float(factorThreshold)* float(sensor.envelopeMax() - sensor.envelopeMin())/100.0);
 
     // update published data
     publishBluetoothDataSensor();

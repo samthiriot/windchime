@@ -15,7 +15,7 @@
 
 // TODO share uptime
 
-// TODO set our clocks as RTC clocks
+// TODO set our alarms as RTC alarms
 // TODO use IRQs to wake up the Arduino
 
 class ChimeClock: public BluetoothInformationProducer {
@@ -53,9 +53,3 @@ class ChimeClock: public BluetoothInformationProducer {
 
 
 #endif // CHIME_CLOCK_H
-
-
-
-
-
-

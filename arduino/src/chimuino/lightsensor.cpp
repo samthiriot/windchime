@@ -90,6 +90,7 @@ void ChimeLightSensor::publishBluetoothDataSettings() {
   content.threshold = factorThreshold;
   this->bluetooth->publishLightSettings(content);
 }
+
 void ChimeLightSensor::publishBluetoothDataSensor() {
   ble_light_sensor content;
   content.level = getLightLevel();

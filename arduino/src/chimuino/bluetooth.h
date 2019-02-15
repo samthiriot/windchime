@@ -130,6 +130,11 @@ struct ble_actions {
   bool snooze;      // if true, snooze (else 0)
   uint16_t shutup;  // be quiet for that many minutes (or 0)
 };
+
+struct ble_mode {
+  uint8_t ongoing;
+  uint32_t when;
+};
   
 enum BluetoothListenerAnswer {
   NOT_CONCERNED,  // returned by a listener who does not care about the info
