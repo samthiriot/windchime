@@ -15,6 +15,25 @@ import { BLE } from '@ionic-native/ble';
 
 import {Platform} from 'ionic-angular';
 
+/**
+ * Enum 
+ */
+export enum CurrentMode {
+	NOTHING = 0, 
+	WELCOME_SUN, 
+	PREALARM1,
+	PREALARM2,
+	ALARM1,       			// being ringing alam1
+	ALARM2,   
+	DEMO_LIGHT,
+	DEMO_MEDIUM,
+	DEMO_STRONG,
+	SILENCE,      			// do not play sound
+	CALIBRATING,  			// calibration of sound is ongoing
+	AMBIANCE_TINTEMENT,    // hear a very light bell sound
+	AMBIANCE_PREREVEIL,    // hear the bell, enough to be conscious of their existence
+	AMBIANCE_REVEIL        // hear the bells so much it should awake you
+};
 
 /**
  * Mediates all the interactions between the arduino on the chimuino through bluetooth.
@@ -60,12 +79,13 @@ export class ChimuinoProvider {
 	private static readonly CHARACTERISTIC_AMBIANCE:string = "5553"; 
 	private static readonly CHARACTERISTIC_UPTIME:string = "5554"; 
 	private static readonly CHARACTERISTIC_ACTIONS:string = "5555"; 
+	private static readonly CHARACTERISTIC_CURRENT_MODE:string = "5556"; 
 
 	/**********************************************************************
 	 * Ambiance data storage and access
 	 **********************************************************************/
 
-	public isAmbianceLoaded = false;
+	public isAmbianceLoaded:boolean = false;
 	private _isChimeEnabled:boolean = true;
 	private _chimeLevel:number = 50;
 
@@ -85,6 +105,8 @@ export class ChimuinoProvider {
 	public _lightMin:number = 0;
 	public _lightMax:number = 255;
 
+	private _currentMode = null;
+	private _currentModeWhen:number = 0;
 
 	set chimeEnabled(value:boolean) {
 		this._isChimeEnabled = value;
@@ -130,7 +152,6 @@ export class ChimuinoProvider {
 	}
 
 
-
 	private onAmbianceReceived(buffer:any) {
 
 		let dv = new DataView(buffer);
@@ -173,6 +194,19 @@ export class ChimuinoProvider {
 
 		let dv = new DataView(buffer);
 		this._soundThreshold = dv.getUint8(0);
+
+		this.isSoundThresholdLoaded = true;
+	}
+
+	get currentMode():string {
+		return CurrentMode[this._currentMode]; //+" until "+this._currentModeWhen+"ms";
+	}
+
+	private onCurrentModeReceived(buffer:any) {
+
+		let dv = new DataView(buffer);
+		this._currentMode = CurrentMode[dv.getUint8(0)];
+		this._currentModeWhen = dv.getUint32(1, true);
 
 		this.isSoundThresholdLoaded = true;
 	}
@@ -793,6 +827,10 @@ export class ChimuinoProvider {
 		this.readAndListen(
 			ChimuinoProvider.SERVICE_SENSING, 	ChimuinoProvider.CHARACTERISTIC_SOUND_SENSOR, 
 			(data) => { this.onSoundSensorReceived(data); });
+		this.readAndListen(
+			ChimuinoProvider.SERVICE_CHIMUINO, 	ChimuinoProvider.CHARACTERISTIC_CURRENT_MODE, 
+			(data) => { this.onCurrentModeReceived(data); });
+
 
 		// send information to the Chimuino
 		if (this._firstConnection) {

@@ -12,7 +12,7 @@
 
 enum mode {
   
-  NOTHING,      // doing nothing
+  NOTHING = 0,      // doing nothing 
 
   WELCOME_SUN,  
   
