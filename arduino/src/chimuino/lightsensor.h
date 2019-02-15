@@ -65,15 +65,9 @@ class ChimeLightSensor: public BluetoothInformationProducer,
     // inherited
     // TODO receive level and/or adjustement of level demand
     virtual BluetoothListenerAnswer receivedLightSettings(ble_light_settings content);
-    virtual Intention proposeNextMode(enum mode current_mode, unsigned long next_planned_action);
+    virtual Intention proposeNextMode(Intention currentIntention);
 
 };
 
 
 #endif // CHIME_LIGHTSENSOR_H
-
-
-
-
-
-

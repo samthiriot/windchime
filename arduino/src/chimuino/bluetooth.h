@@ -173,6 +173,7 @@ class ChimeBluetooth {
     uint8_t bleCharAmbiance;
     uint8_t bleCharUptime;
     uint8_t bleCharActions;
+    uint8_t bleCharCurrentMode;
 
     uint8_t bleServiceSensingId;
     uint8_t bleCharTemperature;
@@ -195,6 +196,7 @@ class ChimeBluetooth {
     void setup_char_sound_sensor();
     void setup_char_sound_settings();
     void setup_char_actions();
+    void setup_char_current_mode();
 
     void setup_service_sensing();
     void setup_attribute_current_time();
@@ -247,6 +249,7 @@ class ChimeBluetooth {
     void publishLightSettings(ble_light_settings content);
     void publishSoundSensor(ble_sound_sensor content);
     void publishSoundSettings(ble_sound_settings content);
+    void publishCurrentMode(ble_mode content);
 
 
 };

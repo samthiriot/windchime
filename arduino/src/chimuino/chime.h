@@ -46,7 +46,7 @@ class IntentionProvider {
       // called when a GET <SOMETHING> was received
       // will receive as arguments the <SOMETHING> char*, 
       // and a pointer to serial port to use to answer
-      virtual Intention proposeNextMode(enum mode current_mode, uint32_t next_planned_action);
+      virtual Intention proposeNextMode(Intention currentIntention);
 
 };
 
@@ -76,7 +76,7 @@ class Chime: public BluetoothInformationProducer,
     void doDemoMedium();
     void doDemoStrong();
     
-    virtual Intention proposeNextMode(enum mode current_mode, uint32_t next_planned_action);
+    virtual Intention proposeNextMode(Intention currrent_intention);
 
 
 };

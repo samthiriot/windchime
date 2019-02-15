@@ -57,7 +57,7 @@ class ChimeAlarm: public BluetoothInformationProducer,
     virtual BluetoothListenerAnswer receivedAlarm1(ble_alarm content);
     virtual BluetoothListenerAnswer receivedAlarm2(ble_alarm content);
 
-    virtual Intention proposeNextMode(enum mode current_mode, unsigned long next_planned_action);
+    virtual Intention proposeNextMode(Intention currentIntention);
 
 
 };

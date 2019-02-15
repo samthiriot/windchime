@@ -97,9 +97,12 @@ void setupRandom() {
 }
 
 
-unsigned long next_planned_action = millis();
 
-mode current_mode = NOTHING;
+Intention currentIntention = { NOTHING, millis() };
+
+//unsigned long next_planned_action = millis();
+
+//mode current_mode = NOTHING;
 
 
 /**
@@ -133,6 +136,9 @@ void setup() {
   chime.setBluetooth(&bluetooth);       // TODO what for?
   ambiance.setBluetooth(&bluetooth);
 
+  sendCurrentModeBluetooth();
+
+
   // inform bluetooth of the users of data it produces
   bluetooth.setUsers(&clock, &alarm1, &alarm2, &lightSensor, &soundSensor, &chime, &ambiance);
   
@@ -140,6 +146,14 @@ void setup() {
 
 }
 
+void sendCurrentModeBluetooth() {
+  
+    ble_mode content;
+    content.ongoing = currentIntention.what;
+    content.when = currentIntention.when;
+        
+    bluetooth.publishCurrentMode(content);
+}
 
 bool debugNow = false;
 void loop() {
@@ -172,9 +186,9 @@ void loop() {
     lightSensor.debugSerial();
     ambiance.debugSerial();
     
-    DEBUG_PRINT(F("mode: ")); DEBUG_PRINT(mode2str(current_mode));
-    if (current_mode != NOTHING) {
-      DEBUG_PRINT(F(" in: ")); DEBUG_PRINT((next_planned_action - millis())/1000); DEBUG_PRINT('s');
+    DEBUG_PRINT(F("mode: ")); DEBUG_PRINT(mode2str(currentIntention.what));
+    if (currentIntention.what != NOTHING) {
+      DEBUG_PRINT(F(" in: ")); DEBUG_PRINT((currentIntention.when - millis())/1000); DEBUG_PRINT('s');
     }
     DEBUG_PRINTLN();
     //bluetooth.sendDebug();
@@ -182,59 +196,54 @@ void loop() {
 
 
   // DESIRE 
-
-  // alarms have the power to override past settings (alarm 1 has priority)
-  Intention proposedIntention = alarm2.proposeNextMode(current_mode, next_planned_action);
-  current_mode = proposedIntention.what; 
-  next_planned_action = proposedIntention.when;
+  Intention previousIntention = currentIntention;
   
-  proposedIntention = alarm1.proposeNextMode(current_mode, next_planned_action);
-  current_mode = proposedIntention.what; 
-  next_planned_action = proposedIntention.when;
-
+  // alarms have the power to override past settings (alarm 1 has priority)
+  currentIntention = alarm2.proposeNextMode(currentIntention);
+  currentIntention = alarm1.proposeNextMode(currentIntention);
+  
   // maybe a demo was asked?
-  proposedIntention = chime.proposeNextMode(current_mode, next_planned_action);
-  current_mode = proposedIntention.what; 
-  next_planned_action = proposedIntention.when;
-
+  currentIntention = chime.proposeNextMode(currentIntention);
+  
   // maybe the light sensor would like to propose welcoming the sun? 
-  proposedIntention = lightSensor.proposeNextMode(current_mode, next_planned_action);
-  current_mode = proposedIntention.what; 
-  next_planned_action = proposedIntention.when;
-
+  currentIntention = lightSensor.proposeNextMode(currentIntention);
+  
   // if nothing happens and we can play ambiance
-  proposedIntention = ambiance.proposeNextMode(current_mode, next_planned_action);
-  current_mode = proposedIntention.what; 
-  next_planned_action = proposedIntention.when;
-
-
+  currentIntention = ambiance.proposeNextMode(currentIntention);
+  
   if (debugNow) {
-    DEBUG_PRINT(F("new mode: ")); DEBUG_PRINT(mode2str(current_mode));
-    if (current_mode != NOTHING) {
-      DEBUG_PRINT(F(" in: ")); DEBUG_PRINT((next_planned_action - millis())/1000); DEBUG_PRINT('s');
+    DEBUG_PRINT(F("new mode: ")); DEBUG_PRINT(mode2str(currentIntention.what));
+    if (currentIntention.what != NOTHING) {
+      DEBUG_PRINT(F(" in: ")); DEBUG_PRINT((currentIntention.when - millis())/1000); DEBUG_PRINT('s');
     }
     DEBUG_PRINTLN();
   }
 
+  if (currentIntention.what != previousIntention.what) {
+    // the intention changed. 
+    // publish that in bluetooth
+    sendCurrentModeBluetooth();
+  }
+  
   // INTENTION
 
   persist.storeIfRequired();
 
   // maybe it's time to apply what we had planned?
-  if (current_mode != NOTHING and next_planned_action <= millis()) {
+  if (currentIntention.what != NOTHING and currentIntention.when <= millis()) {
     DEBUG_PRINTLN(F("time to act!"));
     // time to act
-    switch (current_mode) {
+    switch (currentIntention.what) {
       case NOTHING:
       case SILENCE:
-          current_mode = NOTHING; 
+          // currentIntention.what = NOTHING; 
           break;
       case DEMO_MEDIUM:
       case PREALARM1:
       case PREALARM2:
       case AMBIANCE_PREREVEIL:
           stepper.doPreReveil();
-          current_mode = NOTHING;
+          currentIntention.what = NOTHING;
           break;
       case ALARM1:
       case ALARM2:
@@ -242,12 +251,12 @@ void loop() {
       case WELCOME_SUN:
       case DEMO_STRONG:
           stepper.doReveil();
-          current_mode = NOTHING;
+          currentIntention.what = NOTHING;
           break;
       case AMBIANCE_TINTEMENT:
       case DEMO_LIGHT:
           stepper.doTintement();
-          current_mode = NOTHING;
+          currentIntention.what = NOTHING;
           break;
     }
    
@@ -255,8 +264,3 @@ void loop() {
   
   
 }
-
-
-
-
-

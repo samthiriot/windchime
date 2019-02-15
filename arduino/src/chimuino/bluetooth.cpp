@@ -25,6 +25,7 @@
   const char message_ble_sound_settings [] PROGMEM = "sound settings";
   const char message_ble_ambiance [] PROGMEM = "ambiance";
   const char message_ble_actions [] PROGMEM = "actions";
+  const char message_ble_current_mode [] PROGMEM = "current mode";
   
   const char message_ble_sensing [] PROGMEM = "sensing";
   const char message_ble_temperature [] PROGMEM = "temperature";  
@@ -123,6 +124,13 @@ union ble_actions_bytes {
   ble_actions data;
   uint8_t bytes[sizeof(ble_actions)];
 };
+
+// converter between actions and bytes
+union ble_mode_bytes {
+  ble_mode data;
+  uint8_t bytes[sizeof(ble_mode)];
+};
+
 
 ChimeBluetooth::ChimeBluetooth(unsigned short _pinTXD, unsigned short _pinRXD, 
                                unsigned short _pinMode, unsigned short _pinCTS, unsigned short _pinRTS,
@@ -427,7 +435,7 @@ void ChimeBluetooth::setup_service_chimuino() {
     setup_attribute_ambiance();
     setup_attribute_uptime();
     setup_char_actions();
-
+    setup_char_current_mode();
     // TODO ...
     
   }
@@ -573,6 +581,28 @@ void ChimeBluetooth::setup_char_actions() {
     if (bleCharActions == 0) {
       ERROR_PRINT(PGMSTR(message_ble_error_creating_char));
       ERROR_PRINTLN(PGMSTR(message_ble_actions));
+    } 
+}
+
+void ChimeBluetooth::setup_char_current_mode() {
+
+    TRACE_PRINT(PGMSTR(message_ble_adding_char));
+    TRACE_PRINTLN(PGMSTR(message_ble_current_mode));
+ 
+    // GATT_CHARS_PROPERTIES_WRITE
+    bleCharCurrentMode = gatt.addCharacteristic(
+      // format
+      BLE_GATT_CHAR_MODE,
+      // properties
+      GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, 
+      // data size min, max, 
+      sizeof(ble_mode_bytes), sizeof(ble_mode_bytes), 
+      // present format
+      BLE_DATATYPE_BYTEARRAY
+      );
+    if (bleCharCurrentMode == 0) {
+      ERROR_PRINT(PGMSTR(message_ble_error_creating_char));
+      ERROR_PRINTLN(PGMSTR(message_ble_current_mode));
     } 
 }
 
@@ -900,6 +930,21 @@ void ChimeBluetooth::publishSoundSettings(ble_sound_settings settings) {
   gatt.setChar(bleCharSoundSettings, content.bytes, sizeof(content.bytes));
   
 }
+
+void ChimeBluetooth::publishCurrentMode(ble_mode mode) {
+
+  // encore as bytes
+  ble_mode_bytes content;
+  content.data = mode;
+
+  TRACE_PRINT(PGMSTR(message_ble_bluetooth_publishing));
+  TRACE_PRINTLN(PGMSTR(message_ble_current_mode));
+  
+  // update the corresponding attribute value
+  gatt.setChar(bleCharCurrentMode, content.bytes, sizeof(content.bytes));
+  
+}
+
 
 /**
  * Reads whatever available from bluetooth

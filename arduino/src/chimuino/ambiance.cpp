@@ -61,11 +61,11 @@ BluetoothListenerAnswer Ambiance::receivedAmbiance(ble_ambiance content) {
   return PROCESSED;
 }
 
-Intention Ambiance::proposeNextMode(enum mode current_mode, unsigned long next_planned_action) {
+Intention Ambiance::proposeNextMode(Intention currentIntention) {
 
     bool canPlay = isEnabled() and !lightSensor->isDark() and soundSensor->isQuiet();
     
-   if (current_mode == NOTHING and canPlay) {
+   if (currentIntention.what == NOTHING and canPlay) {
 
     unsigned long additionalDelay;
     
@@ -88,13 +88,13 @@ Intention Ambiance::proposeNextMode(enum mode current_mode, unsigned long next_p
       return Intention { AMBIANCE_TINTEMENT,  millis() + additionalDelay};
     }
   } else if (!canPlay and 
-          (current_mode == AMBIANCE_TINTEMENT or current_mode == AMBIANCE_PREREVEIL or current_mode == AMBIANCE_REVEIL)
+          (currentIntention.what == AMBIANCE_TINTEMENT or currentIntention.what == AMBIANCE_PREREVEIL or currentIntention.what == AMBIANCE_REVEIL)
           ) {
       // disable planned ambiance if any!
       TRACE_PRINTLN(F("no more sound for ambiance."));
       return Intention { NOTHING,  millis() };
   }
   
-  return Intention { current_mode, next_planned_action };
+  return currentIntention;
   
 }

@@ -194,29 +194,29 @@ bool ChimeAlarm::shouldRing() {
   
 }
 
-Intention ChimeAlarm::proposeNextMode(enum mode current_mode, unsigned long next_planned_action) {
+Intention ChimeAlarm::proposeNextMode(Intention currentIntention) {
 
   enum mode PREALARM = id==1 ? PREALARM1: PREALARM2;
   enum mode ALARM = id==1 ? ALARM1: ALARM2;
   
   if (shouldPrering()) {
-    if (current_mode != PREALARM) {
+    if (currentIntention.what != PREALARM) {
       // we should prering, but we don't; let's propose to act !
       TRACE_PRINT(PGMSTR(message_alarm)); TRACE_PRINT_DEC(id); TRACE_PRINTLN(F(" prering"));
       return Intention { PREALARM,  millis() + random(1*60*1000l,5*60*1000l) };
     }
   } else if (shouldRing()) {
-    if (current_mode != ALARM) {
+    if (currentIntention.what != ALARM) {
       // we should ring, but we don't; let's propose to ring !
       TRACE_PRINT(PGMSTR(message_alarm)); TRACE_PRINT_DEC(id); TRACE_PRINTLN(F(" ring"));
       return Intention { ALARM,  millis() + random(1*60*1000l,5*60*1000l) };
     }
-  } else if (current_mode == PREALARM or current_mode == ALARM) {
+  } else if (currentIntention.what == PREALARM or currentIntention.what == ALARM) {
     // we were intending to alarm, but it's no time anymore; let's stop and leave some silence
     TRACE_PRINT(F("no more alarm")); TRACE_PRINT(PGMSTR(message_alarm)); TRACE_PRINTLN(id);
     return Intention { SILENCE,  millis() + 60*1000l };
   }
 
-  return Intention { current_mode, next_planned_action };
+  return currentIntention;
   
 }

@@ -31,10 +31,9 @@ class Ambiance: public BluetoothInformationProducer,
     
     // inherited
     virtual BluetoothListenerAnswer receivedAmbiance(ble_ambiance content);
-    virtual Intention proposeNextMode(enum mode current_mode, unsigned long next_planned_action);
+    virtual Intention proposeNextMode(Intention currentIntention);
 
 
 };
 
 #endif // AMBIANCE_H
-

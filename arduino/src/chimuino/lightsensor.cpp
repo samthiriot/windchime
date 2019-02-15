@@ -122,16 +122,16 @@ BluetoothListenerAnswer ChimeLightSensor::receivedLightSettings(ble_light_settin
 
 }
 
-Intention ChimeLightSensor::proposeNextMode(enum mode current_mode, unsigned long next_planned_action) {
+Intention ChimeLightSensor::proposeNextMode(Intention currentIntention) {
   
   bool isDarkNow = isDark();
   bool wasDark = previousIsDark;
   previousIsDark = isDarkNow;
-  if ( (current_mode == NOTHING) && (!isDarkNow) && (wasDark) ) {
+  if ( (currentIntention.what == NOTHING) && (!isDarkNow) && (wasDark) ) {
       // light just came back; welcome it!
       TRACE_PRINTLN(F("welcoming the sun ;-)"));
       return Intention { WELCOME_SUN,  millis() };
   }
-  return Intention { current_mode, next_planned_action };
+  return currentIntention;
   
 }
