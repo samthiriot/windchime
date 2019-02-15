@@ -20,11 +20,21 @@
           <ion-label>Enabled</ion-label>
           <ion-toggle [disabled]="!chimuino.isAmbianceLoaded" [(ngModel)]="chimuino.chimeEnabled"></ion-toggle>
         </ion-item>
+        <!--
         <ion-item>
           <ion-range [disabled]="!chimuino.isAmbianceLoaded" [(ngModel)]="chimuino.chimeLevel">
             <ion-icon range-left name="volume-down"></ion-icon>
             <ion-icon range-right name="volume-up"></ion-icon>
           </ion-range>
+        </ion-item>
+      -->
+        <ion-item>
+          <ion-label>It is now:</ion-label>
+          {{chimuino.isDark?"dark":"lit"}}
+        </ion-item>
+        <ion-item>
+          <ion-label>Now doing</ion-label>
+           {{chimuino.currentMode}}
         </ion-item>
       </ion-list>
 
@@ -46,7 +56,7 @@
           </ion-range>
         </ion-item>
         <ion-item>
-          <ion-range [disabled]="!chimuino.isLightThresholdLoaded" [(ngModel)]="chimuino.lightLevel" min="0" max="100" >
+          <ion-range [disabled]="true" [(ngModel)]="chimuino.lightLevel" min="0" max="100" >
             <ion-icon range-left small name="sunny"></ion-icon>
             <ion-icon range-right name="sunny"></ion-icon>
           </ion-range>
@@ -70,7 +80,7 @@
           </ion-range>
         </ion-item>
         <ion-item>
-          <ion-range [disabled]="!chimuino.isLightThresholdLoaded" [(ngModel)]="chimuino.soundLevel" min="0" max="100" >
+          <ion-range [disabled]="true" [(ngModel)]="chimuino.soundLevel" min="0" max="100" >
             <ion-icon range-left name="volume-down"></ion-icon>
             <ion-icon range-right name="volume-up"></ion-icon>
           </ion-range>
@@ -78,5 +88,20 @@
       </ion-list>
     </ion-card-content>
   </ion-card>
+
+  <ion-card>
+    <ion-card-header>
+      <ion-icon name="volume-up"></ion-icon> Demo
+    </ion-card-header>
+    <ion-card-content>
+
+              <button ion-button block [disabled]="!chimuino.isConnected" (click)="doChimeLight()">demo weak</button>
+              <button ion-button block [disabled]="!chimuino.isConnected" (click)="doChimeMedium()">demo medium</button>
+              <button ion-button block [disabled]="!chimuino.isConnected" (click)="doChimeStrong()">demo strong</button>
+
+    </ion-card-content>
+  </ion-card>
+
+
 
 </ion-content>

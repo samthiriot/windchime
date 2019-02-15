@@ -94,6 +94,13 @@ export class InstallPage {
   listDevices(){
 
   	/*
+  	// enable bluetooth
+	this.ble.enable()
+		.then( (enabled) => { this.scanForChimuino(); })
+	*/
+
+
+  	/*
 	this.ble.enable();
 	this.ble.isEnabled().then((data) => {
 		//this.buttonScanEnabled = true;

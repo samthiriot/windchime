@@ -13,6 +13,9 @@ import { BLE } from '@ionic-native/ble';
 // https://github.com/randdusing/cordova-plugin-bluetoothle
 //import { BluetoothLE } from '@ionic-native/bluetooth-le';
 
+// TODO
+// https://stackoverflow.com/questions/17870189/android-4-3-bluetooth-low-energy-unstable
+
 import {Platform} from 'ionic-angular';
 
 /**
@@ -118,6 +121,7 @@ export class ChimuinoProvider {
 		return this._isChimeEnabled;
 	}
 
+
 	set chimeLevel(value:number) {
 		this._chimeLevel = value;
 		this.storage.set('chime-level', value);
@@ -133,7 +137,7 @@ export class ChimuinoProvider {
 	}
 	set lightThreshold(value:number) {
 		this._lightThreshold = value;
-		this.setLightThreshold(this._lightThreshold);
+		this.setLightSettings(this._lightThreshold);
 	}
 	get lightMinMaxStr():String {
 		return ""+(this._lightMin)+":"+(this._lightMax);
@@ -144,8 +148,7 @@ export class ChimuinoProvider {
 	}
 	set soundThreshold(value:number) {
 		this._soundThreshold = value;
-		this.setSoundThreshold(this._soundThreshold);
-		// TODO update
+		this.setSoundSettings(this._soundThreshold);
 	}
 	get soundMinMaxStr():String {
 		return ""+(this._soundMin)+":"+(this._soundMax);
@@ -161,6 +164,17 @@ export class ChimuinoProvider {
 		//this.displayDebug("received alarm1: "+active+" "+hour+":"+minutes+" "+sunday+monday+tuesday+wednesday+thursday+friday+saturday+" "+durationSoft+" "+durationStrong);
 
 	}
+
+	// send the data to Arduino by bluetooth
+	private setAmbiance(enabled:boolean) {
+		
+		let buffer = new ArrayBuffer(1);
+		let dv = new DataView(buffer);
+		dv.setUint8(0, enabled?1:0);
+		
+		this.write(ChimuinoProvider.SERVICE_CHIMUINO, ChimuinoProvider.CHARACTERISTIC_AMBIANCE, dv.buffer);
+	}
+	
 	private onLightSensorReceived(buffer:any) {
 
 		let dv = new DataView(buffer);
@@ -179,6 +193,14 @@ export class ChimuinoProvider {
 
 		this.isLightThresholdLoaded = true;
 	}
+	private setLightSettings(threshold:number) {
+
+		let buffer = new ArrayBuffer(1);
+		let dv = new DataView(buffer);
+		dv.setUint8(0, threshold);
+
+		this.write(ChimuinoProvider.SERVICE_SENSING, ChimuinoProvider.CHARACTERISTIC_LIGHT_SETTINGS, dv.buffer);
+	}
 	private onSoundSensorReceived(buffer:any) {
 
 		let dv = new DataView(buffer);
@@ -196,6 +218,15 @@ export class ChimuinoProvider {
 		this._soundThreshold = dv.getUint8(0);
 
 		this.isSoundThresholdLoaded = true;
+	}
+
+	private setSoundSettings(threshold:number) {
+
+		let buffer = new ArrayBuffer(1);
+		let dv = new DataView(buffer);
+		dv.setUint8(0, threshold);
+
+		this.write(ChimuinoProvider.SERVICE_SENSING, ChimuinoProvider.CHARACTERISTIC_SOUND_SETTINGS, dv.buffer);
 	}
 
 	get currentMode():string {
@@ -886,60 +917,8 @@ export class ChimuinoProvider {
 		}
 
 		
-		//	.catch( (error) => { this.displayDebug("error when updating time: "+error); });
-
 	}
 
-
-	/**
-	 * returns a Promise of BLE which should be connected 
-	 */
-	 /*
-	private getConnectedBle() {
-
-			// check bluetooth is enabled
-		return this.ble.isEnabled()
-			// ... if bluetooth is not enabled, enable it
-			.then(
-				(enabled) => {
-					//this.displayDebug("enabled? "+enabled);
-
-					if (!enabled) return this.ble.enable();
-					else return true;
-				})
-			// check the device is connected
-			.then(this.ble.isConnected)
-			// ... if not, connect it!
-			.then(
-				(connected) => {
-					this.displayDebug("connected? "+connected);
-					if (!connected) return this.ble.connect(this._device.id);
-					else return true;
-				});
-	}*/
-
-	/**
-	 * React when the bluetooth device was found; 
-	 * this._device is thus set.
-	 */
-	 /*
-	private reactDeviceFound() {
-
-		// display information to the user
-		this.displayToastMessage('connecting '+this._device.name+'...');
-
-		this.ble.connect(this._device.id).subscribe(
-			(peripherical) => {
-				this.displayToastMessage("connected to "+this._device.name);
-				this.reactDeviceConnected(); 
-			},
-			(peripherical) => {
-				this.displayToastMessage("disconnected from "+this._device.name+" :-(");
-				this._isConnected = false;
-			});
-
-	}
-	*/
 
 	/**
 	 * Called when the time changed.
@@ -961,20 +940,6 @@ export class ChimuinoProvider {
 
 	}
 
-
-/*
-	private readAndListen(service:string, characteristic:string, callback_data:(data:any) => void, what:string) {
-		this.ble.read(this._device.id, service, characteristic).then(
-			(data) => { callback_data(data) }, 
-			(error) => { this.displayToastMessage("unable to read "+what);  }
-			);
-		this.ble.startNotification(this._device.id, service, characteristic).subscribe(
-			(data) => { callback_data(data) }, 
-			(error) => { this.displayToastMessage("unable to listen "+what); }
-		);
-	}
-*/
-
 	/**
 	 * Called when the notification demand fails. 
 	 * Usually means we are disconnected.
@@ -984,45 +949,6 @@ export class ChimuinoProvider {
 		this.displayToastMessage("notification failure :-(");
 		//this.attemptReconnect();
 	}	
-
-	private sendMessage(wathever) {
-		// TODO just to deactivate the old protocol
-	}
-
-	// TODO to replace. 
-
-	// ask for characteristics
-	askAlarm1()			{ this.sendMessage("GET ALARM1"); 			}
-	askAlarm2()			{ this.sendMessage("GET ALARM2"); 			}
-
-	askAmbiance()		{ this.sendMessage("GET AMBIANCE"); 		}
-	
-	askVersion()		{ this.sendMessage("GET VERSION"); 			}
-	
-	askSoundThreshold()	{ this.sendMessage("GET SOUNDTHRESHOLD"); 	}
-	askSoundLevel()		{ this.sendMessage("GET SOUNDLEVEL");		}
-	askSoundEnvelope()	{ this.sendMessage("GET SOUNDENVELOPE");	}
-	
-	askLightThreshold()	{ this.sendMessage("GET LIGHTTHRESHOLD"); 	}
-	askLightLevel()		{ this.sendMessage("GET LIGHTLEVEL");		}
-	askLightEnvelope()	{ this.sendMessage("GET LIGHTENVELOPE");	}
-	
-	askDatetime()		{ this.sendMessage("GET DATETIME");			}
-	
-	askTemperature()	{ this.sendMessage("GET TEMPERATURE");		}
-
-	askUptime()			{ this.sendMessage("GET UPTIME");			}
-
-	// TODO envelopes
-
-	
-
-	setSoundThreshold(t:number) { this.sendMessage("SET SOUNDTHRESHOLD "+t); }
-	setLightThreshold(t:number) { this.sendMessage("SET LIGHTTHRESHOLD "+t); }
-
-	// setters for one Boolean
-	setAmbiance(enabled:boolean) { this.sendMessage("SET AMBIANCE "+(enabled?"1":"0")); }
-
 
 	/*
 	* Sets the time of the chimuino to 
