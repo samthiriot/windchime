@@ -130,7 +130,7 @@ void setup() {
   alarm2.setBluetooth(&bluetooth);
   lightSensor.setBluetooth(&bluetooth);
   soundSensor.setBluetooth(&bluetooth);
-  chime.setBluetooth(&bluetooth);
+  chime.setBluetooth(&bluetooth);       // TODO what for?
   ambiance.setBluetooth(&bluetooth);
 
   // inform bluetooth of the users of data it produces
@@ -139,7 +139,8 @@ void setup() {
   DEBUG_PRINTLN("init: end.");
 
 }
-char truc[] = "GET VERSION\n";
+
+
 bool debugNow = false;
 void loop() {
 
@@ -150,11 +151,11 @@ void loop() {
   
   // BELIEFS 
   
+  // percieve the world
   bluetooth.readAndReact();
-
-  // pervceive the world
   soundSensor.perceive();
   lightSensor.perceive();
+  clock.perceive();
   
   bool isDark = lightSensor.isDark();   // is there any light around? 
   bool isQuiet = soundSensor.isQuiet(); // is there any sound around?

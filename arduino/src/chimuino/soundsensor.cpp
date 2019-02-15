@@ -5,6 +5,11 @@
 
 #include "debug.h"
 
+const char msg_soundsensor[] PROGMEM  = { "sound sensor"};
+const char msg_quiet[] PROGMEM  =       { "quiet"};
+const char msg_noisy[] PROGMEM  =       { "noisy"};
+
+
 SoundLowPassFilterSensorWithMinMax::SoundLowPassFilterSensorWithMinMax(
                                   const float _ETA, const byte _pin, const unsigned int _period, 
                                   const float _ETAslow, const float _ETAquick
@@ -80,6 +85,8 @@ void ChimeSoundSensor::perceive() {
     // ... update the threshold!
     quietThreshold = sensor.envelopeMin() + int(float(factorThreshold)* float(sensor.envelopeMax() - sensor.envelopeMin())/100.0);
 
+    // update published data
+    publishBluetoothDataSensor();
   }
   
 }
@@ -88,7 +95,7 @@ void ChimeSoundSensor::debugSerial() {
   
   #ifdef DEBUG
   Serial << F("SOUND LEVEL: ") << _DEC(sensor.value()) << ' ' 
-         << ( isQuiet() ? F("(quiet)"):F("(noisy)") ) << ' '
+         << ( isQuiet() ? PGMSTR(msg_quiet):PGMSTR(msg_noisy) ) << ' '
          << _DEC(factorThreshold) << '>'
          << _DEC(quietThreshold) << ' '
          << '[' << _DEC(sensor.envelopeMin()) << ':' << _DEC(sensor.envelopeMax()) << ']'
@@ -100,7 +107,7 @@ void ChimeSoundSensor::debugSerial() {
 void ChimeSoundSensor::setup(Persist* _persist) {
 
   TRACE_PRINT(message_init); 
-  TRACE_PRINTLN(F("sound sensor..."));
+  TRACE_PRINTLN(PGMSTR(msg_soundsensor));
 
   sensor.setup(-1, -1); // we have no f idea of what are the min and max for such a sensor !
   sensor.sense();
@@ -109,14 +116,15 @@ void ChimeSoundSensor::setup(Persist* _persist) {
   if (persist->hasDataStored()) {
     // there is data persisted ! Let's load it :-)
     factorThreshold = persist->getSoundThreshold();
-    TRACE_PRINTLN(F("loaded data from saved state"));
+    TRACE_PRINTLN(PGMSTR(msg_loaded_saved_state));
   } else {
-    ERROR_PRINTLN(F("no saved state, defining the default state..."));
+    ERROR_PRINTLN(PGMSTR(msg_not_persisted_default_state));
     storeState();
-  }
+  };
   
-  TRACE_PRINT(message_init); 
-  TRACE_PRINTLN(F("sound sensor ok"));
+  DEBUG_PRINT(PGMSTR(message_init)); 
+  DEBUG_PRINT(PGMSTR(msg_soundsensor));
+  DEBUG_PRINTLN(PGMSTR(msg_ok_dot));
 }
 
 
@@ -137,22 +145,24 @@ bool ChimeSoundSensor::isQuiet() {
   return getSoundLevel() <= quietThreshold;
 }
 
+void ChimeSoundSensor::publishBluetoothDataSettings() {
+   ble_sound_settings content;
+  content.threshold = factorThreshold;
+  this->bluetooth->publishSoundSettings(content);
+}
+void ChimeSoundSensor::publishBluetoothDataSensor() {
+  ble_sound_sensor content;
+  content.level = getSoundLevel();
+  content.isQuiet = isQuiet();
+  content.min = sensor.envelopeMin();
+  content.max = sensor.envelopeMax();  
+  this->bluetooth->publishSoundSensor(content);
+}
+
 void ChimeSoundSensor::publishBluetoothData() {
 
-  {
-    ble_sound_sensor content;
-    content.level = getSoundLevel();
-    content.isQuiet = isQuiet();
-    content.min = sensor.envelopeMin();
-    content.max = sensor.envelopeMax();  
-    this->bluetooth->publishSoundSensor(content);
-  }
-
-  {
-    ble_sound_settings content;
-    content.threshold = factorThreshold;
-    this->bluetooth->publishSoundSettings(content);
-  }
+  publishBluetoothDataSettings();
+  publishBluetoothDataSensor();
 }
 
 BluetoothListenerAnswer ChimeSoundSensor::receivedSoundSettings(ble_sound_settings content) {

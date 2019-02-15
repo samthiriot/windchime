@@ -10,6 +10,10 @@
 #define PERSIST_MAGIC 501983
 #define PERSIST_VERSION_CURRENT 1;
 
+const char msg_not_persisted_default_state[] PROGMEM  = { "no saved state, defining the default state"};
+const char msg_loaded_saved_state[] PROGMEM  = { "loaded data from saved state"};
+
+
 struct ChimePersistedAlarmData {
   bool enabled;
   unsigned short start_hour;

@@ -149,7 +149,8 @@ void ChimeBluetooth::setup() {
   DEBUG_PRINT(PGMSTR(message_ble_init_bluetooth));
   DEBUG_PRINT(F("connecting hardware... "));
   if ( !ble.begin(BLE_VERBOSE_MODE) ) {
-      ERROR_PRINTLN(F("ERROR BLE dongle not found")); // , make sure it's in command mode & check wiring?
+      ERROR_PRINT(PGMSTR(msg_error_semicol));
+      ERROR_PRINTLN(F("BLE dongle not found")); // , make sure it's in command mode & check wiring?
   } else {
     DEBUG_PRINTLN(PGMSTR(msg_ok_dot));
   }
@@ -902,12 +903,13 @@ void ChimeBluetooth::publishSoundSettings(ble_sound_settings settings) {
  */
 void ChimeBluetooth::readAndReact() {
 
+  // TODO only every few seconds!
   // is button pressed???
   if (digitalRead(pinButtonConnect) == LOW) {
-    DEBUG_PRINTLN(F("********* button pressed *********"));
+    DEBUG_PRINTLN(F("button is pressed"));
   }
   if (digitalRead(pinButtonSwitch) == LOW) {
-    DEBUG_PRINTLN(F("********* bluetooth off *********"));
+    DEBUG_PRINTLN(F("bluetooth is off"));
   }
   
   // check if anything new on the side of BLE?

@@ -8,10 +8,7 @@
 #include <Streaming.h>
 #include <TimeLib.h>
 
-
-  #include <avr/pgmspace.h>
-
- const char message_alarm [] PROGMEM = "ALARM";
+const char message_alarm [] PROGMEM = "ALARM";
  
 ChimeAlarm::ChimeAlarm(byte _id):
             BluetoothInformationProducer(),
@@ -43,9 +40,10 @@ void ChimeAlarm::setup(Persist* _persist) {
     thursday = read.thursday;
     friday = read.friday;
     saterday = read.saterday;
-    TRACE_PRINTLN(F("loaded data from saved state"));
+
+    TRACE_PRINTLN(PGMSTR(msg_loaded_saved_state));
   } else {
-    ERROR_PRINTLN(F("no saved state, defining the default state..."));
+    ERROR_PRINTLN(PGMSTR(msg_not_persisted_default_state));
     storeState();
   }
 
@@ -64,7 +62,7 @@ void ChimeAlarm::debugSerial() {
   #ifdef TRACE
   Serial << message_alarm << id << F(": ") 
          << _DEC(start_hour) << ':' << _DEC(start_minutes) << ' ' 
-         << (enabled ? F("enabled") : F("disabled")) << ' '
+         << (enabled ? PGMSTR(msg_enabled) : PGMSTR(msg_disabled) << ' '
          << _DEC(durationSoft) << ' ' << _DEC(durationStrong) << F(" days:")
          << bool2char(sunday) << bool2char(monday) << bool2char(tuesday) << bool2char(wednesday) << bool2char(thursday) << bool2char(friday) << bool2char(saterday)
          << endl;
@@ -205,18 +203,18 @@ Intention ChimeAlarm::proposeNextMode(enum mode current_mode, unsigned long next
   if (shouldPrering()) {
     if (current_mode != PREALARM) {
       // we should prering, but we don't; let's propose to act !
-      TRACE_PRINT(F("alarm")); TRACE_PRINT_DEC(id); TRACE_PRINTLN(F(" prering"));
+      TRACE_PRINT(PGMSTR(message_alarm)); TRACE_PRINT_DEC(id); TRACE_PRINTLN(F(" prering"));
       return Intention { PREALARM,  millis() + random(1*60*1000l,5*60*1000l) };
     }
   } else if (shouldRing()) {
     if (current_mode != ALARM) {
       // we should ring, but we don't; let's propose to ring !
-      TRACE_PRINT(F("alarm")); TRACE_PRINT_DEC(id); TRACE_PRINTLN(F(" ring"));
+      TRACE_PRINT(PGMSTR(message_alarm)); TRACE_PRINT_DEC(id); TRACE_PRINTLN(F(" ring"));
       return Intention { ALARM,  millis() + random(1*60*1000l,5*60*1000l) };
     }
   } else if (current_mode == PREALARM or current_mode == ALARM) {
     // we were intending to alarm, but it's no time anymore; let's stop and leave some silence
-    TRACE_PRINT(F("no more alarm ALARM"));TRACE_PRINTLN(id);
+    TRACE_PRINT(F("no more alarm")); TRACE_PRINT(PGMSTR(message_alarm)); TRACE_PRINTLN(id);
     return Intention { SILENCE,  millis() + 60*1000l };
   }
 

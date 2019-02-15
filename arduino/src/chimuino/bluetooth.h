@@ -59,7 +59,8 @@ const uint8_t BLUEFRUIT_UART_RTS_PIN=12;
 #define BLE_GATT_CHAR_ALARM2          0x5552
 #define BLE_GATT_CHAR_AMBIANCE        0x5553 // settings such as "enable chiming"
 #define BLE_GATT_CHAR_UPTIME          0x5554 // in minutes
-#define BLE_GATT_CHAR_ACTIONS         0x5555 // in minutes
+#define BLE_GATT_CHAR_ACTIONS         0x5555 
+#define BLE_GATT_CHAR_MODE            0x5556 // shares the current mode (what the chime is doing)
 
 
 
@@ -158,22 +159,22 @@ class ChimeBluetooth {
     Ambiance* ambiance;
                   
     // the internal identifiers for the services and characteristics
-    int32_t bleServiceChimuinoId;
-    int32_t bleCharCurrentTime;
-    int32_t bleCharAlarm1;
-    int32_t bleCharAlarm2;
-    int32_t bleCharAmbiance;
-    int32_t bleCharUptime;
-    int32_t bleCharActions;
+    uint8_t bleServiceChimuinoId;
+    uint8_t bleCharCurrentTime;
+    uint8_t bleCharAlarm1;
+    uint8_t bleCharAlarm2;
+    uint8_t bleCharAmbiance;
+    uint8_t bleCharUptime;
+    uint8_t bleCharActions;
 
-    int32_t bleServiceSensingId;
-    int32_t bleCharTemperature;
-    int32_t bleCharTemperature1;
-    int32_t bleCharTemperature2;
-    int32_t bleCharLightSensor;
-    int32_t bleCharLightSettings;
-    int32_t bleCharSoundSensor;
-    int32_t bleCharSoundSettings;
+    uint8_t bleServiceSensingId;
+    uint8_t bleCharTemperature;
+    uint8_t bleCharTemperature1;
+    uint8_t bleCharTemperature2;
+    uint8_t bleCharLightSensor;
+    uint8_t bleCharLightSettings;
+    uint8_t bleCharSoundSensor;
+    uint8_t bleCharSoundSettings;
 
     SoftwareSerial bluefruitSS = SoftwareSerial(BLUEFRUIT_SWUART_TXD_PIN, BLUEFRUIT_SWUART_RXD_PIN);    
     Adafruit_BluefruitLE_UART ble = Adafruit_BluefruitLE_UART(bluefruitSS, BLUEFRUIT_UART_MODE_PIN, BLUEFRUIT_UART_CTS_PIN, BLUEFRUIT_UART_RTS_PIN);
@@ -278,9 +279,3 @@ class BluetoothInformationProducer {
 };
 
 #endif // CHIME_BLUETOOTH_H
-
-
-
-
-
-

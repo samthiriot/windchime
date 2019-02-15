@@ -21,9 +21,9 @@ void Ambiance::setup(Persist* _persist, ChimeSoundSensor* _soundSensor, ChimeLig
   if (persist->hasDataStored()) {
     // there is data persisted ! Let's load it :-)
     enabled = persist->getAmbianceEnabled();
-    TRACE_PRINTLN(F("loaded ambiance data from saved state"));
+    TRACE_PRINTLN(PGMSTR(msg_loaded_saved_state));
   } else {
-    ERROR_PRINTLN(F("no saved state for ambiance, defining the default state..."));
+    ERROR_PRINTLN(PGMSTR(msg_not_persisted_default_state));
     storeState();
   }
 
@@ -42,7 +42,7 @@ void Ambiance::publishBluetoothData() {
 void Ambiance::debugSerial() {
   #ifdef TRACE
   Serial << F("Ambiance: ") 
-         << (enabled ? F("enabled") : F("disabled"))
+         << (enabled ? PGMSTR(msg_enabled) : PGMSTR(msg_disabled) )
          << endl;
   #endif 
 }

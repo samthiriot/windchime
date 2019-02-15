@@ -28,6 +28,8 @@ class ChimeClock: public BluetoothInformationProducer {
     ChimeClock();
     
     void setup();
+
+    void perceive();
     
     // prints debug information in the Serial port
     void debugSerial();

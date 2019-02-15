@@ -40,6 +40,8 @@ class ChimeLightSensor: public BluetoothInformationProducer,
 
     Persist* persist;
 
+    void publishBluetoothDataSettings();
+    void publishBluetoothDataSensor();
     virtual void publishBluetoothData();
 
   public:

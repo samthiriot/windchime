@@ -4,6 +4,8 @@
 
 #include "debug.h"
 
+const char msg_stepper[] PROGMEM  = { "stepper"};
+
 ChimeStepper::ChimeStepper(
       unsigned short _steps, 
       unsigned short _pin1, unsigned short _pin2, unsigned short _pin3, unsigned short _pin4):
@@ -20,7 +22,7 @@ ChimeStepper::ChimeStepper(
 void ChimeStepper::setup() {
 
     DEBUG_PRINT(PGMSTR(message_init)); 
-    DEBUG_PRINTLN(F("stepper..."));
+    DEBUG_PRINTLN(PGMSTR(msg_stepper));
 
     pinMode(pin1, OUTPUT);
     pinMode(pin2, OUTPUT);
@@ -46,7 +48,8 @@ void ChimeStepper::setup() {
     doFreeWheel(); // relax and don't consume energy
 
     DEBUG_PRINT(PGMSTR(message_init)); 
-    DEBUG_PRINTLN(F("stepper ok"));
+    DEBUG_PRINT(PGMSTR(msg_stepper));
+    DEBUG_PRINTLN(PGMSTR(msg_ok_dot)); 
 }
 
 /**
@@ -87,7 +90,7 @@ void ChimeStepper::doPreReveil() {
 
 
 void ChimeStepper::doTintement() {
-  TRACE_PRINTLN(F("prereveil..."));
+  TRACE_PRINTLN(F("tintement..."));
   for (int i=0; i<random(1,5); i++){
     motor.setSpeed(MOTOR_SPEED_SLOW);
     motor.step(pull_light);

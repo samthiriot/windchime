@@ -56,6 +56,9 @@ class ChimeSoundSensor: public BluetoothInformationProducer {
     Persist* persist;
 
     void storeState();
+    
+    void publishBluetoothDataSettings();
+    void publishBluetoothDataSensor();
     virtual void publishBluetoothData();
 
   public:

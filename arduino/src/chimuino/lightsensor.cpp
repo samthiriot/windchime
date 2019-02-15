@@ -5,6 +5,8 @@
 
 #include "debug.h"
 
+const char msg_lightsensor[] PROGMEM  = { "light sensor"};
+
 ChimeLightSensor::ChimeLightSensor(const byte _pin):
               BluetoothInformationProducer(),
               IntentionProvider(),
@@ -28,7 +30,9 @@ void ChimeLightSensor::perceive() {
 
     // ... update the threshold!
     darkThreshold = sensor.envelopeMin() + int(float(factorThreshold) * float(sensor.envelopeMax() - sensor.envelopeMin()) / 100.);
-  
+
+    // publish these novel values
+    publishBluetoothDataSensor();
   }
 }
 
@@ -48,7 +52,7 @@ void ChimeLightSensor::debugSerial() {
 void ChimeLightSensor::setup(Persist* _persist) {
 
   TRACE_PRINT(message_init); 
-  TRACE_PRINTLN(F("light sensor..."));
+  TRACE_PRINTLN(PGMSTR(msg_lightsensor));
 
   sensor.setup(0, -1); // we assume no light means 0, but have no idea of the max
   sensor.sense();
@@ -57,14 +61,15 @@ void ChimeLightSensor::setup(Persist* _persist) {
   if (persist->hasDataStored()) {
     // there is data persisted ! Let's load it :-)
     factorThreshold = persist->getLightThreshold();
-    TRACE_PRINTLN(F("loaded data from saved state"));
+    TRACE_PRINTLN(PGMSTR(msg_loaded_saved_state));
   } else {
-    ERROR_PRINTLN(F("no saved state, defining the default state..."));
+    ERROR_PRINTLN(PGMSTR(msg_not_persisted_default_state));
     storeState();
   }
 
-  TRACE_PRINT(message_init); 
-  TRACE_PRINTLN(F("light sensor ok"));
+  TRACE_PRINT(PGMSTR(message_init)); 
+  TRACE_PRINT(PGMSTR(msg_lightsensor));
+  TRACE_PRINTLN(PGMSTR(msg_ok_dot));
 }
 
 void ChimeLightSensor::storeState() {
@@ -79,22 +84,26 @@ bool ChimeLightSensor::isDark() {
   return getLightLevel() <= darkThreshold;
 }
 
+
+void ChimeLightSensor::publishBluetoothDataSettings() {
+  ble_light_settings content;
+  content.threshold = factorThreshold;
+  this->bluetooth->publishLightSettings(content);
+}
+void ChimeLightSensor::publishBluetoothDataSensor() {
+  ble_light_sensor content;
+  content.level = getLightLevel();
+  content.isDark = isDark();
+  content.min = sensor.envelopeMin();
+  content.max = sensor.envelopeMax();  
+  this->bluetooth->publishLightSensor(content);
+}
+
 void ChimeLightSensor::publishBluetoothData() {
 
-  {
-    ble_light_sensor content;
-    content.level = getLightLevel();
-    content.isDark = isDark();
-    content.min = sensor.envelopeMin();
-    content.max = sensor.envelopeMax();  
-    this->bluetooth->publishLightSensor(content);
-  }
-
-  {
-    ble_light_settings content;
-    content.threshold = factorThreshold;
-    this->bluetooth->publishLightSettings(content);
-  }
+  publishBluetoothDataSensor();
+  publishBluetoothDataSettings();
+ 
 }
 
 BluetoothListenerAnswer ChimeLightSensor::receivedLightSettings(ble_light_settings content) {

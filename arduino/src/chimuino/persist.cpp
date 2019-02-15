@@ -4,6 +4,8 @@
 
 #include <EEPROM.h>
 
+const char msg_init_persistence_col[] PROGMEM  = { "init persistence: "};
+
 Persist::Persist() {
   
 };
@@ -13,13 +15,15 @@ void Persist::setup() {
   EEPROM.get(PERSIST_BASE_ADDRESS, persisted);
   isReadValid = (persisted.magic == PERSIST_MAGIC);
   if (!isReadValid) {
-    ERROR_PRINTLN("init persistence: wrong magic, will not read anything !");
+    ERROR_PRINT(PGMSTR(msg_init_persistence_col));
+    ERROR_PRINTLN(F("WRONG MAGIC, will not restore data"));
     // init values with something which makes sense
     persisted.magic = PERSIST_MAGIC;
     persisted.struct_version = PERSIST_VERSION_CURRENT;
     // the other (nice !) components should tell us soon which default value to write for each parameter.
   } else {
-    TRACE_PRINTLN("init persistence: read from EEPROM.");
+    DEBUG_PRINT(PGMSTR(msg_init_persistence_col));
+    DEBUG_PRINTLN(PGMSTR(msg_ok_dot));
   }
 };
 
@@ -27,7 +31,7 @@ void Persist::setup() {
 void Persist::storeIfRequired() {
   
   if ((lastUpdate > 0) and (millis()-lastUpdate >= PERSIST_DELAY_MS)) {
-    TRACE_PRINTLN(F("Time to persist data into non-volatile memory..."));
+    TRACE_PRINTLN(F("Persisting data."));
     EEPROM.put(PERSIST_BASE_ADDRESS, persisted);
     lastUpdate = 0;
   }

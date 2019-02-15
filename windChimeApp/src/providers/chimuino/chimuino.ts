@@ -218,7 +218,8 @@ export class ChimuinoProvider {
 		this._alarm1hour = parseInt(tokens[0]);
 		this._alarm1minutes = parseInt(tokens[1]);
 		if (isNaN(this._alarm1hour) || isNaN(this._alarm1minutes)) {      return; 	}
-		this.updateChimuinoAlarm1(); 	}
+		this.updateChimuinoAlarm1(); 	
+	}
 	set alarm1soft(value:number) 		{	this._alarm1soft = value;		this.storage.set('alarm-1-soft', value);		this.updateChimuinoAlarm1();	}
 	set alarm1strong(value:number) 		{	this._alarm1strong = value;		this.storage.set('alarm-1-strong', value);		this.updateChimuinoAlarm1();	}
 	set alarm1sunday(value:boolean)     { 	this._alarm1sunday = value;     this.updateChimuinoAlarm1(); }
@@ -511,18 +512,18 @@ export class ChimuinoProvider {
 
 	}
 	public doChimeLight() { 
-		this.sendActions(1, false, false);
+		this.sendActions(1, false, 0);
 	}
 	public doChimeMedium() { 
-		this.sendActions(2, false, false);
+		this.sendActions(2, false, 0);
 	}
 	public doChimeStrong() { 
-		this.sendActions(3, false, false);
+		this.sendActions(3, false, 0);
 	}
 	public doSnooze() { 
-		this.sendActions(0, true, false);
+		this.sendActions(0, true, 0);
 	}
-	
+
 	constructor(//public http: HttpClient,
   			  private ble: BLE,
   			  private storage: Storage,

@@ -60,8 +60,8 @@ void ChimeClock::setup() {
   startTimestamp = millis();
 
   TRACE_PRINT(PGMSTR(message_init)); 
-  TRACE_PRINTLN(F("RTC ok"));
-
+  TRACE_PRINT(F("RTC"));
+  TRACE_PRINTLN(PGMSTR(msg_ok_dot));
 }
 
 time_t ChimeClock::now() {
@@ -94,7 +94,6 @@ void ChimeClock::publishBluetoothData() {
     // TODO this uptime overflows quickly. use RTC instead?
     uint32_t uptime = (millis() - startTimestamp)/(60l*1000l);
     bluetooth->publishUptime(uptime);
-
     
 }
 
@@ -122,6 +121,9 @@ BluetoothListenerAnswer ChimeClock::receivedCurrentDateTime(ble_datetime content
 }
 
 
+void ChimeClock::perceive() {
+  publishBluetoothData();
+}
 
 /* TODO 
 void ChimeClock::setAlarm1(unsigned short hour, unsigned short minutes) {
