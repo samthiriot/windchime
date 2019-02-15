@@ -45,6 +45,12 @@ const uint8_t BLUEFRUIT_SWUART_TXD_PIN=11;
 const uint8_t BLUEFRUIT_SWUART_RXD_PIN=10;
 const uint8_t BLUEFRUIT_UART_RTS_PIN  =12;
 
+
+// this magic number is used to detect if we need a factory reset
+// upgrade it to trigger an update of services and characteristics and other 
+// bluetooth settings
+#define MAGIC_NUMBER  0x555551
+
 // the services and characteristics we will publish
 #define BLE_GATT_SERVICE_SENSING      0x181A // https://www.bluetooth.com/specifications/assigned-numbers/environmental-sensing-service-characteristics
 #define BLE_GATT_CHAR_TEMPERATURE     0x2A6E // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.temperature.xml
@@ -65,12 +71,11 @@ const uint8_t BLUEFRUIT_UART_RTS_PIN  =12;
 #define BLE_GATT_CHAR_MODE            0x5556 // shares the current mode (what the chime is doing)
 
 
-
 // if true, the initialization of the dongle is verbose
 #define BLE_VERBOSE_MODE            true
 
 // if defined, we will do a factory reset
-#define BLE_FACTORYRESET_ENABLE
+// #define BLE_FACTORYRESET_ENABLE
 
 // stores a date-time content, in order to update the current date time from a phone
 struct ble_datetime {
@@ -217,6 +222,8 @@ class ChimeBluetooth {
     void decodeSoundSettings(uint8_t data[], uint16_t len);
     void decodeActions(uint8_t data[], uint16_t len);
 
+    bool wrongLength(uint16_t len, uint8_t sizof);
+    
   public:
     ChimeBluetooth(unsigned short _pinTXD, unsigned short _pinRXD,
                    unsigned short _pinMode, unsigned short _pinCTS, unsigned short _pinRTS,

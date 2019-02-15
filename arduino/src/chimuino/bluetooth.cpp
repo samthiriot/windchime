@@ -152,53 +152,63 @@ void ChimeBluetooth::setup() {
   pinMode(pinButtonConnect,INPUT_PULLUP);
   pinMode(pinButtonSwitch,INPUT_PULLUP);
 
-
   // initialize the BLE access (and detect HW problems)
   TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
   TRACE_PRINT(F("connecting hardware... "));
   if ( !ble.begin(BLE_VERBOSE_MODE) ) {
       ERROR_PRINT(PGMSTR(msg_error_semicol));
       ERROR_PRINTLN(F("BLE dongle not found")); // , make sure it's in command mode & check wiring?
+      // TODO break
+      return;
   } else {
     DEBUG_PRINTLN(PGMSTR(msg_ok_dot));
   }
   
-  #ifdef BLE_FACTORYRESET_ENABLE 
-  /* Perform a factory reset to make sure everything is in a known state */
-  TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
-  TRACE_PRINTLN(F("factory reset... "));
-  if ( !ble.factoryReset() ){
-    ERROR_PRINTLN(PGMSTR(message_ble_error));
-  } else {
-    DEBUG_PRINTLN(PGMSTR(msg_ok_dot));
-  }
-  #endif
-
-  /* Disable command echo from Bluefruit */
+  // Disable command echo from Bluefruit
   ble.echo(false);
 
-  TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
-  TRACE_PRINT(F("setting name... "));
-  if (! ble.sendCommandCheckOK(F( "AT+GAPDEVNAME=Chimuino2" ))) {
-    TRACE_PRINTLN(PGMSTR(message_ble_error));
-  } else {
-    TRACE_PRINTLN(PGMSTR(msg_ok_dot));
-  }
+  // read magic, and only factoryreset and redefine if the magic is not ok
+  int32_t magic_number;
+  ble.readNVM(0, &magic_number);
+  if ( magic_number != MAGIC_NUMBER) {
+    
+    //#ifdef BLE_FACTORYRESET_ENABLE 
+    // Perform a factory reset to make sure everything is in a known state
+    TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
+    TRACE_PRINTLN(F("factory reset... "));
+    if ( !ble.factoryReset() ){
+      ERROR_PRINTLN(PGMSTR(message_ble_error));
+    } else {
+      DEBUG_PRINTLN(PGMSTR(msg_ok_dot));
+    }
+    //#endif
 
-  TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
-  TRACE_PRINTLN(F("creating services... "));
-  // SET the services and characteristics
-  setup_service_chimuino();
-  setup_service_sensing();
-   
-  /* Reset the device for the new service setting changes to take effect */
-  TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
-  TRACE_PRINTLN(F("reset to apply changes... "));
-  ble.reset();
-  delay(200);
+    TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
+    TRACE_PRINT(F("setting name... "));
+    if (! ble.sendCommandCheckOK(F( "AT+GAPDEVNAME=Chimuino2" ))) {
+      TRACE_PRINTLN(PGMSTR(message_ble_error));
+    } else {
+      TRACE_PRINTLN(PGMSTR(msg_ok_dot));
+    }
+  
+    TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
+    TRACE_PRINTLN(F("creating services... "));
+    // SET the services and characteristics
+    setup_service_chimuino();
+    setup_service_sensing();
+     
+    /* Reset the device for the new service setting changes to take effect */
+    TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
+    TRACE_PRINTLN(F("reset to apply changes... "));
+    ble.reset();
+    delay(200);
+
+    // NVM written
+    ble.writeNVM(0 , MAGIC_NUMBER);
+  }
   
   TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
-  TRACE_PRINTLN(F("installing callbacks... "));
+  TRACE_PRINTLN(F("installing callbacks"));
   // set callbacks to be called when...
   // ... some central device connects,
   ble.setConnectCallback(reactCentralConnectedStatic);
@@ -237,9 +247,6 @@ void ChimeBluetooth::setup_service_sensing() {
     setup_char_sound_sensor();
     setup_char_sound_settings();
 
-    // TODO sound
-    // TODO ...
-    
   }
 }
 
@@ -436,7 +443,6 @@ void ChimeBluetooth::setup_service_chimuino() {
     setup_attribute_uptime();
     setup_char_actions();
     setup_char_current_mode();
-    // TODO ...
     
   }
 
@@ -605,6 +611,7 @@ void ChimeBluetooth::setup_char_current_mode() {
       ERROR_PRINTLN(PGMSTR(message_ble_current_mode));
     } 
 }
+
 
 void ChimeBluetooth::decodeCurrentDateTime(uint8_t data[], uint16_t len) {
 
