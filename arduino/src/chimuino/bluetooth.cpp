@@ -41,7 +41,7 @@
   const char message_ble_error [] PROGMEM = "error :-(";
   const char message_ble_error_creating_char [] PROGMEM = "bluetooth: error when creating characteristic ";
   const char message_ble_error_creating_service [] PROGMEM = "bluetooth: error when creating service ";
-  const char message_wrong_size [] PROGMEM = "bluetooth ERROR: wrong length ";
+  const char message_wrong_size [] PROGMEM = "BLE ERROR: wrong length ";
 
 #include <Arduino.h>
 
@@ -161,32 +161,34 @@ void ChimeBluetooth::setup() {
       // TODO break
       return;
   } else {
-    DEBUG_PRINTLN(PGMSTR(msg_ok_dot));
+    TRACE_PRINTLN(PGMSTR(msg_ok_dot));
   }
-  
-  // Disable command echo from Bluefruit
-  ble.echo(false);
-
+ 
   // read magic, and only factoryreset and redefine if the magic is not ok
-  int32_t magic_number;
-  ble.readNVM(0, &magic_number);
-  if ( magic_number != MAGIC_NUMBER) {
+  //int32_t magic_number;
+  //ble.readNVM(0, &magic_number);
+  // TODO debug that !
+  //if (true || magic_number != MAGIC_NUMBER) {
     
     //#ifdef BLE_FACTORYRESET_ENABLE 
     // Perform a factory reset to make sure everything is in a known state
     TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
     TRACE_PRINTLN(F("factory reset... "));
     if ( !ble.factoryReset() ){
-      ERROR_PRINTLN(PGMSTR(message_ble_error));
+      ERROR_PRINT(PGMSTR(msg_error_semicol)); ERROR_PRINTLN(F("factory reset"));
     } else {
       DEBUG_PRINTLN(PGMSTR(msg_ok_dot));
     }
     //#endif
 
+
+    // Disable command echo from Bluefruit
+    ble.echo(false);
+
     TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
     TRACE_PRINT(F("setting name... "));
     if (! ble.sendCommandCheckOK(F( "AT+GAPDEVNAME=Chimuino2" ))) {
-      TRACE_PRINTLN(PGMSTR(message_ble_error));
+      ERROR_PRINT(PGMSTR(msg_error_semicol)); ERROR_PRINT(F("setting name"));
     } else {
       TRACE_PRINTLN(PGMSTR(msg_ok_dot));
     }
@@ -204,9 +206,10 @@ void ChimeBluetooth::setup() {
     delay(200);
 
     // NVM written
-    ble.writeNVM(0 , MAGIC_NUMBER);
-  }
-  
+    //ble.writeNVM(0 , MAGIC_NUMBER);
+  //}
+
+  //ble.echo(false);
   TRACE_PRINT(PGMSTR(message_ble_init_bluetooth));
   TRACE_PRINTLN(F("installing callbacks"));
   // set callbacks to be called when...
@@ -222,6 +225,8 @@ void ChimeBluetooth::setup() {
   ble.setBleGattRxCallback(bleCharLightSettings,  reactCharacteristicReceivedStatic);
   ble.setBleGattRxCallback(bleCharSoundSettings,  reactCharacteristicReceivedStatic);
   ble.setBleGattRxCallback(bleCharActions,        reactCharacteristicReceivedStatic);
+
+  ble.echo(false);
 
   DEBUG_PRINT(PGMSTR(message_ble_init_bluetooth));
   DEBUG_PRINTLN(PGMSTR(msg_ok_dot));
@@ -613,7 +618,7 @@ void ChimeBluetooth::setup_char_current_mode() {
 }
 
 
-void ChimeBluetooth::decodeCurrentDateTime(uint8_t data[], uint16_t len) {
+void ChimeBluetooth::decodeCurrentDateTime(uint8_t data[], uint8_t len) {
 
    // ensure the length is ok
    if (len != sizeof(ble_datetime_bytes)) {
@@ -630,12 +635,12 @@ void ChimeBluetooth::decodeCurrentDateTime(uint8_t data[], uint16_t len) {
   
 }
 
-void ChimeBluetooth::decodeAlarm1(uint8_t data[], uint16_t len) {
+void ChimeBluetooth::decodeAlarm1(uint8_t data[], uint8_t len) {
 
   // ensure the length is ok
   if (len != sizeof(ble_alarm_bytes)) {
-    TRACE_PRINT(PGMSTR(message_wrong_size));
-    TRACE_PRINTLN(len);
+    ERROR_PRINT(PGMSTR(message_wrong_size));
+    ERROR_PRINTLN(len);
     return;
   } 
 
@@ -643,15 +648,15 @@ void ChimeBluetooth::decodeAlarm1(uint8_t data[], uint16_t len) {
   ble_alarm_bytes received_alarm;
   memcpy(&received_alarm, data, len);
   
-  alarm1->receivedAlarm2(received_alarm.data);
+  alarm1->updateAlarmWithData(received_alarm.data);
 }
 
-void ChimeBluetooth::decodeAlarm2(uint8_t data[], uint16_t len) {
+void ChimeBluetooth::decodeAlarm2(uint8_t data[], uint8_t len) {
 
   // ensure the length is ok
   if (len != sizeof(ble_alarm_bytes)) {
-    TRACE_PRINT(PGMSTR(message_wrong_size));
-    TRACE_PRINTLN(len);
+    ERROR_PRINT(PGMSTR(message_wrong_size));
+    ERROR_PRINTLN(len);
     return;
   } 
 
@@ -659,11 +664,12 @@ void ChimeBluetooth::decodeAlarm2(uint8_t data[], uint16_t len) {
   ble_alarm_bytes received_alarm;
   memcpy(&received_alarm, data, len);
 
-  alarm2->receivedAlarm2(received_alarm.data);
+  DEBUG_PRINTLN(F("alarm2"));
+  alarm2->updateAlarmWithData(received_alarm.data);
 }
 
 
-void ChimeBluetooth::decodeAmbiance(uint8_t data[], uint16_t len) {
+void ChimeBluetooth::decodeAmbiance(uint8_t data[], uint8_t len) {
   
   // ensure the length is ok
   if (len != sizeof(ble_ambiance_bytes)) {
@@ -680,7 +686,7 @@ void ChimeBluetooth::decodeAmbiance(uint8_t data[], uint16_t len) {
 
 }
 
-void ChimeBluetooth::decodeLightSettings(uint8_t data[], uint16_t len) {
+void ChimeBluetooth::decodeLightSettings(uint8_t data[], uint8_t len) {
   
   // ensure the length is ok
   if (len != sizeof(ble_light_settings_bytes)) {
@@ -697,7 +703,7 @@ void ChimeBluetooth::decodeLightSettings(uint8_t data[], uint16_t len) {
 
 }
 
-void ChimeBluetooth::decodeSoundSettings(uint8_t data[], uint16_t len) {
+void ChimeBluetooth::decodeSoundSettings(uint8_t data[], uint8_t len) {
   
   // ensure the length is ok
   if (len != sizeof(ble_sound_settings_bytes)) {
@@ -713,7 +719,7 @@ void ChimeBluetooth::decodeSoundSettings(uint8_t data[], uint16_t len) {
   soundSensor->receivedSoundSettings(received_settings.data);
 }
 
-void ChimeBluetooth::decodeActions(uint8_t data[], uint16_t len) {
+void ChimeBluetooth::decodeActions(uint8_t data[], uint8_t len) {
   
   // ensure the length is ok
   if (len != sizeof(ble_actions_bytes)) {
@@ -746,9 +752,9 @@ void ChimeBluetooth::decodeActions(uint8_t data[], uint16_t len) {
 }
 
 
-void ChimeBluetooth::reactCharacteristicReceived(int32_t chars_id, uint8_t data[], uint16_t len) {
+void ChimeBluetooth::reactCharacteristicReceived(uint8_t chars_id, uint8_t data[], uint8_t len) {
 
-  DEBUG_PRINT(F("BLE: val for char "));
+  DEBUG_PRINT(F("BLE:char "));
   DEBUG_PRINTLN(chars_id);
   
   if (chars_id == bleCharCurrentTime) {
@@ -793,6 +799,12 @@ void ChimeBluetooth::reactCentralDisconnected()  {
   TRACE_PRINTLN(F("central disconnected"));
 };
 
+bool ChimeBluetooth::isFloatDifferent(float a, float b) {
+
+  return (abs(a - b) >= 0.01);
+
+}
+
 void ChimeBluetooth::publishAmbiance(ble_ambiance ambiance) {
 
   // TODO
@@ -809,6 +821,8 @@ void ChimeBluetooth::publishAmbiance(ble_ambiance ambiance) {
 
 void ChimeBluetooth::publishAlarm1(ble_alarm alarm) {
 
+  if (!bleCharAlarm1) return;
+  
   // encore as bytes
   ble_alarm_bytes content;
   content.data = alarm;
@@ -824,6 +838,8 @@ void ChimeBluetooth::publishAlarm1(ble_alarm alarm) {
 
 void ChimeBluetooth::publishAlarm2(ble_alarm alarm) {
 
+  if (!bleCharAlarm2) return;
+  
   // encore as bytes
   ble_alarm_bytes content;
   content.data = alarm;
@@ -839,6 +855,8 @@ void ChimeBluetooth::publishAlarm2(ble_alarm alarm) {
 
 void ChimeBluetooth::publishTemperature1(float temp) {
 
+  if (!bleCharTemperature1) return;
+  
   // encore as bytes
   ble_float_bytes content;
   content.value = temp;
@@ -852,6 +870,8 @@ void ChimeBluetooth::publishTemperature1(float temp) {
 }
 
 void ChimeBluetooth::publishTemperature2(float temp) {
+
+  if (!bleCharTemperature2) return;
 
   // encore as bytes
   ble_float_bytes content;
@@ -868,6 +888,8 @@ void ChimeBluetooth::publishTemperature2(float temp) {
 
 void ChimeBluetooth::publishUptime(uint32_t uptime_min) {
 
+  if (!bleCharUptime) return;
+
   // encore as bytes
   ble_uint32_bytes content;
   content.value = uptime_min;
@@ -882,6 +904,8 @@ void ChimeBluetooth::publishUptime(uint32_t uptime_min) {
 
 
 void ChimeBluetooth::publishLightSensor(ble_light_sensor light_sensor) {
+
+  if (!bleCharLightSensor) return;
 
   // encore as bytes
   ble_light_sensor_bytes content;
@@ -898,6 +922,8 @@ void ChimeBluetooth::publishLightSensor(ble_light_sensor light_sensor) {
 
 void ChimeBluetooth::publishLightSettings(ble_light_settings settings) {
 
+  if (!bleCharLightSettings) return;
+
   // encore as bytes
   ble_light_settings_bytes content;
   content.data = settings;
@@ -911,6 +937,8 @@ void ChimeBluetooth::publishLightSettings(ble_light_settings settings) {
 }
 
 void ChimeBluetooth::publishSoundSensor(ble_sound_sensor sound_sensor) {
+
+  if (!bleCharSoundSensor) return;
 
   // encore as bytes
   ble_sound_sensor_bytes content;
@@ -926,6 +954,8 @@ void ChimeBluetooth::publishSoundSensor(ble_sound_sensor sound_sensor) {
 
 void ChimeBluetooth::publishSoundSettings(ble_sound_settings settings) {
 
+  if (!bleCharSoundSettings) return;
+
   // encore as bytes
   ble_sound_settings_bytes content;
   content.data = settings;
@@ -935,10 +965,19 @@ void ChimeBluetooth::publishSoundSettings(ble_sound_settings settings) {
   
   // update the corresponding attribute value
   gatt.setChar(bleCharSoundSettings, content.bytes, sizeof(content.bytes));
+  /*
+  ble_sound_settings_bytes contentPrevious;
+  gatt.getChar(bleCharSoundSettings, contentPrevious.bytes, sizeof(contentPrevious.bytes));
+  if (contentPrevious.bytes != content.bytes) {
+    gatt.setChar(bleCharSoundSettings, content.bytes, sizeof(content.bytes));
+  }
+  */
   
 }
 
 void ChimeBluetooth::publishCurrentMode(ble_mode mode) {
+
+  if (!bleCharCurrentMode) return;
 
   // encore as bytes
   ble_mode_bytes content;
@@ -963,8 +1002,16 @@ void ChimeBluetooth::readAndReact() {
   
   // is button pressed???
   if (digitalRead(pinButtonConnect) == LOW) {
-    DEBUG_PRINTLN(F("button pressed"));
+    if (wasBluetoothButtonPressed) {
+      // new press on the button.
+      DEBUG_PRINTLN(F("button pressed"));
+      ble.reset(); // TODO right now we reset on press ^^
+      wasBluetoothButtonPressed = true;
+    }
+  } else {
+    wasBluetoothButtonPressed = false;
   }
+  
   /*
   if (digitalRead(pinButtonSwitch) == LOW) {
     DEBUG_PRINTLN(F("bluetooth is off"));
@@ -974,7 +1021,10 @@ void ChimeBluetooth::readAndReact() {
   {
     if (ble.sendCommandCheckOK(F("AT+HWGETDIETEMP"))) {
       const float v = atof(ble.buffer);
-      publishTemperature2(v);
+      if (isFloatDifferent(previousTemperature, v)) {
+        publishTemperature2(v);
+        previousTemperature = v;
+      }
     }
   }
    

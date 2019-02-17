@@ -12,7 +12,7 @@
 #include <Arduino.h>
 
 const char msg_ok_dot[] PROGMEM  =        { "ok."};
-const char msg_error_semicol[] PROGMEM  = { "error :"};
+const char msg_error_semicol[] PROGMEM  = { "error: "};
 const char msg_enabled[] PROGMEM  =       { "enabled" };
 const char msg_disabled[] PROGMEM  =      { "disabled" };
 const char msg_level[] PROGMEM  =         { "level" };

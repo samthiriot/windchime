@@ -192,6 +192,9 @@ void loop() {
     }
     DEBUG_PRINTLN();
     //bluetooth.sendDebug();
+
+    // TODO ???
+    sendCurrentModeBluetooth();
   }
 
 
@@ -212,11 +215,11 @@ void loop() {
   currentIntention = ambiance.proposeNextMode(currentIntention);
   
   if (debugNow) {
-    DEBUG_PRINT(F("new mode: ")); DEBUG_PRINT(mode2str(currentIntention.what));
+    DEBUG_PRINT(F("\nnew mode: ")); DEBUG_PRINT(mode2str(currentIntention.what));
     if (currentIntention.what != NOTHING) {
       DEBUG_PRINT(F(" in: ")); DEBUG_PRINT((currentIntention.when - millis())/1000); DEBUG_PRINT('s');
     }
-    DEBUG_PRINTLN();
+    DEBUG_PRINTLN('\n');
   }
 
   if (currentIntention.what != previousIntention.what) {
@@ -231,7 +234,7 @@ void loop() {
 
   // maybe it's time to apply what we had planned?
   if (currentIntention.what != NOTHING and currentIntention.when <= millis()) {
-    DEBUG_PRINTLN(F("time to act!"));
+    DEBUG_PRINT(F("time to do: ")); DEBUG_PRINTLN(mode2str(currentIntention.what));
     // time to act
     switch (currentIntention.what) {
       case NOTHING:

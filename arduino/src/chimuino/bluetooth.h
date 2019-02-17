@@ -24,6 +24,7 @@
 // TODO use the AT+DFUIRQ to use IRQ so we wake up only when data is available
 // TODO detect when the temperature is too high and alert (?)
 // TODO add description
+// TODO send value only if case it changed! 
 
 // see https://github.com/adafruit/Adafruit_BluefruitLE_nRF51/blob/master/changelog_firmware.md
 
@@ -49,7 +50,7 @@ const uint8_t BLUEFRUIT_UART_RTS_PIN  =12;
 // this magic number is used to detect if we need a factory reset
 // upgrade it to trigger an update of services and characteristics and other 
 // bluetooth settings
-#define MAGIC_NUMBER  0x555551
+#define MAGIC_NUMBER  0x555552
 
 // the services and characteristics we will publish
 #define BLE_GATT_SERVICE_SENSING      0x181A // https://www.bluetooth.com/specifications/assigned-numbers/environmental-sensing-service-characteristics
@@ -72,7 +73,7 @@ const uint8_t BLUEFRUIT_UART_RTS_PIN  =12;
 
 
 // if true, the initialization of the dongle is verbose
-#define BLE_VERBOSE_MODE            true
+#define BLE_VERBOSE_MODE            false
 
 // if defined, we will do a factory reset
 // #define BLE_FACTORYRESET_ENABLE
@@ -169,6 +170,10 @@ class ChimeBluetooth {
     ChimeSoundSensor* soundSensor;
     Chime* chime;
     Ambiance* ambiance;
+
+    bool wasBluetoothButtonPressed = false;
+
+    float previousTemperature = -55.55;
                   
     // the internal identifiers for the services and characteristics
     uint8_t bleServiceChimuinoId;
@@ -214,13 +219,13 @@ class ChimeBluetooth {
 
     // for each data characteristic we might receive, we implement here 
     // the conversion from a bytes array to the relevant content
-    void decodeCurrentDateTime(uint8_t data[], uint16_t len);
-    void decodeAlarm1(uint8_t data[], uint16_t len);
-    void decodeAlarm2(uint8_t data[], uint16_t len);
-    void decodeAmbiance(uint8_t data[], uint16_t len);
-    void decodeLightSettings(uint8_t data[], uint16_t len);
-    void decodeSoundSettings(uint8_t data[], uint16_t len);
-    void decodeActions(uint8_t data[], uint16_t len);
+    void decodeCurrentDateTime(uint8_t data[], uint8_t len);
+    void decodeAlarm1(uint8_t data[], uint8_t len);
+    void decodeAlarm2(uint8_t data[], uint8_t len);
+    void decodeAmbiance(uint8_t data[], uint8_t len);
+    void decodeLightSettings(uint8_t data[], uint8_t len);
+    void decodeSoundSettings(uint8_t data[], uint8_t len);
+    void decodeActions(uint8_t data[], uint8_t len);
 
     bool wrongLength(uint16_t len, uint8_t sizof);
     
@@ -230,10 +235,13 @@ class ChimeBluetooth {
                    unsigned short _pinButtonConnect, unsigned short _pinButtonSwitch);
     void setup();
 
+    // returns true if the difference is sufficient to motivate sending the value
+    bool isFloatDifferent(float a, float b);
+    
     // called when a central device connected to BLE
     void reactCentralConnected();
     void reactCentralDisconnected();
-    void reactCharacteristicReceived(int32_t chars_id, uint8_t data[], uint16_t len);
+    void reactCharacteristicReceived(uint8_t chars_id, uint8_t data[], uint8_t len);
 
     void sendDebug();
 

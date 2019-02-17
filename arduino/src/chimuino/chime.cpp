@@ -59,13 +59,22 @@ void Chime::doDemoStrong() {
 
 Intention Chime::proposeNextMode(Intention currentIntention) {
 
-  if ( (currentIntention.what == NOTHING or currentIntention.what == SILENCE) and currentIntention.what != NOTHING) {
-    TRACE_PRINT("Doing demo of "); TRACE_PRINTLN(mode2str(demoAsked));
+  if (demoAsked != NOTHING) {
     enum mode demoAsked2 = demoAsked;
     demoAsked = NOTHING;
     return Intention { demoAsked2,  millis() }; 
+    /*switch (currentIntention.what) {
+      case PREALARM1:
+      case PREALARM2:
+      case ALARM1:
+      case ALARM2:
+        // there is something more serious ongoing; let's do it
+        
+        default;
+       case 
+    }*/
   }
-
+  
   return currentIntention;
   
 }

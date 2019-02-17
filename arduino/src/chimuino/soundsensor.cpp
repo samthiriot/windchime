@@ -94,7 +94,7 @@ void ChimeSoundSensor::perceive() {
 void ChimeSoundSensor::debugSerial() {
   
   #ifdef DEBUG
-  Serial << F("sound") << PGMSTR(msg_level) << _DEC(sensor.value()) << ' ' 
+  Serial << F("sound") << PGMSTR(msg_level) << ' ' << _DEC(sensor.value()) << ' ' 
          << ( isQuiet() ? PGMSTR(msg_quiet):PGMSTR(msg_noisy) ) << ' '
          << _DEC(factorThreshold) << '>'
          << _DEC(quietThreshold) << ' '

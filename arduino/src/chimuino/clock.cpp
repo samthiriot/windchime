@@ -88,7 +88,10 @@ void ChimeClock::publishBluetoothData() {
 
     // publish our temperature
     float c = RTC.temperature() / 4.;
-    bluetooth->publishTemperature1(c);
+    if (bluetooth->isFloatDifferent(previousTemperature, c)) {
+      bluetooth->publishTemperature1(c);
+      previousTemperature = c;
+    }
 
     // publish the uptime
     // TODO this uptime overflows quickly. use RTC instead?
@@ -134,4 +137,3 @@ void ChimeClock::setAlarm1(unsigned short hour, unsigned short minutes) {
     );
 }
 */
-

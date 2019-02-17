@@ -39,9 +39,7 @@ class ChimeAlarm: public BluetoothInformationProducer,
     void storeState();
     virtual void publishBluetoothData();
     
-    // adapts the current alarm with data coming from bluetooth
-    void updateAlarmWithData(ble_alarm content);
-    
+
   public:
     // constructor
     ChimeAlarm(byte id);
@@ -52,11 +50,12 @@ class ChimeAlarm: public BluetoothInformationProducer,
 
     bool shouldPrering();
     bool shouldRing();
+
+    // adapts the current alarm with data coming from bluetooth
+    void updateAlarmWithData(ble_alarm content);
     
     // inherited
-    virtual BluetoothListenerAnswer receivedAlarm1(ble_alarm content);
-    virtual BluetoothListenerAnswer receivedAlarm2(ble_alarm content);
-
+    
     virtual Intention proposeNextMode(Intention currentIntention);
 
 

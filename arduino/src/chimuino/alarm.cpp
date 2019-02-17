@@ -61,7 +61,7 @@ void ChimeAlarm::debugSerial() {
   #ifdef TRACE
   Serial << message_alarm << id << F(": ") 
          << _DEC(start_hour) << ':' << _DEC(start_minutes) << ' ' 
-         << (enabled ? PGMSTR(msg_enabled) : PGMSTR(msg_disabled) << ' '
+         << (enabled ? PGMSTR(msg_enabled) : PGMSTR(msg_disabled)) << ' '
          << _DEC(durationSoft) << ' ' << _DEC(durationStrong) << F(" days:")
          << bool2char(sunday) << bool2char(monday) << bool2char(tuesday) << bool2char(wednesday) << bool2char(thursday) << bool2char(friday) << bool2char(saterday)
          << endl;
@@ -84,11 +84,12 @@ void ChimeAlarm::updateAlarmWithData(ble_alarm content) {
   saterday = content.saterday;
   sunday = content.sunday;
 
+  // TODO activate an alarm in the RTC chip?
+  debugSerial();
+  
   // store this update!
   storeState();
     
-  // TODO activate an alarm in the RTC chip?
-  debugSerial();
 
 }
 
@@ -118,24 +119,6 @@ void ChimeAlarm::publishBluetoothData() {
   } else {
     ERROR_PRINTLN(F("ERROR: wrong alarm id"));
   }
-}
-
-BluetoothListenerAnswer ChimeAlarm::receivedAlarm1(ble_alarm content) {
-   if (id == 1) {
-      updateAlarmWithData(content);
-      return PROCESSED;
-   } else {
-      return NOT_CONCERNED;
-   }
-}
-
-BluetoothListenerAnswer ChimeAlarm::receivedAlarm2(ble_alarm content) {
-   if (id == 2) {
-      updateAlarmWithData(content);
-      return PROCESSED;
-   } else {
-      return NOT_CONCERNED;
-   }
 }
 
 bool ChimeAlarm::rightWeekdayForRing() {

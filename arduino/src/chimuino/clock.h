@@ -22,6 +22,8 @@ class ChimeClock: public BluetoothInformationProducer {
   
   private:
 
+    float previousTemperature = -55.55;
+    
     virtual void publishBluetoothData();
 
   public:
