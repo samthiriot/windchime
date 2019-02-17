@@ -8,6 +8,7 @@ import { Injectable } from '@angular/core';
 import { ToastController } from 'ionic-angular';
 import { Storage } from '@ionic/storage';
 import { BLE } from '@ionic-native/ble';
+import { AndroidPermissions } from '@ionic-native/android-permissions/ngx';
 
 // https://ionicframework.com/docs/v3/native/bluetoothle/
 // https://github.com/randdusing/cordova-plugin-bluetoothle
@@ -62,7 +63,7 @@ export class ChimuinoProvider {
 
 	public _isConnected:boolean = false;
 	public _device = null;
-	private DURATION_SCAN:number = 5;
+	private DURATION_SCAN:number = 60; // seconds
 
 	private _firstConnection:boolean = true;
 
@@ -110,6 +111,14 @@ export class ChimuinoProvider {
 
 	private _currentMode = null;
 	private _currentModeWhen:number = 0;
+
+	get isDarkStr():string {
+		return (this.isDark?"dark":"lit");
+	}
+
+	get isQuietStr():string {
+		return (this.isQuiet?"quiet":"noisy");
+	}
 
 	set chimeEnabled(value:boolean) {
 		this._isChimeEnabled = value;
@@ -177,6 +186,7 @@ export class ChimuinoProvider {
 	
 	private onLightSensorReceived(buffer:any) {
 
+		
 		let dv = new DataView(buffer);
 		this.lightLevel = dv.getUint8(0);
 		this._lightMin = dv.getUint8(1);
@@ -185,8 +195,13 @@ export class ChimuinoProvider {
 
 		this.isLightLevelLoaded = true;
 
+		console.log("light sensor received: "+this.lightLevel+" ["+this._lightMin+":"+this._lightMax+"] "+this.isDark+" => "+this.isDarkStr);
+
+
 	}
 	private onLightSettingsReceived(buffer:any) {
+
+		console.log("light settings received");
 
 		let dv = new DataView(buffer);
 		this._lightThreshold = dv.getUint8(0);
@@ -202,7 +217,7 @@ export class ChimuinoProvider {
 		this.write(ChimuinoProvider.SERVICE_SENSING, ChimuinoProvider.CHARACTERISTIC_LIGHT_SETTINGS, dv.buffer);
 	}
 	private onSoundSensorReceived(buffer:any) {
-
+		
 		let dv = new DataView(buffer);
 		this.soundLevel = dv.getUint8(0);
 		this._soundMin = dv.getUint8(1);
@@ -210,14 +225,18 @@ export class ChimuinoProvider {
 		this.isQuiet = dv.getUint8(3) > 0;
 
 		// TODO ??? this.isSoundLevelLoaded = true;
+		console.log("sound sensor received: "+this.soundLevel+" ["+this._soundMin+":"+this._soundMax+"] "+this.isQuiet+" => "+this.isQuietStr);
 
 	}
 	private onSoundSettingsReceived(buffer:any) {
-
+		
 		let dv = new DataView(buffer);
 		this._soundThreshold = dv.getUint8(0);
 
 		this.isSoundThresholdLoaded = true;
+
+		console.log("sound settings received: "+this._soundThreshold);
+
 	}
 
 	private setSoundSettings(threshold:number) {
@@ -230,7 +249,7 @@ export class ChimuinoProvider {
 	}
 
 	get currentMode():string {
-		return CurrentMode[this._currentMode]; //+" until "+this._currentModeWhen+"ms";
+		return this._currentMode; // CurrentMode[]; //+" until "+this._currentModeWhen+"ms";
 	}
 
 	private onCurrentModeReceived(buffer:any) {
@@ -239,7 +258,7 @@ export class ChimuinoProvider {
 		this._currentMode = CurrentMode[dv.getUint8(0)];
 		this._currentModeWhen = dv.getUint32(1, true);
 
-		this.isSoundThresholdLoaded = true;
+		//this.isSoundThresholdLoaded = true;
 	}
 
 	/**********************************************************************
@@ -369,6 +388,8 @@ export class ChimuinoProvider {
    		this.alarm1loaded = true;
 		//this.displayDebug("received alarm1: "+active+" "+hour+":"+minutes+" "+sunday+monday+tuesday+wednesday+thursday+friday+saturday+" "+durationSoft+" "+durationStrong);
 
+		console.log("received alarm1: "+active+" "+hour+":"+minutes+" "+sunday+monday+tuesday+wednesday+thursday+friday+saturday+" "+durationSoft+" "+durationStrong);
+
 	}
 
 
@@ -488,7 +509,7 @@ export class ChimuinoProvider {
     	this._alarm2friday = friday;
    		this._alarm2saturday = saturday;
    		this.alarm2loaded = true;
-		//this.displayDebug("received alarm1: "+active+" "+hour+":"+minutes+" "+sunday+monday+tuesday+wednesday+thursday+friday+saturday+" "+durationSoft+" "+durationStrong);
+		console.log("received alarm2: "+active+" "+hour+":"+minutes+" "+sunday+monday+tuesday+wednesday+thursday+friday+saturday+" "+durationSoft+" "+durationStrong);
 
 	}
 
@@ -544,18 +565,23 @@ export class ChimuinoProvider {
 		let temp:number = intval/100.0;
 
 		this._temperature = temp;
+
+		console.log("received temperature "+temp);
 	}
 	private onTemperature1Received(buffer:any) {
 
 		let dv = new DataView(buffer);
 		
-		this._temperature1 = dv.getFloat32(0);
+		this._temperature1 = dv.getFloat32(0, true);
+		console.log("received temperature1 "+this._temperature1);
 	}
 	private onTemperature2Received(buffer:any) {
 
 		let dv = new DataView(buffer);
 		
-		this._temperature2 = dv.getFloat32(0);
+		this._temperature2 = dv.getFloat32(0, true);
+		console.log("received temperature2 "+this._temperature2);
+
 	}
 
 	private onUptimeReceived(buffer:any) {
@@ -563,6 +589,8 @@ export class ChimuinoProvider {
 		
 		this._uptime = dv.getUint32(0);	
 		this.uptimeLoaded = true;
+		console.log("received uptime "+this._uptime);
+
 	}
 
 	private sendActions(demo_ring:number, snooze:boolean, shutup:number) {
@@ -593,7 +621,8 @@ export class ChimuinoProvider {
   			  private ble: BLE,
   			  private storage: Storage,
   			  private toastCtrl: ToastController,
-  			  private platform: Platform
+  			  private platform: Platform,
+  			  private androidPermissions: AndroidPermissions
   			  ) {
 
 		this.platform.pause.subscribe(() => {
@@ -608,7 +637,9 @@ export class ChimuinoProvider {
 
 				// when everything is ready, try to connect bluetooth
 
- 				this.displayDebug("try to enable");
+              	console.log('enabling bluetooth');
+
+ 				//this.displayDebug("try to enable");
 
  				return this.ble.enable();
 
@@ -625,25 +656,103 @@ export class ChimuinoProvider {
 			    });*/
 
 		  	})
-	    	.then( (enabled) => { this.scanForChimuino(); })
+	    	.then( (enabled) => { this.askForPermissionLocation(); })
 		  	.catch(
- 					(error) => { this.displayDebug("error when enabling BLE: "+error); }
- 					);
+ 					(error) => { 
+				    	console.log("error when enabling BLE: "+error);
+ 						this.displayDebug("error when enabling BLE: "+error); 
+ 					});
+
+	}
+
+	private askForPermissionLocation() {
+
+		this.scanForChimuino();
+			
+		console.log("cordova.plugins.permissions.ACCESS_COARSE_LOCATION="+this.androidPermissions.PERMISSION.ACCESS_COARSE_LOCATION);
 
 
+		// TODO later
+
+		/*
+	    if (this.platform.is('android')) {
+
+			console.log('(android) asking for the permission ACCESS_COARSE_LOCATION');
+
+			this.displayDebug("requesting permission ACCESS_COARSE_LOCATION...");
+
+			console.log("cordova.plugins.permissions.ACCESS_COARSE_LOCATION="+this.androidPermissions.PERMISSION.ACCESS_COARSE_LOCATION);
+			console.log(this.androidPermissions.requestPermission);
+  			this.androidPermissions.requestPermission(this.androidPermissions.PERMISSION.ACCESS_COARSE_LOCATION)
+  				.then(
+		  				(success) => { this.scanForChimuino(); }
+				)
+				.catch((error) => { 
+	  				    	console.log("error when asking for permission: "+error);
+
+							this.displayDebug("error when asking for permission: "+error); 
+						});  
+  		 					
+	  } else {
+	    	this.scanForChimuino();
+	    }*/
+
+	    	/*
+	    	console.log('(android) checking if permission ACCESS_COARSE_LOCATION is granted');
+
+			this.androidPermissions.checkPermission(cordova.plugins.permissions.ACCESS_COARSE_LOCATION)
+				.then(
+			  		(result) => { 
+			  			if (result) {
+			  				this.scanForChimuino(); 	
+			  			} else {
+			  				console.log('(android) asking for the permission ACCESS_COARSE_LOCATION');
+
+							this.displayDebug("requesting permission ACCESS_COARSE_LOCATION...");
+
+				  			this.androidPermissions.requestPermission(cordova.plugins.permissions.ACCESS_COARSE_LOCATION)
+				  				.then(
+						  				(success) => {this.scanForChimuino(); }, 
+										(error) => { 
+					  				    	console.log("error when asking for permission: "+error);
+
+											this.displayDebug("error when asking for permission: "+error); 
+										}
+								);  
+				  			}	  					
+
+			  		},
+			  		(err) => {
+  				    	console.log("error when checking for permission: "+error);
+  				    	// try to continue anyway
+  				    	this.scanForChimuino();
+
+		  			}
+				);
+		}; 		
+			*/
+	  
+		
 	}
 
 	private scanForChimuino() {
 		
+    	console.log('scanning for chimuino...');
+
 		this.displayDebug("scanning for chimuino...");
 
 		this.ble
 			.scan(
 				[  ],  	// TODO add services  ChimuinoProvider.SERVICE_CHIMUINO
-				60		// max search time
+				60 //ChimuinoProvider.DURATION_SCAN		// max search time
 				)
 			.subscribe(
-				(data) => { this.reactScanResult(data) }
+				(data) => { this.reactScanResult(data) },
+				(error) => { 
+			    	console.log("error when scanning: "+error);
+
+					this.displayDebug("error when scanning: "+error); 
+				}
 				);
 
 		// TODO timeout and detect 
@@ -652,7 +761,8 @@ export class ChimuinoProvider {
 
 	private reactScanResult(data) {
 
-		//this.displayDebug("found "+data.name+" "+data.id)
+		//this.displayDebug("found "+data.name+" "+data.id);
+    	console.log("found "+data.name+" "+data.id);
 
 		if (data.name == "Chimuino2") {
 
@@ -786,6 +896,7 @@ export class ChimuinoProvider {
 
 		this._isConnected = false;
 
+		console.log("we were disconnected from chime :-/");
 		this.displayDebug("we were disconnected from Chime...");
 
 	}
@@ -798,8 +909,10 @@ export class ChimuinoProvider {
 			characteristic)
 		.then(callback)
 		.catch(
-			(error) => { this.displayDebug("error when reading characteristic "+characteristic+": "+error); } 
-			);
+			(error) => { 
+				console.log("error when reading characteristic "+characteristic+": "+error);
+				this.displayDebug("error when reading characteristic "+characteristic+": "+error); 
+			});
 
 	}
 
@@ -912,7 +1025,10 @@ export class ChimuinoProvider {
 			this.ble.write(
 				this._device.id, service, characteristic, 
 				buffer)
-			.then( (success) => { this.displayDebug("updated char "+characteristic); } )
+			.then( (success) => { 
+				this.displayDebug("updated char "+characteristic); 
+				console.log("updated char "+characteristic); 
+			} )
 			.catch( (error) => { this.displayDebug("error update char "+error); } );
 		}
 
@@ -970,8 +1086,15 @@ export class ChimuinoProvider {
 		this.ble.write(
 			this._device.id, ChimuinoProvider.SERVICE_CHIMUINO, ChimuinoProvider.CHARACTERISTIC_TIME, 
 			dv.buffer)
-			.then( (wathever) => { this.displayDebug("updated Chimuino date & time"); } )
-			.catch( (error) => { this.displayDebug("error when updating time: "+error); });
+			.then( (wathever) => { 
+		    	console.log('updated Chimuino date & time');
+				this.displayDebug("updated Chimuino date & time"); 
+
+			} )
+			.catch( (error) => { 
+				console.log("error when updating time: "+error);
+				this.displayDebug("error when updating time: "+error); 
+			});
 
 		
 	}

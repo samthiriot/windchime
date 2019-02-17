@@ -29,12 +29,7 @@
         </ion-item>
       -->
         <ion-item>
-          <ion-label>It is now:</ion-label>
-          {{chimuino.isDark?"dark":"lit"}}
-        </ion-item>
-        <ion-item>
-          <ion-label>Now doing</ion-label>
-           {{chimuino.currentMode}}
+          Now doing: {{chimuino.currentMode}}
         </ion-item>
       </ion-list>
 
@@ -61,6 +56,9 @@
             <ion-icon range-right name="sunny"></ion-icon>
           </ion-range>
         </ion-item>
+        <ion-item>
+          It is now: {{ chimuino.isDarkStr }}
+        </ion-item>
       </ion-list>
     </ion-card-content>
   </ion-card>
@@ -85,6 +83,9 @@
             <ion-icon range-right name="volume-up"></ion-icon>
           </ion-range>
         </ion-item>
+         <ion-item>
+          It is now: {{chimuino.isQuietStr}}
+        </ion-item>
       </ion-list>
     </ion-card-content>
   </ion-card>
@@ -95,9 +96,9 @@
     </ion-card-header>
     <ion-card-content>
 
-              <button ion-button block [disabled]="!chimuino.isConnected" (click)="doChimeLight()">demo weak</button>
-              <button ion-button block [disabled]="!chimuino.isConnected" (click)="doChimeMedium()">demo medium</button>
-              <button ion-button block [disabled]="!chimuino.isConnected" (click)="doChimeStrong()">demo strong</button>
+              <button ion-button block [disabled]="!chimuino.isConnected" (click)="chimuino.doChimeLight()">demo weak</button>
+              <button ion-button block [disabled]="!chimuino.isConnected" (click)="chimuino.doChimeMedium()">demo medium</button>
+              <button ion-button block [disabled]="!chimuino.isConnected" (click)="chimuino.doChimeStrong()">demo strong</button>
 
     </ion-card-content>
   </ion-card>

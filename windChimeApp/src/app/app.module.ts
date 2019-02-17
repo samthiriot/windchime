@@ -13,6 +13,7 @@ import { TabsPage } from '../pages/tabs/tabs';
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
 import { BLE } from '@ionic-native/ble';
+import { AndroidPermissions } from '@ionic-native/android-permissions/ngx';
 
 import { ChimuinoProvider } from '../providers/chimuino/chimuino';
 
@@ -45,6 +46,7 @@ import { ChimuinoProvider } from '../providers/chimuino/chimuino';
     StatusBar,
     SplashScreen,
     BLE,
+    AndroidPermissions,
     {provide: ErrorHandler, useClass: IonicErrorHandler},
     ChimuinoProvider
   ]
