@@ -279,23 +279,22 @@ export class ChimuinoProvider {
 
 	public getModeStr(val:CurrentMode):string {
 		switch (val) {
-			case CurrentMode.NOTHING: 				return "nothing"; break;
-			case CurrentMode.SILENCE: 				return "silence"; break;
-			case CurrentMode.WELCOME_SUN: 			return "welcome sun"; break;
-			case CurrentMode.PREALARM1: 			return "prealarm1"; break;
-			case CurrentMode.PREALARM2: 			return "prealarm2"; break;
-			case CurrentMode.ALARM1: 				return "alarm1"; break;
-			case CurrentMode.ALARM2: 				return "alarm2"; break;
-			case CurrentMode.DEMO_LIGHT: 			return "demo (light)"; break;
-			case CurrentMode.DEMO_MEDIUM: 			return "demo (medium)"; break;
-			case CurrentMode.DEMO_STRONG: 			return "demo (strong)"; break;
-			case CurrentMode.CALIBRATING: 			return "calibrating"; break;
-			case CurrentMode.AMBIANCE_TINTEMENT: 	return "ambiance (light)"; break;
-			case CurrentMode.AMBIANCE_PREREVEIL: 	return "ambiance (medium)"; break;
-			case CurrentMode.AMBIANCE_REVEIL: 		return "ambiance (strong)"; break;
+			case CurrentMode.NOTHING: 				return "nothing"; 
+			case CurrentMode.SILENCE: 				return "silence"; 
+			case CurrentMode.WELCOME_SUN: 			return "welcome sun"; 
+			case CurrentMode.PREALARM1: 			return "prealarm1"; 
+			case CurrentMode.PREALARM2: 			return "prealarm2"; 
+			case CurrentMode.ALARM1: 				return "alarm1"; 
+			case CurrentMode.ALARM2: 				return "alarm2"; 
+			case CurrentMode.DEMO_LIGHT: 			return "demo (light)"; 
+			case CurrentMode.DEMO_MEDIUM: 			return "demo (medium)"; 
+			case CurrentMode.DEMO_STRONG: 			return "demo (strong)"; 
+			case CurrentMode.CALIBRATING: 			return "calibrating";
+			case CurrentMode.AMBIANCE_TINTEMENT: 	return "ambiance (light)";
+			case CurrentMode.AMBIANCE_PREREVEIL: 	return "ambiance (medium)";
+			case CurrentMode.AMBIANCE_REVEIL: 		return "ambiance (strong)";
 			default:
 				return "???";
-				break;
 		}
 	}
 	/**********************************************************************
