@@ -109,9 +109,9 @@ struct ble_ambiance {
 };
 
 struct ble_light_sensor {
-  uint8_t level;
-  uint8_t min;
-  uint8_t max;
+  uint16_t level;
+  uint16_t min;
+  uint16_t max;
   bool isDark;
 };
 
@@ -121,9 +121,9 @@ struct ble_light_settings {
 
 
 struct ble_sound_sensor {
-  uint8_t level;
-  uint8_t min;
-  uint8_t max;
+  uint16_t level;
+  uint16_t min;
+  uint16_t max;
   bool isQuiet;
 };
 
@@ -139,7 +139,7 @@ struct ble_actions {
 
 struct ble_mode {
   uint8_t ongoing;
-  uint32_t when;
+  uint16_t delay;
 };
   
 enum BluetoothListenerAnswer {
@@ -236,7 +236,7 @@ class ChimeBluetooth {
     void setup();
 
     // returns true if the difference is sufficient to motivate sending the value
-    bool isFloatDifferent(float a, float b);
+    bool isFloatDifferent(float a, float b, float diff);
     
     // called when a central device connected to BLE
     void reactCentralConnected();

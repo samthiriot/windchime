@@ -29,10 +29,10 @@ bool SoundLowPassFilterSensorWithMinMax::sense() {
 
   // measure the value 
   const uint8_t sampleWindow = 50; // Sample window width in mS (50 mS = 20Hz)
-  uint8_t peakToPeak = 0;   // peak-to-peak level  
-  uint8_t signalMax = 0;
-  uint8_t signalMin = 1024;
-  uint8_t sample;
+  uint16_t peakToPeak = 0;   // peak-to-peak level  
+  uint16_t signalMax = 0;
+  uint16_t signalMin = 1024;
+  uint16_t sample;
 
   // collect data for 50 ms
   while (millis() - startMillis <= sampleWindow) {
@@ -109,7 +109,7 @@ void ChimeSoundSensor::setup(Persist* _persist) {
   TRACE_PRINT(message_init); 
   TRACE_PRINTLN(PGMSTR(msg_soundsensor));
 
-  sensor.setup(-1, -1); // we have no f idea of what are the min and max for such a sensor !
+  sensor.setup(1, 255); // we have no f idea of what are the min and max for such a sensor !
   sensor.sense();
 
   persist = _persist; 
@@ -156,7 +156,12 @@ void ChimeSoundSensor::publishBluetoothDataSensor() {
   content.isQuiet = isQuiet();
   content.min = sensor.envelopeMin();
   content.max = sensor.envelopeMax();  
-  this->bluetooth->publishSoundSensor(content);
+
+  if (abs(lastLevelSentBluetooth - content.level) > 3) {
+    debugSerial();
+    this->bluetooth->publishSoundSensor(content);
+    lastLevelSentBluetooth = content.level;
+  }
 }
 
 void ChimeSoundSensor::publishBluetoothData() {

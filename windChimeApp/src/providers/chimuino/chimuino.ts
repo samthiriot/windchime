@@ -102,6 +102,7 @@ export class ChimuinoProvider {
 	public isQuiet:boolean = false;
 	private _soundMin:number = 0;
 	private _soundMax:number = 255;
+	public isSoundLevelLoaded:boolean = true;
 
 	public isLightLevelLoaded:boolean = false;
 	public lightLevel:number = 50;
@@ -109,6 +110,7 @@ export class ChimuinoProvider {
 	public _lightMin:number = 0;
 	public _lightMax:number = 255;
 
+	public isCurrentModeLoaded:boolean = false;
 	private _currentMode = null;
 	private _currentModeWhen:number = 0;
 
@@ -148,8 +150,12 @@ export class ChimuinoProvider {
 		this._lightThreshold = value;
 		this.setLightSettings(this._lightThreshold);
 	}
-	get lightMinMaxStr():String {
-		return ""+(this._lightMin)+":"+(this._lightMax);
+	get lightMinMaxStr():string {
+		if (!this.isLightLevelLoaded) {
+			return "";
+		} else {
+			return ""+this._lightMin+":"+(this._lightMax);
+		}
 	}
 
 	get soundThreshold():number {
@@ -159,8 +165,12 @@ export class ChimuinoProvider {
 		this._soundThreshold = value;
 		this.setSoundSettings(this._soundThreshold);
 	}
-	get soundMinMaxStr():String {
-		return ""+(this._soundMin)+":"+(this._soundMax);
+	get soundMinMaxStr():string {
+		if (!this.isSoundLevelLoaded) {
+			return "";
+		} else {
+			return ""+this._soundMin+":"+this._soundMax;
+		}
 	}
 
 
@@ -188,10 +198,10 @@ export class ChimuinoProvider {
 
 		
 		let dv = new DataView(buffer);
-		this.lightLevel = dv.getUint8(0);
-		this._lightMin = dv.getUint8(1);
-		this._lightMax = dv.getUint8(2);
-		this.isDark = dv.getUint8(3) > 0;
+		this.lightLevel = dv.getUint16(0, true);
+		this._lightMin = dv.getUint16(2, true);
+		this._lightMax = dv.getUint16(4, true);
+		this.isDark = dv.getUint8(6) > 0;
 
 		this.isLightLevelLoaded = true;
 
@@ -219,12 +229,12 @@ export class ChimuinoProvider {
 	private onSoundSensorReceived(buffer:any) {
 		
 		let dv = new DataView(buffer);
-		this.soundLevel = dv.getUint8(0);
-		this._soundMin = dv.getUint8(1);
-		this._soundMax = dv.getUint8(2);
-		this.isQuiet = dv.getUint8(3) > 0;
+		this.soundLevel = dv.getUint16(0, true);
+		this._soundMin = dv.getUint16(2, true);
+		this._soundMax = dv.getUint16(4, true);
+		this.isQuiet = dv.getUint8(6) > 0;
 
-		// TODO ??? this.isSoundLevelLoaded = true;
+		this.isSoundLevelLoaded = true;
 		console.log("sound sensor received: "+this.soundLevel+" ["+this._soundMin+":"+this._soundMax+"] "+this.isQuiet+" => "+this.isQuietStr);
 
 	}
@@ -249,18 +259,45 @@ export class ChimuinoProvider {
 	}
 
 	get currentMode():string {
-		return this._currentMode; // CurrentMode[]; //+" until "+this._currentModeWhen+"ms";
+		if (!this.isCurrentModeLoaded) {
+			return "?";
+		} else {
+			return "in "+(this._currentModeWhen)+"s do "+this.getModeStr(this._currentMode);
+		}
 	}
 
 	private onCurrentModeReceived(buffer:any) {
 
 		let dv = new DataView(buffer);
-		this._currentMode = CurrentMode[dv.getUint8(0)];
-		this._currentModeWhen = dv.getUint32(1, true);
+		this._currentMode = dv.getUint8(0);
+		this._currentModeWhen = dv.getUint16(1, true); //- (new Date).getTime();
 
-		//this.isSoundThresholdLoaded = true;
+		this.isCurrentModeLoaded = true;
+		console.log("received current mode: "+CurrentMode[this._currentMode]+" "+this._currentModeWhen);
 	}
 
+
+	public getModeStr(val:CurrentMode):string {
+		switch (val) {
+			case CurrentMode.NOTHING: 				return "nothing"; break;
+			case CurrentMode.SILENCE: 				return "silence"; break;
+			case CurrentMode.WELCOME_SUN: 			return "welcome sun"; break;
+			case CurrentMode.PREALARM1: 			return "prealarm1"; break;
+			case CurrentMode.PREALARM2: 			return "prealarm2"; break;
+			case CurrentMode.ALARM1: 				return "alarm1"; break;
+			case CurrentMode.ALARM2: 				return "alarm2"; break;
+			case CurrentMode.DEMO_LIGHT: 			return "demo (light)"; break;
+			case CurrentMode.DEMO_MEDIUM: 			return "demo (medium)"; break;
+			case CurrentMode.DEMO_STRONG: 			return "demo (strong)"; break;
+			case CurrentMode.CALIBRATING: 			return "calibrating"; break;
+			case CurrentMode.AMBIANCE_TINTEMENT: 	return "ambiance (light)"; break;
+			case CurrentMode.AMBIANCE_PREREVEIL: 	return "ambiance (medium)"; break;
+			case CurrentMode.AMBIANCE_REVEIL: 		return "ambiance (strong)"; break;
+			default:
+				return "???";
+				break;
+		}
+	}
 	/**********************************************************************
 	 * Alarm 1 data storage and access
 	 **********************************************************************/
@@ -587,7 +624,7 @@ export class ChimuinoProvider {
 	private onUptimeReceived(buffer:any) {
 		let dv = new DataView(buffer);
 		
-		this._uptime = dv.getUint32(0);	
+		this._uptime = dv.getUint32(0, true);	
 		this.uptimeLoaded = true;
 		console.log("received uptime "+this._uptime);
 
@@ -656,7 +693,7 @@ export class ChimuinoProvider {
 			    });*/
 
 		  	})
-	    	.then( (enabled) => { this.askForPermissionLocation(); })
+	    	.then( (enabled) => { this.listedBondedDevices(); })
 		  	.catch(
  					(error) => { 
 				    	console.log("error when enabling BLE: "+error);
@@ -667,7 +704,7 @@ export class ChimuinoProvider {
 
 	private askForPermissionLocation() {
 
-		this.scanForChimuino();
+		//this.listedBondedDevices();
 			
 		console.log("cordova.plugins.permissions.ACCESS_COARSE_LOCATION="+this.androidPermissions.PERMISSION.ACCESS_COARSE_LOCATION);
 
@@ -733,6 +770,45 @@ export class ChimuinoProvider {
 			*/
 	  
 		
+	}
+
+	private listedBondedDevices() {
+
+		console.log("list bonded devices...");
+
+		this._device = null;
+
+		// TODO if android only?
+
+		this.ble.bondedDevices()
+			.then(
+				(devices) => {
+					console.log("received "+devices.length+" bonded devices");
+					for (let device of devices) {
+						if (device.name == "Chimuino2") {
+							this._device = device;
+							console.log("found bonded Chimuino2 :-)");
+						}
+						//console.log("bonded: "+JSON.stringify(device)); 
+					}
+					if (this._device == null) {
+						// found no bonded device
+						// let's search for it
+						console.log("found no bonded deviced; let's start a scan");
+						this.scanForChimuino();
+					} else {
+						console.log("found the device bonded; let's connect.");
+						this.connect();
+					}
+				}
+				)
+			.catch(
+				(error) => { 
+					console.log("error when trying to search for bonded devices; will scan instead: "+error);
+					this.scanForChimuino(); 
+				});
+
+
 	}
 
 	private scanForChimuino() {
@@ -883,21 +959,24 @@ export class ChimuinoProvider {
 
 	private connect() {
 
+		console.log("trying to connect "+this._device.id);
 		this.ble
 			.connect(this._device.id)
 			.subscribe( 
 				(device) => { this.reactDeviceConnected(); },
-				(disconnected) => { this.reactDisconnected(); } 
+				(disconnected) => { 
+					this.reactDisconnected(disconnected); 
+				} 
 				);
 
 	}
 
-	private reactDisconnected() {
+	private reactDisconnected(disconnected) {
 
 		this._isConnected = false;
 
-		console.log("we were disconnected from chime :-/");
-		this.displayDebug("we were disconnected from Chime...");
+		console.log("we were disconnected from chime: "+JSON.stringify(disconnected));
+		this.displayDebug("we were disconnected: "+disconnected);
 
 	}
 
@@ -1015,7 +1094,10 @@ export class ChimuinoProvider {
 												buffer);
 										this.reactDeviceConnected(); 
 										},
-							(disconnected) => { this.reactDisconnected(); } 
+							(disconnected) => { 
+								console.log("failed to reconnect to write char "+characteristic+": "+disconnected);
+								this.reactDisconnected(disconnected); 
+							} 
 						);
 
 					} )

@@ -38,10 +38,10 @@ void ChimeLightSensor::perceive() {
 
 void ChimeLightSensor::debugSerial() {
 
-  #ifdef DEBUG
+  #ifdef TRACE
   Serial << F("light") << PGMSTR(msg_level) << F(" IS ") 
          << _DEC(getLightLevel()) << ' ' 
-         << (isDark() ? F("DARK"): F("LIT")) << ','
+         << (isDark() ? F("dark"): F("lit")) << ','
          << _DEC(factorThreshold) << '>'
          << _DEC(darkThreshold) << F(" in ")
          << '[' << _DEC(sensor.envelopeMin()) << ':' << _DEC(sensor.envelopeMax()) << ']'
@@ -92,12 +92,18 @@ void ChimeLightSensor::publishBluetoothDataSettings() {
 }
 
 void ChimeLightSensor::publishBluetoothDataSensor() {
+
   ble_light_sensor content;
   content.level = getLightLevel();
   content.isDark = isDark();
   content.min = sensor.envelopeMin();
   content.max = sensor.envelopeMax();  
-  this->bluetooth->publishLightSensor(content);
+
+  if (abs(lastLevelSentBluetooth - content.level) > 3) {
+    debugSerial();
+    this->bluetooth->publishLightSensor(content);
+    lastLevelSentBluetooth = content.level;
+  }
 }
 
 void ChimeLightSensor::publishBluetoothData() {

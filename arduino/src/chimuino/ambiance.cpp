@@ -69,7 +69,8 @@ Intention Ambiance::proposeNextMode(Intention currentIntention) {
 
     unsigned long additionalDelay;
     
-    int r = random(0,100);
+    uint8_t r = random(0,100);
+    DEBUG_PRINT("r="); DEBUG_PRINTLN(r);
     if (r <= 60) { 
       additionalDelay = millis() + random(10,60)*1000l;
       TRACE_PRINT(F("silence for ")); TRACE_PRINT(additionalDelay/1000); TRACE_PRINTLN('s');

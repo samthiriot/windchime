@@ -18,9 +18,9 @@ class LowPassFilterSensor {
     uint16_t period;        // how often to listen for the value (in milliseconds)
 
     unsigned long lastReading = 0;    // timestamp of the last reading
-    uint8_t pastvalue;
-    uint8_t update_value(uint8_t v, uint8_t pastvalue, float ETA);
-    uint8_t update_value(float vf, uint8_t pastvalue, float ETA);
+    uint16_t pastvalue;
+    uint16_t update_value(uint16_t v, uint16_t pastvalue, float ETA);
+    uint16_t update_value(float vf, uint16_t pastvalue, float ETA);
 
   public:
    
@@ -32,7 +32,7 @@ class LowPassFilterSensor {
      */
     bool sense();
     
-    uint8_t value() { return pastvalue; }
+    uint16_t value() { return pastvalue; }
 };
 
 
@@ -47,8 +47,8 @@ class LowPassFilterSensorWithMinMax: public LowPassFilterSensor {
     float ETAquick = 0.95;
     float ETAslow = 0.000001;
   
-    uint8_t currentMin;
-    uint8_t currentMax;
+    uint16_t currentMin;
+    uint16_t currentMax;
 
     void adaptMinMax(float v);
     
@@ -60,9 +60,9 @@ class LowPassFilterSensorWithMinMax: public LowPassFilterSensor {
     void setup(uint8_t initialMin = -1, uint8_t initialMax = -1);
     bool sense();
     
-    uint8_t envelopeMin() { return currentMin; }
-    uint8_t envelopeMax() { return currentMax; }
-    bool isMeaningful() { return uint8_t(currentMax - currentMin) > 10; }
+    uint16_t envelopeMin() { return currentMin; }
+    uint16_t envelopeMax() { return currentMax; }
+    bool isMeaningful() { return uint16_t(currentMax - currentMin) > 10; }
 };
 
 

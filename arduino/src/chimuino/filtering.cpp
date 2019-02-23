@@ -21,14 +21,14 @@ void LowPassFilterSensor::setup() {
   
 }
 
-uint8_t LowPassFilterSensor::update_value(uint8_t v, uint8_t pastvalue, float ETA) {
+uint16_t LowPassFilterSensor::update_value(uint16_t v, uint16_t pastvalue, float ETA) {
     
     return update_value(float(v), pastvalue, ETA);
 }
 
-uint8_t LowPassFilterSensor::update_value(float vf, uint8_t pastvalue, float ETA) {
-    
-    return (uint8_t)(ETA * vf + (1.0 - ETA) * float(pastvalue));
+uint16_t LowPassFilterSensor::update_value(float vf, uint16_t pastvalue, float ETA) {
+
+    return (uint16_t)((ETA * vf + (1000.0 - ETA) * float(pastvalue))/1000.0);
 }
 
 bool LowPassFilterSensor::sense() {
@@ -36,7 +36,7 @@ bool LowPassFilterSensor::sense() {
   if (now - lastReading >= period) {
     
     // let's read
-    pastvalue = update_value(uint8_t(analogRead(pin)), pastvalue, ETA);
+    pastvalue = update_value(uint16_t(analogRead(pin)), pastvalue, ETA);
     lastReading = now;
     return true;
   }

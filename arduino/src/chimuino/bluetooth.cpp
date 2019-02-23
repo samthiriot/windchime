@@ -799,9 +799,9 @@ void ChimeBluetooth::reactCentralDisconnected()  {
   TRACE_PRINTLN(F("central disconnected"));
 };
 
-bool ChimeBluetooth::isFloatDifferent(float a, float b) {
+bool ChimeBluetooth::isFloatDifferent(float a, float b, float diff) {
 
-  return (abs(a - b) >= 0.01);
+  return (abs(a - b) >= diff);
 
 }
 
@@ -1021,7 +1021,7 @@ void ChimeBluetooth::readAndReact() {
   {
     if (ble.sendCommandCheckOK(F("AT+HWGETDIETEMP"))) {
       const float v = atof(ble.buffer);
-      if (isFloatDifferent(previousTemperature, v)) {
+      if (isFloatDifferent(previousTemperature, v, 2.0)) {
         publishTemperature2(v);
         previousTemperature = v;
       }

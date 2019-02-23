@@ -16,9 +16,9 @@ char* mode2str(enum mode v) {
     case ALARM2:              return ("alarm 2");
     case SILENCE:             return ("silence");
     case CALIBRATING:         return ("calibration");
-    case AMBIANCE_TINTEMENT:  return ("mood: tintement");
-    case AMBIANCE_PREREVEIL:  return ("mood: prereveil");
-    case AMBIANCE_REVEIL:     return ("mood: reveil");
+    case AMBIANCE_TINTEMENT:  return ("ambiance (light)");
+    case AMBIANCE_PREREVEIL:  return ("ambiance (medium)");
+    case AMBIANCE_REVEIL:     return ("ambiance (strong)");
     case DEMO_LIGHT:          return ("demo light");
     case DEMO_MEDIUM:         return ("demo medium");
     case DEMO_STRONG:         return ("demo strong");

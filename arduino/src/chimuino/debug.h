@@ -16,6 +16,7 @@ const char msg_error_semicol[] PROGMEM  = { "error: "};
 const char msg_enabled[] PROGMEM  =       { "enabled" };
 const char msg_disabled[] PROGMEM  =      { "disabled" };
 const char msg_level[] PROGMEM  =         { "level" };
+const char msg_mode[] PROGMEM  =          { "mode" };
 
 // use to access strings
 #define PGMSTR(x) (__FlashStringHelper*)(x)

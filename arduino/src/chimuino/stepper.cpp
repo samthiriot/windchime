@@ -30,8 +30,8 @@ void ChimeStepper::setup() {
     pinMode(pin4, OUTPUT);
 
     pull_light = steps/14;
-    pull_medium = steps/12;
-    pull_strong = steps/10;
+    pull_medium = steps/10;
+    pull_strong = steps/6;
 
     pull_light_bck = pull_light/2;
     pull_medium_bck = pull_medium/2;

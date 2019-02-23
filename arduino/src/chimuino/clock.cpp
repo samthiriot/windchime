@@ -88,7 +88,7 @@ void ChimeClock::publishBluetoothData() {
 
     // publish our temperature
     float c = RTC.temperature() / 4.;
-    if (bluetooth->isFloatDifferent(previousTemperature, c)) {
+    if (bluetooth->isFloatDifferent(previousTemperature, c, 0.1)) {
       bluetooth->publishTemperature1(c);
       previousTemperature = c;
     }

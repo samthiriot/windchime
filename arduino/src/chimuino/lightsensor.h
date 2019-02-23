@@ -3,11 +3,13 @@
 #define CHIME_LIGHTSENSOR_H
 
 // in milliseconds
-#define CHIME_LIGHTSENSOR_MEASURES_FREQUENCY 1000 
-#define CHIME_LIGHTSENSOR_MEASURES_ETA 0.5 
+#define CHIME_LIGHTSENSOR_MEASURES_FREQUENCY 100 
+
+// milliemes de 1
+#define CHIME_LIGHTSENSOR_MEASURES_ETA 500.0
 
 #define CHIME_LIGHTSENSOR_ENVELOPE_ETA_SLOW 0.00000001
-#define CHIME_LIGHTSENSOR_ENVELOPE_ETA_QUICK 0.999
+#define CHIME_LIGHTSENSOR_ENVELOPE_ETA_QUICK 999.0
 
 // default light threshold
 #define PHOTOCELL_NIGHT_THRESHOLD 30                                     // TODO detect threshold
@@ -33,6 +35,8 @@ class ChimeLightSensor: public BluetoothInformationProducer,
     LowPassFilterSensorWithMinMax sensor;                                                           // the sensor plugged on the pin
 
     unsigned short darkThreshold = PHOTOCELL_NIGHT_THRESHOLD;          // the default threshold
+
+    uint16_t lastLevelSentBluetooth = 0;
     
     byte factorThreshold = 50;                // the quiet / noisy threshold in % will be defined as min+(max-min)*factor; so a factor of 0 will always lead to noisy, a factor of 1 will alwats lead to quiet
     bool previousIsDark = false;

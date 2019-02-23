@@ -4,10 +4,10 @@
 
 // in milliseconds
 #define CHIME_SOUNDSENSOR_MEASURES_FREQUENCY 100 
-#define CHIME_SOUNDSENSOR_MEASURES_ETA 0.2
+#define CHIME_SOUNDSENSOR_MEASURES_ETA 100.0
 
-#define CHIME_SOUNDSENSOR_ENVELOPE_ETA_SLOW 0.0000001
-#define CHIME_SOUNDSENSOR_ENVELOPE_ETA_QUICK 0.3
+#define CHIME_SOUNDSENSOR_ENVELOPE_ETA_SLOW 0.0000001 // that's the max precision we can have...
+#define CHIME_SOUNDSENSOR_ENVELOPE_ETA_QUICK 999.0
 
 #include "filtering.h"
 #include "bluetooth.h"
@@ -46,6 +46,7 @@ class ChimeSoundSensor: public BluetoothInformationProducer {
     SoundLowPassFilterSensorWithMinMax sensor;                                                // the sensor plugged on the pin
       
     // state
+    uint16_t lastLevelSentBluetooth = 0;
     unsigned short quietThreshold = 20;                  // the silence / noise threshold
 
     byte factorThreshold = 50;                // the quiet / noisy threshold will be defined as min+(max-min)*factor; so a factor of 0 will always lead to noisy, a factor of 1 will alwats lead to quiet
@@ -86,9 +87,3 @@ class ChimeSoundSensor: public BluetoothInformationProducer {
 
 
 #endif // CHIME_SOUNDSENSOR_H
-
-
-
-
-
-
