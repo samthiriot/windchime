@@ -29,9 +29,9 @@ void ChimeStepper::setup() {
     pinMode(pin3, OUTPUT);
     pinMode(pin4, OUTPUT);
 
-    pull_light = steps/14;
-    pull_medium = steps/10;
-    pull_strong = steps/6;
+    pull_light = steps/16;
+    pull_medium = steps/14;
+    pull_strong = steps/12;
 
     pull_light_bck = pull_light/2;
     pull_medium_bck = pull_medium/2;
@@ -64,26 +64,26 @@ void ChimeStepper::doFreeWheel() {
 
 void ChimeStepper::doReveil() {
   TRACE_PRINTLN(F("reveil..."));
-  for (uint8_t i=0; i<random(3,7); i++){
-    motor.setSpeed(MOTOR_SPEED_QUICK);
+  for (uint8_t i=0; i<random(4,8); i++){
+    motor.setSpeed(MOTOR_SPEED_SLOW);
     motor.step(pull_strong);
-    delay(100);
-    motor.setSpeed(MOTOR_SPEED_QUICK);
+    delay(200);
+    motor.setSpeed(MOTOR_SPEED_SLOW);
     motor.step(-pull_strong_bck);
-    delay(300);
+    delay(200);
   } 
   doFreeWheel();
 }
   
 void ChimeStepper::doPreReveil() {
   TRACE_PRINTLN(F("prereveil..."));
-  for (uint8_t i=0; i<random(2,7); i++){
+  for (uint8_t i=0; i<random(3,7); i++){
     motor.setSpeed(MOTOR_SPEED_SLOW);
     motor.step(pull_medium);
-    delay(100);
-    motor.setSpeed(MOTOR_SPEED_QUICK);
+    delay(200);
+    motor.setSpeed(MOTOR_SPEED_SLOW);
     motor.step(-pull_medium_bck);
-    delay(300);
+    delay(200);
   }
   doFreeWheel(); 
 }
@@ -91,13 +91,13 @@ void ChimeStepper::doPreReveil() {
 
 void ChimeStepper::doTintement() {
   TRACE_PRINTLN(F("tintement..."));
-  for (uint8_t i=0; i<random(1,5); i++){
+  for (uint8_t i=0; i<random(1,6); i++){
     motor.setSpeed(MOTOR_SPEED_SLOW);
     motor.step(pull_light);
-    delay(100);
-    motor.setSpeed(MOTOR_SPEED_QUICK);
+    delay(200);
+    motor.setSpeed(MOTOR_SPEED_SLOW);
     motor.step(-pull_light_bck);
-    delay(300);
+    delay(200);
   }
   doFreeWheel(); 
 }
