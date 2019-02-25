@@ -63,31 +63,32 @@ BluetoothListenerAnswer Ambiance::receivedAmbiance(ble_ambiance content) {
 
 Intention Ambiance::proposeNextMode(Intention currentIntention) {
 
-    bool canPlay = isEnabled() and !lightSensor->isDark() and soundSensor->isQuiet();
+  bool canPlay = isEnabled() and !lightSensor->isDark() and soundSensor->isQuiet();
     
-   if (currentIntention.what == NOTHING and canPlay) {
+  if (currentIntention.what == NOTHING and canPlay) {
 
-    unsigned long additionalDelay;
-    
-    uint8_t r = random(0,100);
-    DEBUG_PRINT("r="); DEBUG_PRINTLN(r);
-    if (r <= 60) { 
-      additionalDelay = millis() + random(10,60)*1000l;
-      TRACE_PRINT(F("silence for ")); TRACE_PRINT(additionalDelay/1000); TRACE_PRINTLN('s');
-      return Intention { SILENCE,  millis() + additionalDelay};
-    } else if (r <= 65) {
-      additionalDelay = millis() + random(4*60,15*60)*1000l;
-      TRACE_PRINT(F("mood strong in ")); TRACE_PRINT(additionalDelay/1000); TRACE_PRINTLN('s');
-      return Intention { AMBIANCE_REVEIL,  millis() + additionalDelay};
-    } else if (r <= 75) {
-      additionalDelay = millis() + random(4*60,10*60)*1000l;  
-      TRACE_PRINT(F("mood medium in ")); TRACE_PRINT(additionalDelay/1000); TRACE_PRINTLN('s');
-      return Intention { AMBIANCE_PREREVEIL,  millis() + additionalDelay};
-    } else {
-      additionalDelay = millis() + random(4*60,10*60)*1000l;  
-      TRACE_PRINT(F("mood light in ")); TRACE_PRINT(additionalDelay/1000); TRACE_PRINTLN('s');
-      return Intention { AMBIANCE_TINTEMENT,  millis() + additionalDelay};
-    }
+      unsigned long additionalDelay;
+          
+      uint8_t r = random(0,100);
+      DEBUG_PRINT("r="); DEBUG_PRINTLN(r);
+      if (r <= 60) { 
+        additionalDelay = random(10,60)*1000l;
+        TRACE_PRINT(F("silence for ")); TRACE_PRINT(additionalDelay/1000); TRACE_PRINTLN('s');
+        return Intention { SILENCE,  millis() + additionalDelay};
+      } else if (r <= 65) {
+        additionalDelay = random(4*60,15*60)*1000l;
+        TRACE_PRINT(F("mood strong in ")); TRACE_PRINT(additionalDelay/1000); TRACE_PRINTLN('s');
+        return Intention { AMBIANCE_REVEIL,  millis() + additionalDelay};
+      } else if (r <= 75) {
+        additionalDelay = random(4*60,10*60)*1000l;  
+        TRACE_PRINT(F("mood medium in ")); TRACE_PRINT(additionalDelay/1000); TRACE_PRINTLN('s');
+        return Intention { AMBIANCE_PREREVEIL,  millis() + additionalDelay};
+      } else {
+        additionalDelay = random(4*60,10*60)*1000l;  
+        TRACE_PRINT(F("mood light in ")); TRACE_PRINT(additionalDelay/1000); TRACE_PRINTLN('s');
+        return Intention { AMBIANCE_TINTEMENT,  millis() + additionalDelay};
+      }
+
   } else if (!canPlay and 
           (currentIntention.what == AMBIANCE_TINTEMENT or currentIntention.what == AMBIANCE_PREREVEIL or currentIntention.what == AMBIANCE_REVEIL)
           ) {
